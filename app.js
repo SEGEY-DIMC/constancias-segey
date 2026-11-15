@@ -15,6 +15,10 @@ const ACTIVE_LAYOUT_ID_KEY = 'segey_active_layout_id';
 const ADMIN_AUTH_KEY = 'segey_admin_auth_v1';
 const AREAS_STORAGE_KEY = 'segey_areas_notificadoras_v1';
 
+function getGoogleScriptWebhookUrl() {
+  return localStorage.getItem(WEBHOOK_KEY) || DEFAULT_WEBHOOK_URL;
+}
+
 function escapeHtml(str) {
   if (!str) return '';
   return String(str)
