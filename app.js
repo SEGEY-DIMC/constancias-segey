@@ -1311,7 +1311,7 @@ function updateEstatusPermissions(isAdmin) {
       hintEl.innerHTML = '<i class="fa-solid fa-check-circle mr-1"></i>Modo Administrador activo: Acceso total para gestionar todos los estatus del trámite.';
     } else {
       hintEl.className = 'text-[10px] text-slate-500 mt-1';
-      hintEl.innerHTML = '<i class="fa-solid fa-circle-info mr-1"></i>Todo nuevo registro se emite como <strong>Generada (Listo para Firmar)</strong> para recabar firmas físicas.';
+      hintEl.innerHTML = '<i class="fa-solid fa-circle-info mr-1"></i>Trámites nuevos inician como <strong>Generada (Listo para Firmar)</strong>. Si edita un folio existente, seleccione <strong>Modificación</strong>.';
     }
   }
 
@@ -1322,21 +1322,19 @@ function updateEstatusPermissions(isAdmin) {
         opt.disabled = false;
         opt.className = 'text-slate-800 font-medium';
         opt.textContent = 'Generada (Listo para Firmar)';
+      } else if (opt.value === 'Modificación') {
+        opt.disabled = false;
+        opt.className = 'text-amber-800 font-semibold bg-amber-50';
+        opt.textContent = 'Modificación (Folio en corrección o edición)';
       } else if (opt.value === 'Borrador') {
-        if (isAdmin) {
-          opt.disabled = false;
-          opt.className = 'text-slate-800 font-medium';
-          opt.textContent = 'Borrador (En revisión)';
-        } else {
-          opt.disabled = true;
-          opt.className = 'text-slate-400 bg-slate-50';
-          opt.textContent = '🔒 Borrador (Disponible al activar carga y búsqueda de folios)';
-        }
+        opt.disabled = false;
+        opt.className = 'text-slate-700 font-medium';
+        opt.textContent = 'Borrador (En proceso de integración)';
       } else if (opt.value === 'Firmada y Concluida') {
-        if (isAdmin) {
+        if (isAdmin || editingRecordId) {
           opt.disabled = false;
           opt.className = 'text-slate-800 font-semibold';
-          opt.textContent = '✅ Firmada y Concluida (Expediente completo)';
+          opt.textContent = '✅ Firmada y Concluida (Trámite finalizado)';
         } else {
           opt.disabled = true;
           opt.className = 'text-slate-400 bg-slate-50';
@@ -1354,7 +1352,7 @@ function updateEstatusPermissions(isAdmin) {
         }
       }
     }
-    if (!isAdmin && !editingRecordId) {
+    if (!isAdmin && !editingRecordId && !estatusSelect.value) {
       estatusSelect.value = 'Generada para Firma';
     }
   }
@@ -4274,12 +4272,25 @@ function handleFormSubmit(event) {
   const justificacion = document.getElementById('justificacion').value.trim().toUpperCase();
   const estatus = document.getElementById('estatus').value;
 
-  // Regla institucional: Usuarios estándar emiten "Generada para Firma" (las demás se habilitarán con la carga de folios)
-  if (!isAdminLoggedIn() && estatus !== 'Generada para Firma') {
-    showToast('Los nuevos trámites se emiten con estatus "Generada (Listo para Firmar)".', 'error');
-    document.getElementById('estatus').value = 'Generada para Firma';
-    isSubmittingForm = false;
-    return;
+  // Control de Estatus y Trazabilidad al Guardar
+  if (editingRecordId) {
+    if (estatus !== 'Modificación' && estatus !== 'Borrador' && estatus !== 'Firmada y Concluida') {
+      alert(`⚠️ Para guardar modificaciones en una constancia existente (${folio}), es necesario cambiar el "Estatus del Trámite" a "Modificación" en el Apartado IV para mantener la trazabilidad de control.`);
+      const estSelect = document.getElementById('estatus');
+      if (estSelect) {
+        estSelect.focus();
+        estSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      isSubmittingForm = false;
+      return;
+    }
+  } else {
+    if (!isAdminLoggedIn() && estatus === 'Modificación') {
+      alert('El estatus "Modificación" es exclusivo para constancias ya emitidas que fueron buscadas por folio. Para un nuevo trámite elija "Generada (Listo para Firmar)" o "Borrador".');
+      document.getElementById('estatus').value = 'Generada para Firma';
+      isSubmittingForm = false;
+      return;
+    }
   }
 
   const observaciones = document.getElementById('observaciones').value.trim();
@@ -4411,9 +4422,10 @@ function handleFormSubmit(event) {
   renderDocument(recordData);
   switchTab('tab-preview', true);
 
-  setTimeout(() => {
-    downloadCurrentDocumentPDF();
-  }, 400);
+  const editingBanner = document.getElementById('editing-folio-banner');
+  if (editingBanner) editingBanner.classList.add('hidden');
+
+  showToast(`Constancia ${folio} guardada con éxito (${recordData.estatus}). Puede descargar el PDF oficial desde este visor.`);
 }
 
 function getCurrentFormDataForPreview() {
@@ -5070,9 +5082,11 @@ function getMovimientoBadgeColor(mov) {
 function getEstatusBadgeColor(estatus) {
   switch (estatus) {
     case 'Firmada y Concluida':
-      return 'bg-rose-100 text-segey-800 border border-rose-200';
+      return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+    case 'Modificación':
+      return 'bg-amber-100 text-amber-800 border border-amber-300';
     case 'Borrador':
-      return 'bg-amber-100 text-amber-800 border border-amber-200';
+      return 'bg-slate-100 text-slate-700 border border-slate-300';
     case 'Inactivo':
       return 'bg-slate-200 text-slate-700 border border-slate-300';
     default:
@@ -5474,6 +5488,8 @@ function closeDetailsModal() {
 
 function resetForm() {
   editingRecordId = null;
+  const editingBanner = document.getElementById('editing-folio-banner');
+  if (editingBanner) editingBanner.classList.add('hidden');
   document.getElementById('constancia-form').reset();
   setAreaNotificadoraValue('');
   setResponsableCapturaValue('');
@@ -5932,4 +5948,140 @@ function getInitialSampleRecords() {
       observaciones: 'Se turna expediente de transferencia presupuestal y de bienes muebles a la Dirección de Administración y Finanzas.'
     }
   ];
+}
+
+/**
+ * =========================================================================
+ * BÚSQUEDA Y GESTIÓN DE FOLIOS PARA REIMPRESIÓN O EDICIÓN
+ * =========================================================================
+ */
+function openBuscarFolioModal() {
+  const modal = document.getElementById('modal-buscar-folio');
+  const input = document.getElementById('input-buscar-folio');
+  const container = document.getElementById('resultados-busqueda-folio');
+  if (modal) {
+    if (input) input.value = '';
+    if (container) mostrarResultadosBusquedaFolio(records.slice(0, 5), true);
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+      if (input) input.focus();
+    }, 100);
+  }
+}
+
+function closeBuscarFolioModal() {
+  const modal = document.getElementById('modal-buscar-folio');
+  if (modal) modal.classList.add('hidden');
+}
+
+function ejecutarBusquedaFolio() {
+  const input = document.getElementById('input-buscar-folio');
+  if (!input) return;
+  const q = input.value.trim().toLowerCase();
+  if (!q) {
+    mostrarResultadosBusquedaFolio(records.slice(0, 5), true);
+    return;
+  }
+
+  const matches = records.filter(r => {
+    const fol = (r.folio || '').toLowerCase();
+    const area = (r.areaNotificadora || '').toLowerCase();
+    const resp = (r.responsableCaptura || '').toLowerCase();
+    const denom = (r.nuevaDenominacion || '').toLowerCase();
+    const est = (r.estatus || '').toLowerCase();
+    return fol.includes(q) || area.includes(q) || resp.includes(q) || denom.includes(q) || est.includes(q);
+  });
+
+  mostrarResultadosBusquedaFolio(matches, false);
+}
+
+function mostrarResultadosBusquedaFolio(items, isRecent = false) {
+  const container = document.getElementById('resultados-busqueda-folio');
+  if (!container) return;
+
+  if (!items || items.length === 0) {
+    container.innerHTML = `
+      <div class="p-6 text-center text-slate-500 text-xs">
+        <i class="fa-solid fa-folder-open text-2xl text-slate-400 mb-2 block"></i>
+        No se encontró ninguna constancia con ese criterio de búsqueda.
+      </div>
+    `;
+    return;
+  }
+
+  let html = '';
+  if (isRecent) {
+    html += `<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Constancias en memoria (${items.length}):</p>`;
+  } else {
+    html += `<p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Resultados encontrados (${items.length}):</p>`;
+  }
+
+  items.forEach(r => {
+    const estatusColor = getEstatusBadgeColor(r.estatus);
+    html += `
+      <div class="border border-slate-200 rounded-xl p-3.5 hover:border-segey-500 transition bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="font-mono font-bold text-xs text-segey-900 bg-segey-50 px-2 py-0.5 rounded border border-segey-200">
+              ${escapeHtml(r.folio || 'S/F')}
+            </span>
+            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full ${estatusColor}">
+              ${escapeHtml(r.estatus || 'Generada para Firma')}
+            </span>
+            <span class="text-[11px] text-slate-400">
+              ${r.fechaActa || r.fechaConstancia || ''}
+            </span>
+          </div>
+          <p class="text-xs font-semibold text-slate-800 line-clamp-1">
+            ${escapeHtml(r.nuevaDenominacion || r.tipoMovimiento || 'Trámite')}
+          </p>
+          <p class="text-[11px] text-slate-500 line-clamp-1">
+            <i class="fa-solid fa-building text-[10px] text-slate-400 mr-1"></i>${escapeHtml(r.areaNotificadora || 'Área no especificada')}
+          </p>
+        </div>
+        <div class="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
+          <button type="button" onclick="verFolioEnVisor('${r.id}')" title="Ver en visor y reimprimir PDF"
+            class="px-2.5 py-1.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold transition flex items-center gap-1">
+            <i class="fa-solid fa-file-pdf text-rose-700"></i> Reimprimir
+          </button>
+          <button type="button" onclick="cargarFolioParaEdicion('${r.id}')" title="Cargar en el formulario para editar"
+            class="px-2.5 py-1.5 rounded-lg bg-segey-800 hover:bg-segey-900 text-white text-xs font-bold transition flex items-center gap-1 shadow-xs">
+            <i class="fa-solid fa-pen-to-square"></i> Cargar / Editar
+          </button>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function cargarFolioParaEdicion(id) {
+  closeBuscarFolioModal();
+  editRecord(id);
+  const banner = document.getElementById('editing-folio-banner');
+  const record = records.find(r => r.id === id);
+  if (banner && record) {
+    const lblFol = document.getElementById('lbl-editing-folio');
+    const lblSt = document.getElementById('lbl-editing-status');
+    if (lblFol) lblFol.textContent = record.folio || '';
+    if (lblSt) lblSt.textContent = record.estatus || 'Generada para Firma';
+    banner.classList.remove('hidden');
+    banner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function verFolioEnVisor(id) {
+  closeBuscarFolioModal();
+  const record = records.find(r => r.id === id);
+  if (record) {
+    renderDocument(record);
+    switchTab('tab-preview', true);
+    showToast(`Mostrando constancia ${record.folio} en el visor lista para reimprimir.`);
+  }
+}
+
+function cancelarEdicionFolio() {
+  resetForm();
+  showToast('Modo edición cancelado. Formulario listo para nueva constancia.');
 }
