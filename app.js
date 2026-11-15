@@ -1,0 +1,5923 @@
+/**
+ * Sistema de Gestión y Control de Constancias de Cambios
+ * Secretaría de Educación del Estado de Yucatán (SEGEY)
+ * Formato oficial con motor dinámico de plantillas / Layouts
+ * Permite subir, cambiar y regenerar documentos PDF con cualquier diseño
+ */
+
+const STORAGE_KEY = 'segey_constancias_records_v1';
+const WEBHOOK_KEY = 'segey_gsheets_webhook_url';
+const LAYOUTS_STORAGE_KEY = 'segey_custom_layouts_v1';
+const ACTIVE_LAYOUT_ID_KEY = 'segey_active_layout_id';
+const ADMIN_AUTH_KEY = 'segey_admin_auth_v1';
+const AREAS_STORAGE_KEY = 'segey_areas_notificadoras_v1';
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Catálogo oficial predeterminado de áreas SEGEY (Tomado del Listado de Enlaces Oficial 2024-2030, ordenado alfabéticamente A-Z)
+const DEFAULT_AREAS_NOTIFICADORAS = [
+  'Área de Prestaciones Sociales',
+  'Casa de la Historia de la Educación de Yucatán',
+  'Centro de Evaluación Educativa del Estado de Yucatán',
+  'Centro Estatal de Bellas Artes',
+  'Coordinación de Archivos',
+  'Coordinación de Enlace con Direcciones y Otras Dependencias',
+  'Coordinación de Gestión y Revisión',
+  'Coordinación Estatal de Becas',
+  'Coordinación General de Desarrollo de Habilidades Socioemocionales',
+  'Coordinación General de Inglés',
+  'Coordinación General de Intervención y Gestión Institucional',
+  'Coordinación General de Programas Estratégicos',
+  'Coordinación General de Servicios Educativos',
+  'Coordinación General de Tecnologías de la Información y Comunicaciones',
+  'Coordinación General de Trámite y Control',
+  'Departamento de Adquisiciones',
+  'Departamento de Administración de Personal de Contrato',
+  'Departamento de Control Patrimonial',
+  'Departamento de Distribución de Libros de Texto y Mobiliario',
+  'Departamento de Estadística',
+  'Departamento de Estudios y Proyectos',
+  'Departamento de Gestión de Información, Capacitación y Ética',
+  'Departamento de Innovación y Mejora Continua',
+  'Departamento de Planeación, Evaluación y Seguimiento',
+  'Departamento de Preparatoria Abierta',
+  'Departamento de Preparatorias Estatales y Particulares Incorporadas',
+  'Departamento de Presupuestos',
+  'Departamento de Recursos Financieros',
+  'Departamento de Recursos Humanos',
+  'Departamento de Recursos Materiales y Servicios',
+  'Departamento de Registro y Certificación',
+  'Departamento de Sistemas de Gestión de Nómina',
+  'Departamento de Telebachillerato Comunitario del Estado de Yucatán y Bachillerato Intercultural',
+  'Dirección de Administración y Finanzas',
+  'Dirección de Desarrollo Educativo',
+  'Dirección de Desarrollo Educativo y Proyectos Estratégicos',
+  'Dirección de Educación Artística',
+  'Dirección de Educación Especial',
+  'Dirección de Educación Física',
+  'Dirección de Educación Indígena',
+  'Dirección de Educación Inicial',
+  'Dirección de Educación Preescolar',
+  'Dirección de Educación Primaria',
+  'Dirección de Educación Secundaria',
+  'Dirección de Fortalecimiento de Educación Superior',
+  'Dirección de Planeación',
+  'Dirección de Servicio Profesional',
+  'Dirección de Servicios Educativos de Media Superior',
+  'Dirección de Servicios Regionales',
+  'Dirección Jurídica',
+  'Enlace Estatal con la Unidad del Sistema para la Carrera de las Maestras y los Maestros (USICAMM)',
+  'Jefatura del Despacho',
+  'Secretario Particular',
+  'Subdirección de Organización y Administración de Personal',
+  'Subsecretaría de Educación Básica',
+  'Subsecretaría de Educación Media Superior',
+  'Subsecretaría de Educación Superior',
+  'Universidad Virtual del Estado de Yucatán'
+];
+
+// Meses en español para la redacción oficial
+const MESES = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+];
+
+// LAYOUT BASE PREDETERMINADO (Formato oficial SEGEY sin cuadros)
+const DEFAULT_LAYOUT_HTML = `
+<!-- ============================================================== -->
+<!-- ENCABEZADO OFICIAL SEGEY (IDÉNTICO AL FORMATO WORD)           -->
+<!-- ============================================================== -->
+<div class="official-header mb-3">
+  <table style="width: 100%; border-collapse: collapse; border: 1px solid #A6A6A6; font-family: 'Lato', Arial, sans-serif;">
+    <tr>
+      <!-- Columna 1: Escudo del Estado de Yucatán -->
+      <td style="width: 25%; text-align: center; vertical-align: middle; padding: 6px 8px; border-right: 1px solid #A6A6A6; border-bottom: 1px solid #A6A6A6;">
+        <img src="{{logoYucatan}}" alt="Gobierno del Estado de Yucatán" style="max-height: 48px; max-width: 135px; margin: 0 auto; display: block;" />
+      </td>
+      <!-- Columna 2: Textos Institucionales -->
+      <td style="width: 53%; text-align: center; vertical-align: middle; padding: 6px 10px; border-right: 1px solid #A6A6A6; border-bottom: 1px solid #A6A6A6;">
+        <div style="font-size: 13px; font-weight: bold; color: #111827; letter-spacing: 0.3px; line-height: 1.25; font-family: 'Lato', Arial, sans-serif; text-transform: uppercase;">
+          SECRETARÍA DE EDUCACIÓN
+        </div>
+        <div style="font-size: 10.5px; color: #374151; margin-top: 2px; font-family: 'Lato', Arial, sans-serif;">
+          Dirección de Administración y Finanzas
+        </div>
+      </td>
+      <!-- Columna 3: Logo SEGEY -->
+      <td style="width: 22%; text-align: center; vertical-align: middle; padding: 6px 8px; border-bottom: 1px solid #A6A6A6;">
+        <img src="{{logoSegey}}" alt="SEGEY" style="max-height: 46px; max-width: 65px; margin: 0 auto; display: block;" />
+      </td>
+    </tr>
+    <tr>
+      <!-- Fila 2: Título Oficial de la Constancia (spanning 3 columns) -->
+      <td colspan="3" style="text-align: center; vertical-align: middle; padding: 6px 10px; font-size: 11px; font-weight: bold; color: #111827; background-color: #ffffff; font-family: 'Lato', Arial, sans-serif;">
+        Constancia de cambios de denominación o dependencia jerárquica en las unidades administrativas
+      </td>
+    </tr>
+  </table>
+</div>
+
+<!-- Folio discreto en esquina superior derecha -->
+<div class="text-right text-[11px] text-slate-500 font-mono mb-3">
+  <span>Folio: <strong>{{folio}}</strong></span>
+</div>
+
+<!-- ============================================================== -->
+<!-- CUERPO DEL DOCUMENTO (TEXTO FLUIDO SIN CUADROS)                -->
+<!-- ============================================================== -->
+<div class="official-body text-slate-900 text-justify text-[11pt] leading-relaxed space-y-3" style="font-family: 'Lato', Arial, sans-serif;">
+
+  <!-- APARTADO I. TIPO DE CAMBIO QUE DETERMINA LA UNIDAD ADMINISTRATIVA -->
+  <div>
+    <div class="font-bold text-[11pt] mb-1 uppercase tracking-wide text-slate-900 text-left">I. TIPO DE CAMBIO QUE DETERMINA LA UNIDAD ADMINISTRATIVA</div>
+    <div class="pl-3 space-y-1 text-[11pt] text-left">
+      <p>Se determinó la modificación conforme a lo siguiente:</p>
+      <div class="flex flex-wrap gap-4 items-center my-1 text-[10.5pt]">
+        <span class="font-bold">• Tipo de movimiento:</span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="font-mono font-bold">{{chkAlta}}</span> Alta
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="font-mono font-bold">{{chkBaja}}</span> Baja
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="font-mono font-bold">{{chkNombre}}</span> Cambio de nombre
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="font-mono font-bold">{{chkJerarquica}}</span> Cambio de dependencia jerárquica
+        </span>
+      </div>
+      {{#if esCambioNombre}}
+      <div>
+        <span class="font-bold">• Nombre actual del área o adscripción:</span>
+        <span class="inline font-normal ml-1 text-slate-900 uppercase">{{nombreActual}}</span>
+      </div>
+      <div>
+        <span class="font-bold">• Nuevo nombre del área o adscripción:</span>
+        <span class="inline font-normal ml-1 text-slate-900 uppercase">{{nuevoNombre}}</span>
+      </div>
+      {{/if}}
+      {{#if noEsCambioNombre}}
+      <div>
+        <span class="font-bold">• Nombre del área o adscripción:</span>
+        <span class="inline font-normal ml-1 text-slate-900 uppercase">{{nuevaDenominacion}}</span>
+      </div>
+      {{/if}}
+    </div>
+  </div>
+
+  <!-- APARTADO II. GENERALES -->
+  <div>
+    <div class="font-bold text-[11pt] mb-1 uppercase tracking-wide text-slate-900 text-left">II. GENERALES</div>
+    <p class="text-justify mb-2 leading-relaxed">
+      En el municipio de <span class="font-bold">{{municipio}}</span>, del Estado de Yucatán, siendo las <span class="font-bold">{{horas}}</span> horas con <span class="font-bold">{{minutos}}</span> minutos del día <span class="font-bold">{{dia}}</span> del mes de <span class="font-bold">{{mes}}</span> del año <span class="font-bold">20{{anio}}</span>, constituidos en el inmueble que ocupa <span class="font-bold">{{inmueble}}</span> ubicada en domicilio conocido, se encuentran reunidos los siguientes comparecientes en representación de la Secretaría de Educación:
+    </p>
+
+    <!-- Comparecientes -->
+    <div class="my-2 space-y-1 text-[11pt] pl-3 text-left">
+      <div class="grid grid-cols-12 gap-2 items-start">
+        <div class="col-span-5 font-bold text-slate-800">{{etiquetaTitular1Y2}}:</div>
+        <div class="col-span-7 space-y-0.5 font-normal text-slate-900">
+          <div>1) <span class="font-normal text-slate-900">{{titularUnidad1Linea}}</span></div>
+          {{#if titularUnidad2Linea}}
+          <div>{{etiquetaCompareciente2}}<span class="font-normal text-slate-900">{{titularUnidad2Linea}}</span></div>
+          {{/if}}
+        </div>
+      </div>
+
+      <div class="grid grid-cols-12 gap-2 items-start">
+        <div class="col-span-5 font-bold text-slate-800">Titular de Área:</div>
+        <div class="col-span-7 font-normal text-slate-900">
+          <span class="font-normal text-slate-900">{{titularAreaLinea}}</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-12 gap-2 items-start">
+        <div class="col-span-5 font-bold text-slate-800">Testigos:</div>
+        <div class="col-span-7 space-y-0.5 font-normal text-slate-900">
+          <div>1) <span class="font-normal text-slate-900">{{testigo1Linea}}</span></div>
+          {{#if tieneTestigo2}}
+          <div>2) <span class="font-normal text-slate-900">{{testigo2Linea}}</span></div>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- APARTADO III. JUSTIFICACIÓN Y MOTIVOS DEL CAMBIO -->
+  <div>
+    <div class="font-bold text-[11pt] mb-1 uppercase tracking-wide text-slate-900 text-left">III. JUSTIFICACIÓN Y MOTIVOS DEL CAMBIO</div>
+    <div class="pl-3 space-y-1 text-[11pt]">
+      <p class="italic text-[10.5pt] text-slate-700">Se hace constar los siguientes hechos y circunstancias de carácter administrativo…</p>
+      <div class="text-justify leading-relaxed whitespace-pre-wrap font-normal text-slate-900 uppercase">
+        {{justificacion}}
+      </div>
+    </div>
+  </div>
+
+  <!-- APARTADO IV. CIERRE Y FIRMAS -->
+  <div class="page-break-avoid">
+    <div class="font-bold text-[11pt] mb-1 uppercase tracking-wide text-slate-900 text-left">IV. CIERRE</div>
+    <p class="text-justify mb-4 leading-relaxed text-[11pt]">
+      Una vez expresado lo anterior y al no haber más hechos que hacer constar, se da por concluida la presente, firmando al calce para su debida constancia y manifestando su entera conformidad los involucrados, siendo el mismo día y año.
+    </p>
+
+    <!-- ESPACIO DE FIRMAS CON ESPACIO AMPLIO Y RAZONABLE PARA FIRMAR -->
+    <div class="mt-8 space-y-6 font-sans">
+      <div class="grid grid-cols-2 gap-8 text-center pt-2">
+        <div>
+          <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
+            <div class="font-bold uppercase text-[10.5px] tracking-tight">Titular de Unidad Administrativa (1)</div>
+            <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{titularUnidad1Nombre}}</div>
+            <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{titularUnidad1Cargo}}</div>
+          </div>
+        </div>
+        <div>
+          <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
+            <div class="font-bold uppercase text-[10.5px] tracking-tight">{{etiquetaTitular2Firma}}</div>
+            <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{titularUnidad2Nombre}}</div>
+            <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{titularUnidad2Cargo}}</div>
+          </div>
+        </div>
+      </div>
+
+      {{#if esCambioDependenciaJerarquica}}
+      <!-- Para Cambio de Dependencia Jerárquica: Se quita la firma de en medio. El testigo (1) se vuelve Titular de Área y el testigo (2) se vuelve Testigo (1) -->
+      <div class="grid grid-cols-2 gap-8 text-center pt-2">
+        <div>
+          <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
+            <div class="font-bold uppercase text-[10.5px] tracking-tight">Titular de Área</div>
+            <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{titularAreaNombre}}</div>
+            <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{titularAreaCargo}}</div>
+          </div>
+        </div>
+        <div>
+          <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
+            <div class="font-bold uppercase text-[10.5px] tracking-tight">Testigo (1)</div>
+            <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{testigo1Nombre}}</div>
+            <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{testigo1Cargo}}</div>
+          </div>
+        </div>
+      </div>
+      {{/if}}
+
+      {{#if noEsCambioDependenciaJerarquica}}
+      <!-- Fila 2: Titular de Área al centro -->
+      <div class="text-center pt-2">
+        <div class="w-72 mx-auto border-t border-slate-900 pt-1.5">
+          <div class="font-bold uppercase text-[10.5px] tracking-tight">Titular de Área</div>
+          <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{titularAreaNombre}}</div>
+          <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{titularAreaCargo}}</div>
+        </div>
+      </div>
+
+      <!-- Fila 3: Testigos 1 y 2 -->
+      <div class="grid grid-cols-2 gap-8 text-center pt-2">
+        <div>
+          <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
+            <div class="font-bold uppercase text-[10.5px] tracking-tight">Testigo (1)</div>
+            <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{testigo1Nombre}}</div>
+            <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{testigo1Cargo}}</div>
+          </div>
+        </div>
+        <div>
+          <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
+            <div class="font-bold uppercase text-[10.5px] tracking-tight">Testigo (2)</div>
+            <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{testigo2Nombre}}</div>
+            <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{testigo2Cargo}}</div>
+          </div>
+        </div>
+      </div>
+      {{/if}}
+    </div>
+  </div>
+
+</div>
+
+<!-- ============================================================== -->
+<!-- PIE DE PÁGINA OFICIAL SEGEY (IDÉNTICO AL FORMATO WORD)        -->
+<!-- ============================================================== -->
+<div class="official-footer mt-7 pt-2.5" style="font-family: 'Lato', Arial, sans-serif; font-size: 10px; color: #475569; border-top: none;">
+  <table style="width: 100%; border-collapse: collapse; border: none;">
+    <tr>
+      <td style="text-align: left; vertical-align: middle; padding: 2px 0;">
+        <span style="letter-spacing: 0.5px; font-weight: 600;">F-PR-EAO-03 &nbsp;R01</span>
+      </td>
+      <td style="text-align: right; vertical-align: middle; padding: 2px 0;">
+        <span>Página 1 de 1</span>
+      </td>
+    </tr>
+  </table>
+</div>
+`;
+
+// Estado global de la aplicación
+let records = [];
+let customLayouts = [];
+let activeLayoutId = 'default';
+let editingRecordId = null;
+let currentRenderedRecord = null;
+let predefinedAreas = [];
+
+// Inicialización al cargar el DOM
+document.addEventListener('DOMContentLoaded', () => {
+  initStorage();
+  initLayouts();
+  initAreasNotificadoras();
+  initCatalogoOrganico();
+  updateAdminUI();
+  initFormDefaults();
+  initQueryParams();
+  renderTable();
+  updateStats();
+  populateAreaFilter();
+  updateShareLink();
+  renderDocument(getCurrentFormDataForPreview());
+  poblarSelectJustificaciones('Alta');
+  initAllSearchableComboboxes();
+});
+
+/**
+ * =========================================================================
+ * COMPONENTE COMBOBOX BUSCABLE NATIVO (OPCIÓN 1)
+ * Permite buscar al vuelo escribiendo o hacer clic para ver la lista completa.
+ * Formato limpio: Puesto — Nombre (sin etiquetas de nivel de mando).
+ * =========================================================================
+ */
+function normalizeText(str) {
+  if (!str) return '';
+  return str.toString()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function initSearchableCombobox(selectId, placeholderText = 'Escriba o seleccione...') {
+  const select = document.getElementById(selectId);
+  if (!select) return null;
+
+  // Si ya existe un combobox wrapper para este select, no crear otro
+  let wrapper = select.parentElement ? select.parentElement.querySelector(`.segey-combobox[data-for="${selectId}"]`) : null;
+  if (wrapper) {
+    return wrapper;
+  }
+
+  // Ocultar select original pero mantenerlo en el DOM
+  select.classList.add('hidden');
+  select.style.display = 'none';
+  select.setAttribute('data-combobox-hidden', 'true');
+
+  // Crear wrapper visual
+  wrapper = document.createElement('div');
+  wrapper.className = 'relative segey-combobox w-full';
+  wrapper.setAttribute('data-for', selectId);
+
+  wrapper.innerHTML = `
+    <div class="relative w-full">
+      <input type="text"
+        class="combobox-input w-full text-xs rounded-lg border border-slate-300 p-2.5 pr-14 bg-white text-slate-800 font-medium focus:ring-2 focus:ring-segey-700 focus:outline-none placeholder:text-slate-400 shadow-2xs transition-all"
+        placeholder="${placeholderText}"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 text-slate-400">
+        <button type="button" class="combobox-clear hidden p-1 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors" title="Limpiar selección">
+          <i class="fa-solid fa-xmark text-xs"></i>
+        </button>
+        <button type="button" class="combobox-toggle p-1 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors" title="Ver opciones">
+          <i class="fa-solid fa-chevron-down text-[11px] transition-transform duration-200"></i>
+        </button>
+      </div>
+    </div>
+    <div class="combobox-menu hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl max-h-56 overflow-y-auto z-50 divide-y divide-slate-100 text-xs custom-scrollbar">
+    </div>
+  `;
+
+  select.parentNode.insertBefore(wrapper, select.nextSibling);
+
+  const input = wrapper.querySelector('.combobox-input');
+  const menu = wrapper.querySelector('.combobox-menu');
+  const clearBtn = wrapper.querySelector('.combobox-clear');
+  const toggleBtn = wrapper.querySelector('.combobox-toggle');
+  const chevron = toggleBtn.querySelector('i');
+
+  let activeIndex = -1;
+
+  function getOptions() {
+    const list = [];
+    for (let i = 0; i < select.options.length; i++) {
+      const opt = select.options[i];
+      if (!opt.value && opt.disabled) continue;
+      list.push({
+        value: opt.value,
+        text: opt.textContent.trim(),
+        disabled: opt.disabled,
+        selected: opt.selected,
+        index: i,
+        dataset: { ...opt.dataset }
+      });
+    }
+    return list;
+  }
+
+  function renderMenu(filterText = '') {
+    const q = normalizeText(filterText);
+    const opts = getOptions();
+
+    const filtered = opts.filter(opt => {
+      if (!opt.value && !opt.text) return false;
+      if (!q) return true;
+      return normalizeText(opt.text).includes(q);
+    });
+
+    if (filtered.length === 0) {
+      menu.innerHTML = `<div class="p-3 text-xs text-slate-400 italic text-center">No se encontraron resultados para "${escapeHtml(filterText)}"</div>`;
+      return;
+    }
+
+    let html = '';
+    filtered.forEach((opt) => {
+      const isSelected = (opt.value && opt.value === select.value) || opt.selected;
+      const isManual = opt.value.includes('MANUAL') || opt.value.includes('OTRA');
+      const bgClass = isSelected ? 'bg-segey-50 font-bold text-segey-900 border-l-4 border-segey-700' : 'hover:bg-slate-50 text-slate-800';
+      const manualClass = isManual ? 'text-amber-800 bg-amber-50/50 hover:bg-amber-100/70 font-semibold' : '';
+
+      html += `
+        <div class="combobox-item p-2.5 cursor-pointer transition-colors flex items-center justify-between ${bgClass} ${manualClass}"
+             data-value="${escapeHtml(opt.value)}"
+             data-select-index="${opt.index}">
+          <span class="truncate">${escapeHtml(opt.text)}</span>
+          ${isSelected ? '<i class="fa-solid fa-check text-segey-700 text-xs ml-2 flex-shrink-0"></i>' : ''}
+        </div>
+      `;
+    });
+    menu.innerHTML = html;
+
+    menu.querySelectorAll('.combobox-item').forEach(itemEl => {
+      itemEl.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+      });
+      itemEl.addEventListener('click', () => {
+        selectItem(itemEl.dataset.value, itemEl.getAttribute('data-select-index'));
+      });
+    });
+  }
+
+  function selectItem(val, selectIdx) {
+    if (selectIdx !== null && selectIdx !== undefined) {
+      select.selectedIndex = parseInt(selectIdx, 10);
+    } else {
+      select.value = val;
+    }
+
+    const selectedOpt = select.options[select.selectedIndex];
+    if (selectedOpt && selectedOpt.value) {
+      input.value = selectedOpt.textContent.trim();
+      clearBtn.classList.remove('hidden');
+    } else {
+      input.value = '';
+      clearBtn.classList.add('hidden');
+    }
+
+    closeMenu();
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  function openMenu() {
+    if (select.disabled) return;
+    renderMenu(input.value);
+    menu.classList.remove('hidden');
+    chevron.classList.add('rotate-180');
+    activeIndex = -1;
+  }
+
+  function closeMenu() {
+    menu.classList.add('hidden');
+    chevron.classList.remove('rotate-180');
+    activeIndex = -1;
+    syncInputFromSelect();
+  }
+
+  function syncInputFromSelect() {
+    const selIdx = select.selectedIndex;
+    if (selIdx >= 0 && select.options[selIdx] && select.options[selIdx].value) {
+      input.value = select.options[selIdx].textContent.trim();
+      clearBtn.classList.remove('hidden');
+    } else {
+      input.value = '';
+      clearBtn.classList.add('hidden');
+    }
+    input.disabled = select.disabled;
+    if (select.disabled) {
+      input.classList.add('bg-slate-50', 'text-slate-400', 'cursor-not-allowed');
+      input.classList.remove('bg-white', 'text-slate-800');
+    } else {
+      input.classList.remove('bg-slate-50', 'text-slate-400', 'cursor-not-allowed');
+      input.classList.add('bg-white', 'text-slate-800');
+    }
+  }
+
+  input.addEventListener('focus', () => {
+    openMenu();
+  });
+
+  input.addEventListener('input', (e) => {
+    openMenu();
+    renderMenu(e.target.value);
+    if (e.target.value.trim().length > 0) {
+      clearBtn.classList.remove('hidden');
+    } else {
+      clearBtn.classList.add('hidden');
+    }
+  });
+
+  input.addEventListener('keydown', (e) => {
+    const items = menu.querySelectorAll('.combobox-item');
+    if (menu.classList.contains('hidden')) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter') {
+        openMenu();
+        e.preventDefault();
+        return;
+      }
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (items.length === 0) return;
+      activeIndex = (activeIndex + 1) % items.length;
+      highlightItem(items);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (items.length === 0) return;
+      activeIndex = (activeIndex - 1 + items.length) % items.length;
+      highlightItem(items);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (activeIndex >= 0 && items[activeIndex]) {
+        items[activeIndex].click();
+      } else if (items.length > 0) {
+        items[0].click();
+      }
+    } else if (e.key === 'Escape') {
+      closeMenu();
+    }
+  });
+
+  function highlightItem(items) {
+    items.forEach((it, idx) => {
+      if (idx === activeIndex) {
+        it.classList.add('bg-slate-100', 'font-bold');
+        it.scrollIntoView({ block: 'nearest' });
+      } else {
+        it.classList.remove('bg-slate-100', 'font-bold');
+      }
+    });
+  }
+
+  clearBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    select.value = '';
+    select.selectedIndex = 0;
+    syncInputFromSelect();
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    input.focus();
+    openMenu();
+  });
+
+  toggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (menu.classList.contains('hidden')) {
+      input.focus();
+      openMenu();
+    } else {
+      closeMenu();
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!wrapper.contains(e.target)) {
+      closeMenu();
+    }
+  });
+
+  // Interceptar asignaciones a .value y .selectedIndex en la instancia del select
+  const origValueDesc = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+  const origIndexDesc = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'selectedIndex');
+
+  try {
+    Object.defineProperty(select, 'value', {
+      get() {
+        return origValueDesc.get.call(this);
+      },
+      set(v) {
+        origValueDesc.set.call(this, v);
+        syncInputFromSelect();
+      },
+      configurable: true
+    });
+
+    Object.defineProperty(select, 'selectedIndex', {
+      get() {
+        return origIndexDesc.get.call(this);
+      },
+      set(i) {
+        origIndexDesc.set.call(this, i);
+        syncInputFromSelect();
+      },
+      configurable: true
+    });
+  } catch (err) {
+    console.warn('No se pudo redefinir property descriptors en select:', err);
+  }
+
+  select.addEventListener('change', () => {
+    syncInputFromSelect();
+  });
+
+  const observer = new MutationObserver(() => {
+    syncInputFromSelect();
+  });
+  observer.observe(select, { childList: true, attributeFilter: ['disabled'] });
+
+  syncInputFromSelect();
+  return wrapper;
+}
+
+function initAllSearchableComboboxes() {
+  initSearchableCombobox('areaNotificadoraSelect', 'Buscar área oficial o escribir...');
+  initSearchableCombobox('selectResponsableCaptura', 'Buscar enlace oficial...');
+  initSearchableCombobox('selectTitularUnidad1', 'Seleccionar titular de la unidad...');
+  initSearchableCombobox('selectTitularArea', 'Buscar puesto o persona del área...');
+  initSearchableCombobox('selectTitularArea2', 'Buscar puesto o persona de la unidad 2...');
+  initSearchableCombobox('selectTitularUnidad2', 'Buscar puesto o persona de la unidad...');
+  initSearchableCombobox('selectAreaBaja', 'Buscar área o departamento a dar de baja...');
+  initSearchableCombobox('selectAreaCambioNombre', 'Buscar área o departamento que cambia de nombre...');
+  initSearchableCombobox('selectTestigo1', 'Buscar puesto o persona del Testigo 1...');
+  initSearchableCombobox('selectTestigo2', 'Buscar puesto o persona del Testigo 2...');
+}
+
+/**
+ * Inicializa el almacenamiento local con datos de ejemplo si está vacío
+ */
+function initStorage() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    try {
+      records = JSON.parse(saved);
+    } catch (e) {
+      console.error('Error al cargar registros locales:', e);
+      records = [];
+    }
+  }
+
+  const initial = getInitialSampleRecords();
+  // Si no hay registros, precargamos 2 de ejemplo
+  if (!records || records.length === 0) {
+    records = initial;
+    saveRecordsToStorage();
+  } else {
+    // Sincronizar registros demo existentes a los nuevos ejemplos de unidades administrativas
+    let updated = false;
+    records = records.map(r => {
+      if (r.id === 'rec_demo_001') {
+        updated = true;
+        return initial[0];
+      }
+      if (r.id === 'rec_demo_002') {
+        updated = true;
+        return initial[1];
+      }
+      if (r.folio && r.folio.startsWith('SEGEY-')) {
+        r.folio = r.folio.replace('SEGEY-', 'DIMC-');
+        updated = true;
+      }
+      if (r.nuevaDenominacion && r.nuevaDenominacion !== r.nuevaDenominacion.toUpperCase()) {
+        r.nuevaDenominacion = r.nuevaDenominacion.toUpperCase();
+        updated = true;
+      }
+      if (r.justificacion && r.justificacion !== r.justificacion.toUpperCase()) {
+        r.justificacion = r.justificacion.toUpperCase();
+        updated = true;
+      }
+      return r;
+    });
+
+    // Detección y saneamiento automático de folios duplicados
+    const seenFolios = new Set();
+    const cleanRecords = [];
+    records.forEach(r => {
+      if (!r.folio) {
+        cleanRecords.push(r);
+        return;
+      }
+      if (seenFolios.has(r.folio)) {
+        // Encontrado folio repetido
+        const existing = cleanRecords.find(item => item.folio === r.folio);
+        const isDuplicateClone = existing && (
+          existing.id === r.id ||
+          (existing.areaNotificadora === r.areaNotificadora &&
+           existing.tipoMovimiento === r.tipoMovimiento &&
+           existing.nuevaDenominacion === r.nuevaDenominacion)
+        );
+
+        if (isDuplicateClone) {
+          // Descartar registro clon idéntico generado por doble envío
+          updated = true;
+          console.warn(`Descartando registro clon duplicado con folio ${r.folio}`);
+        } else {
+          // Registro con datos distintos: reasignar el siguiente folio único
+          updated = true;
+          const anio = new Date().getFullYear();
+          let nextNum = 1;
+          let newFolio = `DIMC-CC-${anio}-${String(nextNum).padStart(3, '0')}`;
+          while (seenFolios.has(newFolio) || records.some(x => x.folio === newFolio)) {
+            nextNum++;
+            newFolio = `DIMC-CC-${anio}-${String(nextNum).padStart(3, '0')}`;
+          }
+          r.folio = newFolio;
+          seenFolios.add(newFolio);
+          cleanRecords.push(r);
+          console.warn(`Reasignando folio único: ${newFolio}`);
+        }
+      } else {
+        seenFolios.add(r.folio);
+        cleanRecords.push(r);
+      }
+    });
+
+    if (updated || cleanRecords.length !== records.length) {
+      records = cleanRecords;
+      saveRecordsToStorage();
+    }
+  }
+
+  // Sincronización transparente con el archivo físico en disco (bitacora_constancias.json) vía servidor local
+  if (window.location.protocol.startsWith('http')) {
+    fetch('/api/records')
+      .then(res => res.json())
+      .then(serverRecords => {
+        if (Array.isArray(serverRecords) && serverRecords.length > 0) {
+          if (!records || records.length === 0) {
+            records = serverRecords;
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); } catch (e) {}
+            renderTable();
+            updateStats();
+            populateAreaFilter();
+          }
+        } else if (records && records.length > 0) {
+          fetch('/api/records', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(records)
+          }).catch(() => {});
+        }
+      })
+      .catch(() => {});
+  }
+}
+
+/**
+ * =========================================================================
+ * GESTIÓN DE LAYOUTS / PLANTILLAS DEL DOCUMENTO
+ * =========================================================================
+ */
+function initLayouts() {
+  const savedLayouts = localStorage.getItem(LAYOUTS_STORAGE_KEY);
+  if (savedLayouts) {
+    try {
+      customLayouts = JSON.parse(savedLayouts);
+    } catch (e) {
+      console.error('Error al leer layouts guardados:', e);
+      customLayouts = [];
+    }
+  }
+
+  activeLayoutId = localStorage.getItem(ACTIVE_LAYOUT_ID_KEY) || 'default';
+  populateLayoutSelector();
+  updateLayoutUIBadge();
+}
+
+function getActiveLayoutHtml() {
+  if (activeLayoutId === 'default') {
+    return DEFAULT_LAYOUT_HTML;
+  }
+  const found = customLayouts.find(l => l.id === activeLayoutId);
+  return found ? found.html : DEFAULT_LAYOUT_HTML;
+}
+
+function populateLayoutSelector() {
+  const select = document.getElementById('layout-selector');
+  if (!select) return;
+
+  let options = [
+    `<option value="default" ${activeLayoutId === 'default' ? 'selected' : ''}>Layout Oficial SEGEY (Predeterminado sin cuadros)</option>`
+  ];
+
+  customLayouts.forEach(layout => {
+    const isSelected = layout.id === activeLayoutId ? 'selected' : '';
+    options.push(`<option value="${layout.id}" ${isSelected}>📄 ${layout.name}</option>`);
+  });
+
+  select.innerHTML = options.join('');
+}
+
+function changeActiveLayout(layoutId) {
+  activeLayoutId = layoutId;
+  localStorage.setItem(ACTIVE_LAYOUT_ID_KEY, layoutId);
+  updateLayoutUIBadge();
+
+  // Si hay un documento en pantalla, re-renderizarlo de inmediato con el nuevo layout
+  const targetRecord = currentRenderedRecord || (records.length > 0 ? records[0] : null);
+  if (targetRecord) {
+    renderDocument(targetRecord);
+  }
+
+  const layoutName = getActiveLayoutName();
+  showToast(`Layout activo: "${layoutName}". Todos los documentos usarán este diseño.`);
+}
+
+function getActiveLayoutName() {
+  if (activeLayoutId === 'default') return 'Oficial SEGEY (Predeterminado)';
+  const found = customLayouts.find(l => l.id === activeLayoutId);
+  return found ? found.name : 'Personalizado';
+}
+
+function updateLayoutUIBadge() {
+  const badge = document.getElementById('badge-active-layout');
+  const btnDelete = document.getElementById('btn-delete-layout');
+
+  if (activeLayoutId === 'default') {
+    if (badge) {
+      badge.textContent = 'Oficial SEGEY Activo';
+      badge.className = 'text-[10px] bg-rose-500/30 text-rose-200 border border-rose-500/40 px-2 py-0.5 rounded-full font-mono font-semibold';
+    }
+    if (btnDelete) btnDelete.classList.add('hidden');
+  } else {
+    if (badge) {
+      badge.textContent = 'Personalizado';
+      badge.className = 'text-[10px] bg-amber-500/30 text-amber-200 border border-amber-500/40 px-2 py-0.5 rounded-full font-mono font-semibold';
+    }
+    if (btnDelete) btnDelete.classList.remove('hidden');
+  }
+}
+
+/**
+ * Procesa la subida de un nuevo archivo de layout (.html o .txt)
+ */
+function handleLayoutUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    let content = e.target.result;
+
+    // Si contiene etiquetas de documento completo <body>...</body>, extraer el contenido interior
+    if (content.includes('<body')) {
+      const match = content.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+      if (match && match[1]) {
+        content = match[1];
+      }
+    }
+
+    const layoutNamePrompt = prompt(
+      'Ingrese un nombre descriptivo para identificar este Layout:',
+      file.name.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ')
+    );
+
+    const layoutName = layoutNamePrompt ? layoutNamePrompt.trim() : file.name;
+    const newLayout = {
+      id: 'layout_' + Date.now(),
+      name: layoutName,
+      html: content,
+      fileName: file.name,
+      uploadedAt: new Date().toISOString()
+    };
+
+    customLayouts.push(newLayout);
+    localStorage.setItem(LAYOUTS_STORAGE_KEY, JSON.stringify(customLayouts));
+
+    // Activar inmediatamente el nuevo layout
+    changeActiveLayout(newLayout.id);
+    populateLayoutSelector();
+
+    // Limpiar input file
+    event.target.value = '';
+
+    showToast(`¡Nuevo Layout "${layoutName}" guardado y activado exitosamente!`);
+  };
+
+  reader.readAsText(file);
+}
+
+/**
+ * Descarga el layout base editable con todas las etiquetas
+ */
+function downloadCurrentLayoutTemplate() {
+  const content = getActiveLayoutHtml();
+  const blob = new Blob([content], { type: 'text/html;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `plantilla_layout_editable_${activeLayoutId}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  showToast('Plantilla de layout descargada para editar.');
+}
+
+/**
+ * Elimina el layout personalizado activo y restablece el oficial
+ */
+function deleteCurrentCustomLayout() {
+  if (activeLayoutId === 'default') return;
+
+  const currentLayout = customLayouts.find(l => l.id === activeLayoutId);
+  const name = currentLayout ? currentLayout.name : 'este layout';
+
+  if (confirm(`¿Está seguro de eliminar la plantilla "${name}"? Se restablecerá el layout oficial predeterminado.`)) {
+    customLayouts = customLayouts.filter(l => l.id !== activeLayoutId);
+    localStorage.setItem(LAYOUTS_STORAGE_KEY, JSON.stringify(customLayouts));
+    changeActiveLayout('default');
+    populateLayoutSelector();
+    showToast(`Layout "${name}" eliminado.`);
+  }
+}
+
+/**
+ * Previsualiza el layout activo con el primer registro o datos de muestra
+ */
+function previewActiveLayoutWithSample() {
+  const targetRecord = (records.length > 0) ? records[0] : getInitialSampleRecords()[0];
+  renderDocument(targetRecord);
+  switchTab('tab-preview', true);
+  showToast(`Visualizando documento con layout: "${getActiveLayoutName()}".`);
+}
+
+/**
+ * Modales de etiquetas de layout
+ */
+function openLayoutTagsModal() {
+  const modal = document.getElementById('modal-layout-tags');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeLayoutTagsModal() {
+  const modal = document.getElementById('modal-layout-tags');
+  if (modal) modal.classList.add('hidden');
+}
+
+/**
+ * =========================================================================
+ * MOTOR COMPILADOR DE PLANTILLAS / LAYOUTS
+ * =========================================================================
+ */
+function compileLayout(templateStr, data) {
+  if (!templateStr) return '';
+
+  const u1Nom = data.titularUnidad1Nombre || data.titularUnidad1 || '';
+  const u1Car = data.titularUnidad1Cargo || '';
+  let u2Nom = data.titularUnidad2Nombre || data.titularUnidad2 || '';
+  let u2Car = data.titularUnidad2Cargo || '';
+  const areaNom = data.titularAreaNombre || data.titularArea || '';
+  const areaCar = data.titularAreaCargo || '';
+  const area2Nom = data.titularArea2Nombre || data.titularArea2 || '';
+  const area2Car = data.titularArea2Cargo || '';
+  const test1Nom = data.testigo1Nombre || data.testigo1 || '';
+  const test1Car = data.testigo1Cargo || '';
+  const test2Nom = data.testigo2Nombre || data.testigo2 || '';
+  const test2Car = data.testigo2Cargo || '';
+
+  const tipo = data.tipoMovimiento || 'Alta';
+  const esCambioDependenciaJerarquica = (tipo === 'Cambio de dependencia jerárquica' || tipo === 'cambio_dependencia_jerarquica');
+  const noEsCambioDependenciaJerarquica = !esCambioDependenciaJerarquica;
+  const tieneTestigo2 = noEsCambioDependenciaJerarquica && Boolean(test2Nom.trim());
+  const noTieneTestigo2 = !tieneTestigo2;
+  const tieneTitularArea2 = Boolean(esCambioDependenciaJerarquica && (area2Nom.trim() || area2Car.trim()));
+  const noTieneTitularArea2 = !tieneTitularArea2;
+  const isJefeInmediato = (tipo === 'Alta' || tipo === 'Baja' || tipo === 'Cambio de nombre');
+  const isNoAplica = (!isJefeInmediato && (u2Nom.trim().toLowerCase() === 'no aplica' || u2Nom.trim().toLowerCase() === 'n/a'));
+  if (isNoAplica) {
+    u2Nom = 'No Aplica';
+    u2Car = '';
+  }
+
+  const etiquetaTitular2 = isJefeInmediato ? 'Jefe Inmediato' : 'Titular de Unidad Administrativa (2)';
+  const etiquetaTitular2Firma = isJefeInmediato ? 'JEFE INMEDIATO' : 'TITULAR DE UNIDAD ADMINISTRATIVA (2)';
+  const etiquetaTitular1Y2 = isJefeInmediato ? 'Titular de Unidad y Jefe Inmediato' : 'Titular(es) de Unidad(es) Administrativa(s)';
+  const etiquetaCompareciente2 = isJefeInmediato ? 'Jefe Inmediato: ' : '2) ';
+
+  const vars = {
+    etiquetaTitular2: etiquetaTitular2,
+    etiquetaTitular2Firma: etiquetaTitular2Firma,
+    etiquetaTitular1Y2: etiquetaTitular1Y2,
+    etiquetaCompareciente2: etiquetaCompareciente2,
+    folio: data.folio || 'S/F',
+    areaNotificadora: data.areaNotificadora || '',
+    responsableCaptura: data.responsableCaptura || '',
+    municipio: data.municipio || 'Mérida',
+    fechaActa: data.fechaConstancia || data.fechaActa || '',
+    fechaConstancia: data.fechaConstancia || data.fechaActa || '',
+    dia: data.dia || '10',
+    mes: data.mes || 'Noviembre',
+    anio: (data.anio && String(data.anio).length === 4) ? String(data.anio).slice(-2) : (data.anio || '26'),
+    anioCompleto: data.anioCompleto || (data.anio ? (String(data.anio).length === 2 ? `20${data.anio}` : data.anio) : '2026'),
+    horaActa: data.horaActa || '10:00',
+    horas: data.horas || '10',
+    minutos: data.minutos || '00',
+    inmueble: data.inmueble || 'el Edificio Central de la Secretaría de Educación',
+
+    titularUnidad1Nombre: u1Nom,
+    titularUnidad1Cargo: u1Car,
+    titularUnidad1Completo: formatPersonText(u1Nom, u1Car),
+
+    titularUnidad2Nombre: u2Nom,
+    titularUnidad2Cargo: u2Car,
+    titularUnidad2Completo: isNoAplica ? 'No Aplica' : formatPersonText(u2Nom, u2Car),
+
+    titularAreaNombre: areaNom,
+    titularAreaCargo: areaCar,
+    titularAreaCompleto: formatPersonText(areaNom, areaCar),
+
+    titularArea2Nombre: area2Nom,
+    titularArea2Cargo: area2Car,
+    titularArea2Completo: formatPersonText(area2Nom, area2Car),
+    tieneTitularArea2: tieneTitularArea2,
+    noTieneTitularArea2: noTieneTitularArea2,
+
+    testigo1Nombre: test1Nom,
+    testigo1Cargo: test1Car,
+    testigo1Completo: formatPersonText(test1Nom, test1Car),
+
+    testigo2Nombre: test2Nom,
+    testigo2Cargo: test2Car,
+    testigo2Completo: formatPersonText(test2Nom, test2Car),
+
+    titularUnidad1Linea: u1Nom ? (u1Car ? `${u1Nom} (${u1Car})` : u1Nom) : '',
+    titularUnidad2Linea: isNoAplica ? 'No Aplica' : (u2Nom ? (u2Car ? `${u2Nom} (${u2Car})` : u2Nom) : ''),
+    titularAreaLinea: areaNom ? (areaCar ? `${areaNom} (${areaCar})` : areaNom) : '',
+    titularArea2Linea: area2Nom ? (area2Car ? `${area2Nom} (${area2Car})` : area2Nom) : '',
+    testigo1Linea: test1Nom ? (test1Car ? `${test1Nom} (${test1Car})` : test1Nom) : '',
+    testigo2Linea: test2Nom ? (test2Car ? `${test2Nom} (${test2Car})` : test2Nom) : '',
+    tipoMovimiento: tipo,
+    chkAlta: tipo === 'Alta' ? '[ X ]' : '[   ]',
+    chkBaja: tipo === 'Baja' ? '[ X ]' : '[   ]',
+    chkNombre: tipo === 'Cambio de nombre' ? '[ X ]' : '[   ]',
+    chkJerarquica: tipo === 'Cambio de dependencia jerárquica' ? '[ X ]' : '[   ]',
+
+    esCambioDependenciaJerarquica: esCambioDependenciaJerarquica,
+    noEsCambioDependenciaJerarquica: noEsCambioDependenciaJerarquica,
+    tieneTestigo2: tieneTestigo2,
+    noTieneTestigo2: noTieneTestigo2,
+
+    esCambioNombre: (tipo === 'Cambio de nombre'),
+    noEsCambioNombre: (tipo !== 'Cambio de nombre'),
+    nombreActual: (() => {
+      let nomAct = (data.nombreActual || data.nuevaDenominacion || '').toUpperCase().trim();
+      if (tipo === 'Cambio de nombre') {
+        if (nomAct.includes('➔')) {
+          nomAct = nomAct.split('➔')[0].trim();
+        } else if (nomAct.includes('->')) {
+          nomAct = nomAct.split('->')[0].trim();
+        }
+      }
+      return nomAct || '—';
+    })(),
+    nuevoNombre: (() => {
+      let nomNew = (data.nuevoNombre || '').toUpperCase().trim();
+      if (tipo === 'Cambio de nombre' && (!nomNew || nomNew === '—')) {
+        const full = (data.nuevaDenominacion || '').toUpperCase().trim();
+        if (full.includes('➔')) {
+          nomNew = full.split('➔')[1].trim();
+        } else if (full.includes('->')) {
+          nomNew = full.split('->')[1].trim();
+        }
+      }
+      return nomNew || '—';
+    })(),
+
+    nuevaDenominacion: (data.nuevaDenominacion || '—').toUpperCase(),
+    justificacion: (() => {
+      let j = (data.justificacion || '—').trim();
+      if (j && j.startsWith('Se hace constar')) {
+        const idx = j.indexOf(':');
+        if (idx !== -1) {
+          j = j.substring(idx + 1).trim();
+        } else {
+          j = j.replace(/Se hace constar los siguientes hechos y circunstancias de carácter administrativo…?/g, '').trim();
+        }
+      }
+      return j.toUpperCase();
+    })(),
+    estatus: data.estatus || 'Generada para Firma',
+    observaciones: data.observaciones || ''
+  };
+
+  let result = templateStr;
+
+  // 1. Condicionales {{#if key}} ... {{/if}}
+  result = result.replace(/\{\{#if\s+([a-zA-Z0-9_]+)\}\}([\s\S]*?)\{\{\/if\}\}/g, (match, key, content) => {
+    const val = vars[key];
+    if (val === false || val === null || val === undefined || val === '' || val === '—') return '';
+    return content;
+  });
+
+  // 2. Variables {{key}}
+  result = result.replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, (match, key) => {
+    return vars[key] !== undefined ? vars[key] : '';
+  });
+
+  return result;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
+ * =========================================================================
+ * CONTROL DE ACCESO ADMINISTRATIVO (LOGIN / LOGOUT / SESIÓN)
+ * =========================================================================
+ */
+function isAdminLoggedIn() {
+  return sessionStorage.getItem(ADMIN_AUTH_KEY) === 'true';
+}
+
+function openAdminLoginModal() {
+  const modal = document.getElementById('modal-admin-login');
+  const errorEl = document.getElementById('admin-login-error');
+  const userInput = document.getElementById('admin-username-input');
+  const passInput = document.getElementById('admin-password-input');
+
+  if (errorEl) errorEl.classList.add('hidden');
+  if (userInput) userInput.value = '';
+  if (passInput) passInput.value = '';
+
+  if (modal) {
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+      if (userInput) userInput.focus();
+    }, 100);
+  }
+}
+
+function closeAdminLoginModal() {
+  const modal = document.getElementById('modal-admin-login');
+  if (modal) modal.classList.add('hidden');
+}
+
+function handleAdminLoginSubmit(event) {
+  if (event) event.preventDefault();
+
+  const userInput = document.getElementById('admin-username-input');
+  const passInput = document.getElementById('admin-password-input');
+  const errorEl = document.getElementById('admin-login-error');
+
+  const u = userInput ? userInput.value.trim().toLowerCase() : '';
+  const p = passInput ? passInput.value : '';
+
+  // Credenciales válidas: admin / admin o admin / segey2026
+  if ((u === 'admin' || u === 'administrador') && (p === 'admin' || p === 'segey2026' || p === 'admin123')) {
+    sessionStorage.setItem(ADMIN_AUTH_KEY, 'true');
+    closeAdminLoginModal();
+    updateAdminUI();
+    switchTab('tab-registry');
+    showToast('¡Bienvenido! Sesión iniciada como Administrador.');
+  } else {
+    if (errorEl) errorEl.classList.remove('hidden');
+    if (passInput) {
+      passInput.value = '';
+      passInput.focus();
+    }
+  }
+}
+
+function adminLogout() {
+  sessionStorage.removeItem(ADMIN_AUTH_KEY);
+  updateAdminUI();
+  switchTab('tab-form');
+  showToast('Sesión de administrador finalizada.');
+}
+
+function updateAdminUI() {
+  const logged = isAdminLoggedIn();
+
+  // Botones navegación desktop
+  const tabRegistryBtn = document.getElementById('btn-tab-registry');
+  const loginBtn = document.getElementById('btn-admin-login');
+  const loggedBadge = document.getElementById('admin-logged-in-badge');
+
+  if (tabRegistryBtn) {
+    if (logged) {
+      tabRegistryBtn.classList.remove('hidden');
+    } else {
+      tabRegistryBtn.classList.add('hidden');
+    }
+  }
+
+  if (loginBtn) {
+    if (logged) {
+      loginBtn.classList.add('hidden');
+    } else {
+      loginBtn.classList.remove('hidden');
+    }
+  }
+
+  if (loggedBadge) {
+    if (logged) {
+      loggedBadge.classList.remove('hidden');
+      loggedBadge.classList.add('flex');
+    } else {
+      loggedBadge.classList.add('hidden');
+      loggedBadge.classList.remove('flex');
+    }
+  }
+
+  // Botones navegación móvil
+  const mobileTabRegistryBtn = document.getElementById('btn-tab-registry-mobile');
+  const mobileLoginBtn = document.getElementById('btn-admin-login-mobile');
+  const mobileLogoutBtn = document.getElementById('btn-admin-logout-mobile');
+
+  if (mobileTabRegistryBtn) {
+    if (logged) {
+      mobileTabRegistryBtn.classList.remove('hidden');
+    } else {
+      mobileTabRegistryBtn.classList.add('hidden');
+    }
+  }
+
+  if (mobileLoginBtn) {
+    if (logged) {
+      mobileLoginBtn.classList.add('hidden');
+    } else {
+      mobileLoginBtn.classList.remove('hidden');
+    }
+  }
+
+  if (mobileLogoutBtn) {
+    if (logged) {
+      mobileLogoutBtn.classList.remove('hidden');
+    } else {
+      mobileLogoutBtn.classList.add('hidden');
+    }
+  }
+
+  // Si la pestaña actual era tab-registry pero no está autenticado, volver a formulario
+  const currentRegistryTab = document.getElementById('tab-registry');
+  if (!logged && currentRegistryTab && !currentRegistryTab.classList.contains('hidden')) {
+    switchTab('tab-form');
+  }
+
+  // 3. Reglas de control centralizado y permisos de estatus por rol
+  updateEstatusPermissions(logged);
+}
+
+function updateEstatusPermissions(isAdmin) {
+  const estatusSelect = document.getElementById('estatus');
+  const badgeRol = document.getElementById('badge-estatus-rol');
+  const hintEl = document.getElementById('estatus-admin-hint');
+
+  if (badgeRol) {
+    if (isAdmin) {
+      badgeRol.className = 'text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold';
+      badgeRol.innerHTML = '<i class="fa-solid fa-shield-halved mr-1 text-emerald-600"></i>Admin Central';
+    } else {
+      badgeRol.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
+      badgeRol.innerHTML = '<i class="fa-solid fa-user-pen mr-1"></i>Capturista';
+    }
+  }
+
+  if (hintEl) {
+    if (isAdmin) {
+      hintEl.className = 'text-[10px] text-emerald-700 mt-1';
+      hintEl.innerHTML = '<i class="fa-solid fa-check-circle mr-1"></i>Modo Administrador activo: Acceso total para gestionar todos los estatus del trámite.';
+    } else {
+      hintEl.className = 'text-[10px] text-slate-500 mt-1';
+      hintEl.innerHTML = '<i class="fa-solid fa-circle-info mr-1"></i>Todo nuevo registro se emite como <strong>Generada (Listo para Firmar)</strong> para recabar firmas físicas.';
+    }
+  }
+
+  if (estatusSelect) {
+    for (let i = 0; i < estatusSelect.options.length; i++) {
+      const opt = estatusSelect.options[i];
+      if (opt.value === 'Generada para Firma') {
+        opt.disabled = false;
+        opt.className = 'text-slate-800 font-medium';
+        opt.textContent = 'Generada (Listo para Firmar)';
+      } else if (opt.value === 'Borrador') {
+        if (isAdmin) {
+          opt.disabled = false;
+          opt.className = 'text-slate-800 font-medium';
+          opt.textContent = 'Borrador (En revisión)';
+        } else {
+          opt.disabled = true;
+          opt.className = 'text-slate-400 bg-slate-50';
+          opt.textContent = '🔒 Borrador (Disponible al activar carga y búsqueda de folios)';
+        }
+      } else if (opt.value === 'Firmada y Concluida') {
+        if (isAdmin) {
+          opt.disabled = false;
+          opt.className = 'text-slate-800 font-semibold';
+          opt.textContent = '✅ Firmada y Concluida (Expediente completo)';
+        } else {
+          opt.disabled = true;
+          opt.className = 'text-slate-400 bg-slate-50';
+          opt.textContent = '🔒 Firmada y Concluida (Exclusivo Administrador tras firmas físicas)';
+        }
+      } else if (opt.value === 'Inactivo') {
+        if (isAdmin) {
+          opt.disabled = false;
+          opt.className = 'text-slate-800 font-medium';
+          opt.textContent = 'Inactivo (Cancelada / Sin efecto)';
+        } else {
+          opt.disabled = true;
+          opt.className = 'text-slate-400 bg-slate-50';
+          opt.textContent = '🔒 Inactivo (Exclusivo Administrador para cancelar/reactivar)';
+        }
+      }
+    }
+    if (!isAdmin && !editingRecordId) {
+      estatusSelect.value = 'Generada para Firma';
+    }
+  }
+}
+
+/**
+ * =========================================================================
+ * GESTIÓN DE ÁREAS NOTIFICADORAS PREDEFINIDAS
+ * =========================================================================
+ */
+function initAreasNotificadoras() {
+  const AREAS_VERSION_KEY = 'segey_areas_catalog_version';
+  const CURRENT_CATALOG_VERSION = '2026_11_enlaces_58_sorted';
+
+  const savedVersion = localStorage.getItem(AREAS_VERSION_KEY);
+  const saved = localStorage.getItem(AREAS_STORAGE_KEY);
+
+  if (saved && savedVersion === CURRENT_CATALOG_VERSION) {
+    try {
+      predefinedAreas = JSON.parse(saved);
+    } catch (e) {
+      console.error('Error al cargar áreas predefinidas:', e);
+      predefinedAreas = [];
+    }
+  }
+
+  // Si no hay áreas o la versión es anterior, cargar el catálogo completo ordenado alfabéticamente
+  if (!Array.isArray(predefinedAreas) || predefinedAreas.length === 0 || savedVersion !== CURRENT_CATALOG_VERSION) {
+    predefinedAreas = [...DEFAULT_AREAS_NOTIFICADORAS];
+    saveAreasToStorage();
+    localStorage.setItem(AREAS_VERSION_KEY, CURRENT_CATALOG_VERSION);
+  }
+
+  populateAreaSelect();
+  renderAdminAreasList();
+}
+
+function saveAreasToStorage() {
+  predefinedAreas.sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+  localStorage.setItem(AREAS_STORAGE_KEY, JSON.stringify(predefinedAreas));
+}
+
+function populateAreaSelect() {
+  const select = document.getElementById('areaNotificadoraSelect');
+  if (!select) return;
+
+  const hiddenInput = document.getElementById('areaNotificadora');
+  const currentVal = (hiddenInput && hiddenInput.value) ? hiddenInput.value : '';
+
+  // Ordenar alfabéticamente en español (A-Z) para fácil búsqueda por el usuario
+  const sortedAreas = [...predefinedAreas].sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+
+  let html = `<option value="" disabled ${!currentVal ? 'selected' : ''}>-- Seleccione un área oficial --</option>`;
+  sortedAreas.forEach(area => {
+    const isSelected = (currentVal === area) ? 'selected' : '';
+    html += `<option value="${escapeHtml(area)}" ${isSelected}>${escapeHtml(area)}</option>`;
+  });
+  const isOther = (currentVal && !predefinedAreas.includes(currentVal));
+  html += `<option value="__OTRA__" ${isOther ? 'selected' : ''}>-- Otra área (especificar manualmente) --</option>`;
+
+  select.innerHTML = html;
+}
+
+/**
+ * ==============================================================
+ * CATÁLOGO ORGÁNICO OFICIAL Y LISTAS DESPLEGABLES DEPENDIENTES
+ * ==============================================================
+ */
+
+// Mapeo oficial de las 58 Áreas Notificadoras a su respectiva Unidad Administrativa en CATALOGO_ORGANICO_SEGEY
+const AREA_TO_UNIDAD_MAP = {
+  // Despacho del Secretario y Unidades de Apoyo
+  'Jefatura del Despacho': 'jefatura_despacho',
+  'Secretario Particular': 'despacho_secretario',
+  'Coordinación General de Programas Estratégicos': 'cg_programas_estrategicos',
+  'Coordinación General de Tecnologías de la Información y Comunicaciones': 'cg_tic',
+  'Enlace Estatal con la Unidad del Sistema para la Carrera de las Maestras y los Maestros (USICAMM)': 'enlace_usicamm',
+  'Coordinación General de Inglés': 'cg_ingles',
+  'Coordinación General de Desarrollo de Habilidades Socioemocionales': 'cg_socioemocionales',
+  'Centro Estatal de Bellas Artes': 'centro_bellas_artes',
+  'Coordinación Estatal de Becas': 'coord_becas',
+  'Coordinación General de Intervención y Gestión Institucional': 'cg_intervencion',
+  'Casa de la Historia de la Educación de Yucatán': 'casa_historia',
+  'Centro de Evaluación Educativa del Estado de Yucatán': 'centro_eval_educativa',
+  'Universidad Virtual del Estado de Yucatán': 'univ_virtual',
+
+  // Subsecretaría de Educación Básica y Direcciones
+  'Subsecretaría de Educación Básica': 'subsec_basica',
+  'Coordinación General de Trámite y Control': 'subsec_basica',
+  'Coordinación General de Servicios Educativos': 'subsec_basica',
+  'Dirección de Educación Inicial': 'dir_inicial',
+  'Dirección de Educación Preescolar': 'dir_preescolar',
+  'Dirección de Educación Primaria': 'dir_primaria',
+  'Dirección de Educación Secundaria': 'dir_secundaria',
+  'Dirección de Educación Indígena': 'dir_indigena',
+  'Dirección de Educación Especial': 'dir_especial',
+  'Dirección de Educación Física': 'dir_fisica',
+  'Dirección de Educación Artística': 'dir_artistica',
+
+  // Subsecretaría de Educación Media Superior
+  'Subsecretaría de Educación Media Superior': 'subsec_media_superior',
+  'Dirección de Servicios Educativos de Media Superior': 'dir_serv_ed_media_sup',
+  'Departamento de Telebachillerato Comunitario del Estado de Yucatán y Bachillerato Intercultural': 'dir_serv_ed_media_sup',
+  'Departamento de Preparatorias Estatales y Particulares Incorporadas': 'dir_serv_ed_media_sup',
+  'Departamento de Preparatoria Abierta': 'dir_serv_ed_media_sup',
+  'Dirección de Desarrollo Educativo y Proyectos Estratégicos': 'dir_desarrollo_media_sup',
+
+  // Subsecretaría de Educación Superior
+  'Subsecretaría de Educación Superior': 'subsec_superior',
+  'Dirección de Fortalecimiento de Educación Superior': 'dir_fortalecimiento_sup',
+  'Dirección de Servicio Profesional': 'dir_serv_profesional',
+
+  // Dirección de Planeación
+  'Dirección de Planeación': 'dir_planeacion',
+  'Departamento de Planeación, Evaluación y Seguimiento': 'dir_planeacion',
+  'Departamento de Estudios y Proyectos': 'dir_planeacion',
+  'Departamento de Estadística': 'dir_planeacion',
+  'Departamento de Registro y Certificación': 'dir_planeacion',
+
+  // Dirección de Administración y Finanzas
+  'Dirección de Administración y Finanzas': 'dir_admin_finanzas',
+  'Departamento de Recursos Financieros': 'dir_admin_finanzas',
+  'Departamento de Adquisiciones': 'dir_admin_finanzas',
+  'Departamento de Presupuestos': 'dir_admin_finanzas',
+  'Departamento de Recursos Materiales y Servicios': 'dir_admin_finanzas',
+  'Departamento de Innovación y Mejora Continua': 'dir_admin_finanzas',
+  'Departamento de Control Patrimonial': 'dir_admin_finanzas',
+  'Departamento de Distribución de Libros de Texto y Mobiliario': 'dir_admin_finanzas',
+  'Coordinación de Gestión y Revisión': 'dir_admin_finanzas',
+  'Coordinación de Enlace con Direcciones y Otras Dependencias': 'dir_admin_finanzas',
+  'Coordinación de Archivos': 'dir_admin_finanzas',
+  'Subdirección de Organización y Administración de Personal': 'dir_admin_finanzas',
+  'Departamento de Recursos Humanos': 'dir_admin_finanzas',
+  'Departamento de Administración de Personal de Contrato': 'dir_admin_finanzas',
+  'Departamento de Sistemas de Gestión de Nómina': 'dir_admin_finanzas',
+  'Departamento de Gestión de Información, Capacitación y Ética': 'dir_admin_finanzas',
+  'Área de Prestaciones Sociales': 'dir_admin_finanzas',
+
+  // Otras Direcciones
+  'Dirección Jurídica': 'dir_juridica',
+  'Dirección de Desarrollo Educativo': 'dir_desarrollo_educativo',
+  'Dirección de Servicios Regionales': 'dir_servicios_regionales'
+};
+
+// Catálogo oficial de Enlaces Operativos por Unidad Administrativa (según el Listado de Enlaces Oficial 2024-2030)
+// FILTRADO ESTRICTAMENTE a enlaces con marca 'X' en la columna "Gestión Organizacional"
+// Ordenados alfabéticamente A-Z
+const ENLACES_POR_UNIDAD = {
+  despacho_secretario: [
+    'Ing. Gladys Gahona Cámara',
+    'L.E. Rosalinda Villanueva Hau'
+  ],
+  jefatura_despacho: [
+    'Ing. Gladys Gahona Cámara',
+    'Ing. Vidal Aarón Ché Zapata',
+    'L.E. Rosalinda Villanueva Hau'
+  ],
+  cg_programas_estrategicos: [
+    'Ing. Vidal Aarón Ché Zapata'
+  ],
+  cg_tic: [
+    'Ing. Georgina Elizabeth Kim Flores',
+    'Lic. Mariana Aracelly Vazquez González'
+  ],
+  enlace_usicamm: [
+    'C.P. Katia Isabel Manzanilla Mena'
+  ],
+  cg_ingles: [
+    'L.C.S. María Soledad Cruz Aguilar'
+  ],
+  cg_socioemocionales: [
+    'Lic. Luis Alberto Sarmiento Herrera',
+    'Psic. Ezbay Cervera Soberanis'
+  ],
+  centro_bellas_artes: [
+    'C. Mary Alba Quintal Chí'
+  ],
+  coord_becas: [
+    'L.A. Guillermo Galván Martínez',
+    'Lic. Andrés Ricardo Puc Puch'
+  ],
+  cg_intervencion: [
+    'Mtro. Ángel Alberto Castillo Navarrete'
+  ],
+  casa_historia: [
+    'Lic. Manuel Jesús Tejada Loría'
+  ],
+  centro_eval_educativa: [
+    'Mtra. Nancy Guadalupe Novelo Pech'
+  ],
+  univ_virtual: [
+    'Mtro. José David Encalada Avilés'
+  ],
+  subsec_basica: [
+    'Lic. Rafael Rolando Euán Canché',
+    'Lic. Sara Orquídea Morales Puc',
+    'Mtra. Carla Guadalupe Sanchez Colli'
+  ],
+  dir_inicial: [
+    'LAE. Ricardo Francisco de María Carrillo',
+    'Lic. Sara Orquídea Morales Puc',
+    'Mtra. Carla Guadalupe Sanchez Colli'
+  ],
+  dir_preescolar: [
+    'Lic. Sara Orquídea Morales Puc',
+    'M.F. Adelina Monserrat Hernández Santos',
+    'Mtra. Carla Guadalupe Sanchez Colli'
+  ],
+  dir_primaria: [
+    'Lic. Julia Beatriz Villanueva Ruiz',
+    'Lic. Sara Orquidea Morales Puc',
+    'Mtra. Carla Guadalupe Sanchez Colli'
+  ],
+  dir_secundaria: [
+    'Lic. Rubén Alejandro Gutiérrez Adrián',
+    'Lic. Sara Orquidea Morales Puc',
+    'Mtra. Carla Guadalupe Sanchez Colli'
+  ],
+  dir_indigena: [
+    'Lic. Reyna Bertha de Jesús Teh López',
+    'Lic. Sara Orquidea Morales Puc',
+    'Mtra. Carla Guadalupe Sanchez Colli'
+  ],
+  dir_especial: [
+    'Lic. José Ernesto Barragán Polanco',
+    'Lic. Sara Orquidea Morales Puc',
+    'Mtra. Carla Guadalupe Sanchez Colli'
+  ],
+  dir_fisica: [
+    'Lic. José Guillermo Rosado Alcocer',
+    'Lic. Sara Orquidea Morales Puc',
+    'Mtra. Carla Guadalupe Sanchez Colli'
+  ],
+  dir_artistica: [
+    'Lic. Sara Orquidea Morales Puc',
+    'Mtra. Carla Guadalupe Sanchez Colli',
+    'Tec. Maria de Lourdes Méndez Villafaña'
+  ],
+  subsec_media_superior: [
+    'C.P. Miguel Edgardo Argáez Quijano'
+  ],
+  dir_serv_ed_media_sup: [
+    'C.P. Miguel Edgardo Argáez Quijano',
+    'Mtra. Ana Elisa Hernández Navarro',
+    'Mtra. Didia Marisol Mendoza Arzápalo',
+    'Mtro. Alberto Solís Cámara'
+  ],
+  dir_desarrollo_media_sup: [
+    'Mtra. Ligia Margarita Cícero Galán'
+  ],
+  subsec_superior: [
+    'Lic. Leobardo Medina Xix'
+  ],
+  dir_fortalecimiento_sup: [
+    'Lic. Leobardo Medina Xix'
+  ],
+  dir_serv_profesional: [
+    'Lic. Leobardo Medina Xix'
+  ],
+  dir_planeacion: [
+    'Lic. Gessely Guadalupe Pat Pacheco',
+    'Mtra. Diany Reyna Góngora Franco',
+    'Mtra. María Luisa Guillermo García',
+    'Mtro. Julio Jesús Varela Manzanero',
+    'Tec. Mattia de Jesús Tun Peña'
+  ],
+  dir_admin_finanzas: [
+    'Br. Felipe Humberto Ceballos Pech',
+    'C.P. Ángel Ermilo Sarabia Gamboa',
+    'C.P. Jorge Antonio Uc Camas',
+    'C.P. Manuel Jesús Heredia Ceballos',
+    'C.P. Rolando Antonio Naal Osorio',
+    'C.P. Samuel Medina Flores',
+    'Ing. Mario Miguel Solís Quijano',
+    'L.C.C. Mirna Arleny Canché Moo',
+    'Lic. Blanca Esther Perera Romero',
+    'Lic. Miguel Ángel Cob Uitz',
+    'Lic. Raúl Oswaldo Hernández Fernández',
+    'Lic. William Jesús Rosado Magaña',
+    'Lic. Yazmin Eugenia Cob Caballero',
+    'M.A. Maribel de Jesús Novelo Pérez',
+    'M.E. Adriana del Socorro Durán Lizama',
+    'Mtra. Lucely Guadalupe Azcorra Dzib',
+    'Mtra. Merly Aurora Marrufo León'
+  ],
+  dir_juridica: [
+    'Lic. Alonso Hernández Núñez',
+    'Lic. Maria Guadalupe Castro Acevedo'
+  ],
+  dir_desarrollo_educativo: [
+    'Mtra. Ligia del Socorro Sánchez Castañeda'
+  ],
+  dir_servicios_regionales: [
+    'Ing. Luis Gabriel Canul Mukul'
+  ]
+};
+
+// Mapeo directo de Área a su Enlace oficial asignado en el documento oficial (Gestión Organizacional)
+const ENLACE_DIRECTO_POR_AREA = {
+  'Casa de la Historia de la Educación de Yucatán': 'Lic. Manuel Jesús Tejada Loría',
+  'Centro Estatal de Bellas Artes': 'C. Mary Alba Quintal Chí',
+  'Centro de Evaluación Educativa del Estado de Yucatán': 'Mtra. Nancy Guadalupe Novelo Pech',
+  'Coordinación Estatal de Becas': 'L.A. Guillermo Galván Martínez',
+  'Coordinación General de Desarrollo de Habilidades Socioemocionales': 'Lic. Luis Alberto Sarmiento Herrera',
+  'Coordinación General de Inglés': 'L.C.S. María Soledad Cruz Aguilar',
+  'Coordinación General de Intervención y Gestión Institucional': 'Mtro. Ángel Alberto Castillo Navarrete',
+  'Coordinación General de Programas Estratégicos': 'Ing. Vidal Aarón Ché Zapata',
+  'Coordinación General de Servicios Educativos': 'Lic. Sara Orquídea Morales Puc',
+  'Coordinación General de Tecnologías de la Información y Comunicaciones': 'Ing. Georgina Elizabeth Kim Flores',
+  'Coordinación General de Trámite y Control': 'Lic. Rafael Rolando Euán Canché',
+  'Coordinación de Archivos': 'Mtra. Merly Aurora Marrufo León',
+  'Coordinación de Enlace con Direcciones y Otras Dependencias': 'C.P. Rolando Antonio Naal Osorio',
+  'Coordinación de Gestión y Revisión': 'Lic. William Jesús Rosado Magaña',
+  'Departamento de Administración de Personal de Contrato': 'Lic. Raúl Oswaldo Hernández Fernández',
+  'Departamento de Adquisiciones': 'Lic. Blanca Esther Perera Romero',
+  'Departamento de Control Patrimonial': 'Mtra. Lucely Guadalupe Azcorra Dzib',
+  'Departamento de Distribución de Libros de Texto y Mobiliario': 'Br. Felipe Humberto Ceballos Pech',
+  'Departamento de Estadística': 'Mtra. Diany Reyna Góngora Franco',
+  'Departamento de Estudios y Proyectos': 'Lic. Gessely Guadalupe Pat Pacheco',
+  'Departamento de Gestión de Información, Capacitación y Ética': 'M.E. Adriana del Socorro Durán Lizama',
+  'Departamento de Innovación y Mejora Continua': 'Lic. Yazmin Eugenia Cob Caballero',
+  'Departamento de Planeación, Evaluación y Seguimiento': 'Mtra. María Luisa Guillermo García',
+  'Departamento de Preparatoria Abierta': 'Mtra. Didia Marisol Mendoza Arzápalo',
+  'Departamento de Preparatorias Estatales y Particulares Incorporadas': 'Mtra. Ana Elisa Hernández Navarro',
+  'Departamento de Presupuestos': 'C.P. Jorge Antonio Uc Camas',
+  'Departamento de Recursos Financieros': 'C.P. Ángel Ermilo Sarabia Gamboa',
+  'Departamento de Recursos Humanos': 'L.C.C. Mirna Arleny Canché Moo',
+  'Departamento de Recursos Materiales y Servicios': 'M.A. Maribel de Jesús Novelo Pérez',
+  'Departamento de Registro y Certificación': 'Tec. Mattia de Jesús Tun Peña',
+  'Departamento de Sistemas de Gestión de Nómina': 'C.P. Manuel Jesús Heredia Ceballos',
+  'Departamento de Telebachillerato Comunitario del Estado de Yucatán y Bachillerato Intercultural': 'Mtro. Alberto Solís Cámara',
+  'Dirección Jurídica': 'Lic. Alonso Hernández Núñez',
+  'Dirección de Administración y Finanzas': 'C.P. Ángel Ermilo Sarabia Gamboa',
+  'Dirección de Desarrollo Educativo': 'Mtra. Ligia del Socorro Sánchez Castañeda',
+  'Dirección de Desarrollo Educativo y Proyectos Estratégicos': 'Mtra. Ligia Margarita Cícero Galán',
+  'Dirección de Educación Artística': 'Tec. Maria de Lourdes Méndez Villafaña',
+  'Dirección de Educación Especial': 'Lic. José Ernesto Barragán Polanco',
+  'Dirección de Educación Física': 'Lic. José Guillermo Rosado Alcocer',
+  'Dirección de Educación Indígena': 'Lic. Reyna Bertha de Jesús Teh López',
+  'Dirección de Educación Inicial': 'LAE. Ricardo Francisco de María Carrillo',
+  'Dirección de Educación Preescolar': 'M.F. Adelina Monserrat Hernández Santos',
+  'Dirección de Educación Primaria': 'Lic. Julia Beatriz Villanueva Ruiz',
+  'Dirección de Educación Secundaria': 'Lic. Rubén Alejandro Gutiérrez Adrián',
+  'Dirección de Fortalecimiento de Educación Superior': 'Lic. Leobardo Medina Xix',
+  'Dirección de Planeación': 'Mtro. Julio Jesús Varela Manzanero',
+  'Dirección de Servicio Profesional': 'Lic. Leobardo Medina Xix',
+  'Dirección de Servicios Educativos de Media Superior': 'C.P. Miguel Edgardo Argáez Quijano',
+  'Dirección de Servicios Regionales': 'Ing. Luis Gabriel Canul Mukul',
+  'Enlace Estatal con la Unidad del Sistema para la Carrera de las Maestras y los Maestros (USICAMM)': 'C.P. Katia Isabel Manzanilla Mena',
+  'Jefatura del Despacho': 'Ing. Vidal Aarón Ché Zapata',
+  'Secretario Particular': 'L.E. Rosalinda Villanueva Hau',
+  'Subdirección de Organización y Administración de Personal': 'L.C.C. Mirna Arleny Canché Moo',
+  'Subsecretaría de Educación Básica': 'Mtra. Carla Guadalupe Sanchez Colli',
+  'Subsecretaría de Educación Media Superior': 'C.P. Miguel Edgardo Argáez Quijano',
+  'Subsecretaría de Educación Superior': 'Lic. Leobardo Medina Xix',
+  'Universidad Virtual del Estado de Yucatán': 'Mtro. José David Encalada Avilés',
+  'Área de Prestaciones Sociales': 'Lic. Miguel Ángel Cob Uitz'
+};
+
+function initCatalogoOrganico() {
+  if (typeof CATALOGO_ORGANICO_SEGEY === 'undefined' || !Array.isArray(CATALOGO_ORGANICO_SEGEY)) {
+    console.warn('CATALOGO_ORGANICO_SEGEY no está disponible en la página.');
+    return;
+  }
+
+  // Inicializar la lista completa de Titular (2) con TODAS las unidades oficiales de la SEGEY
+  initSelectTitularUnidad2();
+
+  // Si ya hay un área seleccionada al inicio, actualizar Titular (1) y Titular de Área
+  const areaSelect = document.getElementById('areaNotificadoraSelect');
+  if (areaSelect && areaSelect.value && areaSelect.value !== '__OTRA__') {
+    actualizarTitularesPorArea(areaSelect.value);
+  }
+}
+
+/**
+ * Llena el selector de Titular de Unidad Administrativa (2) con TODAS las unidades
+ * de la Secretaría de Educación, agrupadas por su estructura oficial.
+ */
+function initSelectTitularUnidad2() {
+  const selectT2 = document.getElementById('selectTitularUnidad2');
+  if (!selectT2) return;
+
+  if (typeof CATALOGO_ORGANICO_SEGEY === 'undefined' || !Array.isArray(CATALOGO_ORGANICO_SEGEY)) {
+    return;
+  }
+
+  const grupos = {};
+  CATALOGO_ORGANICO_SEGEY.forEach(u => {
+    const grp = u.grupo || 'Otras Unidades';
+    if (!grupos[grp]) grupos[grp] = [];
+    grupos[grp].push(u);
+  });
+
+  let html = '<option value="" disabled selected>-- Seleccione Dependencia Jerárquica de Destino --</option>';
+
+  Object.keys(grupos).forEach(nombreGrupo => {
+    html += `<optgroup label="${escapeHtml(nombreGrupo)}">`;
+    grupos[nombreGrupo].forEach(u => {
+      html += `<option value="${escapeHtml(u.id)}" data-nombre="${escapeHtml(u.titular.nombre)}" data-cargo="${escapeHtml(u.titular.cargo)}">${escapeHtml(u.unidad)} — ${escapeHtml(u.titular.nombre)}</option>`;
+    });
+    html += '</optgroup>';
+  });
+
+  html += '<option value="__MANUAL__">✏️ Ingresar otro nombre y cargo manualmente...</option>';
+  selectT2.innerHTML = html;
+}
+
+/**
+ * Catálogo oficial de Mandos Altos (13 niveles autorizados SEGEY):
+ * 1. Secretario de Educación
+ * 2. Subsecretario
+ * 3. Jefe del Despacho
+ * 4. Director General
+ * 5. Coordinador General
+ * 6. Director
+ * 7. Director Jurídico
+ * 8. Subdirector
+ * 9. Jefe de Departamento
+ * 10. Coordinador
+ * 11. Coordinador de Soporte Técnico (TIC)
+ * 12. Director de Plantel
+ * 13. Director de Centro
+ */
+const MANDOS_ALTOS_OFICIALES = [
+  'Secretario de Educación',
+  'Subsecretario',
+  'Jefe del Despacho',
+  'Director General',
+  'Coordinador General',
+  'Director',
+  'Director Jurídico',
+  'Subdirector',
+  'Jefe de Departamento',
+  'Coordinador',
+  'Coordinador de Soporte Técnico (TIC)',
+  'Director de Plantel',
+  'Director de Centro'
+];
+
+// Puestos de Mandos Medios Altos / Mandos Bajos que contienen palabras clave
+// pero NO pertenecen a los Mandos Altos oficiales
+const EXCLUSIONES_NO_MANDOS_ALTOS = [
+  'Subdirector Administrativo del Centro',
+  'Subdirector Académico del Centro',
+  'Coordinador Regional',
+  'Coordinador de Área',
+  'Jefe de Oficina',
+  'Secretario Particular',
+  'Secretario Técnico',
+  'Secretario Administrativo',
+  'Secretaría Administrativa',
+  'Secretario Administrativo(a)',
+  'Secretaría(o) Administrativa(o)'
+];
+
+function esMandoAlto(puesto) {
+  if (!puesto) return false;
+  const p = puesto.trim();
+  const pLower = p.toLowerCase();
+
+  // 1. Excluir específicamente puestos de Mandos Medios o Bajos con denominaciones similares
+  for (const exc of EXCLUSIONES_NO_MANDOS_ALTOS) {
+    if (pLower.startsWith(exc.toLowerCase())) {
+      return false;
+    }
+  }
+
+  // 2. Comprobar si coincide con alguno de los 13 Mandos Altos autorizados
+  const reglasMandosAltos = [
+    /^secretari[oa]\s+de\s+educaci[oó]n/i,
+    /^subsecretari[oa]/i,
+    /^jefe\s+del\s+despacho/i,
+    /^director(a)?\s+general/i,
+    /^coordinador(a)?\s+general/i,
+    /^director(a)?\s+jur[ií]dic[oa]/i,
+    /^director(a)?\s+de\s+plantel/i,
+    /^director(a)?\s+(de\s+|del\s+)?centro/i,
+    /^subdirector(a)?/i,
+    /^director(a)?/i,
+    /^(jefe|jefa)\s+de\s+departamento/i,
+    /^coordinador(a)?\s+de\s+soporte\s+t[eé]cnico/i,
+    /^coordinador(a)?/i
+  ];
+
+  return reglasMandosAltos.some(reg => reg.test(p));
+}
+
+/**
+ * Llena el selector de Titular (2) / Jefe Inmediato con los Mandos Altos
+ * vinculados a la Unidad Administrativa seleccionada (para Alta, Baja y Cambio de nombre).
+ */
+function poblarSelectJefeInmediato(areaNombre) {
+  const selectT2 = document.getElementById('selectTitularUnidad2');
+  if (!selectT2) return;
+
+  if (typeof CATALOGO_ORGANICO_SEGEY === 'undefined' || !Array.isArray(CATALOGO_ORGANICO_SEGEY)) {
+    return;
+  }
+
+  if (!areaNombre) {
+    const areaSelect = document.getElementById('areaNotificadoraSelect');
+    if (areaSelect && areaSelect.value && areaSelect.value !== '__OTRA__') {
+      areaNombre = areaSelect.value;
+    } else {
+      const areaCustom = document.getElementById('areaNotificadora');
+      if (areaCustom && areaCustom.value) {
+        areaNombre = areaCustom.value;
+      }
+    }
+  }
+
+  let unidadId = areaNombre ? AREA_TO_UNIDAD_MAP[areaNombre] : null;
+  let unidad = null;
+  if (unidadId) {
+    unidad = CATALOGO_ORGANICO_SEGEY.find(u => u.id === unidadId);
+  }
+  if (!unidad && areaNombre) {
+    unidad = CATALOGO_ORGANICO_SEGEY.find(u => u.unidad === areaNombre) ||
+             CATALOGO_ORGANICO_SEGEY.find(u => areaNombre.toLowerCase().includes(u.unidad.toLowerCase()) || u.unidad.toLowerCase().includes(areaNombre.toLowerCase()));
+  }
+
+  let html = '<option value="" selected>-- Seleccione Jefe Inmediato de la Unidad --</option>';
+
+  if (unidad) {
+    // 1. Titular oficial de la Unidad (Puesto — Nombre)
+    if (unidad.titular && unidad.titular.nombre) {
+      html += `<option value="titular_unidad" data-nombre="${escapeHtml(unidad.titular.nombre)}" data-cargo="${escapeHtml(unidad.titular.cargo)}">${escapeHtml(unidad.titular.cargo)} — ${escapeHtml(unidad.titular.nombre)}</option>`;
+    }
+
+    // 2. Personal vinculado a la Unidad Administrativa elegida (Puesto — Nombre)
+    const rawSubs = unidad.subordinados || [];
+    const mandosAltos = rawSubs.filter(s => esMandoAlto(s.puesto));
+
+    if (mandosAltos.length > 0) {
+      mandosAltos.forEach((s, idx) => {
+        const esVacante = s.es_vacante || (s.nombre && s.nombre.toLowerCase().trim() === 'vacante');
+        const displayNombre = esVacante ? 'Vacante' : s.nombre;
+        const displayLabel = `${s.puesto} — ${displayNombre}`;
+        html += `<option value="sub_${idx}" data-nombre="${escapeHtml(displayNombre)}" data-cargo="${escapeHtml(s.puesto)}">${escapeHtml(displayLabel)}</option>`;
+      });
+    }
+
+    // Actualizar badge
+    const badgeT2 = document.getElementById('badgeTitular2');
+    if (badgeT2) {
+      badgeT2.className = 'text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-semibold border border-emerald-200';
+      badgeT2.innerHTML = '<i class="fa-solid fa-user-shield mr-1"></i>Jefe Inmediato';
+    }
+  }
+
+  html += '<option value="__MANUAL__">✏️ Ingresar otro nombre y cargo manualmente...</option>';
+  selectT2.innerHTML = html;
+}
+
+/**
+ * Obtiene todas las áreas, coordinaciones y departamentos oficiales
+ * vinculados a la Unidad Administrativa seleccionada.
+ */
+function getAreasVinculadasPorUnidad(areaNombre) {
+  if (typeof CATALOGO_ORGANICO_SEGEY === 'undefined' || !Array.isArray(CATALOGO_ORGANICO_SEGEY)) {
+    return [];
+  }
+
+  if (!areaNombre) {
+    const areaSelect = document.getElementById('areaNotificadoraSelect');
+    if (areaSelect && areaSelect.value && areaSelect.value !== '__OTRA__') {
+      areaNombre = areaSelect.value;
+    } else {
+      const areaCustom = document.getElementById('areaNotificadora');
+      if (areaCustom && areaCustom.value) {
+        areaNombre = areaCustom.value;
+      }
+    }
+  }
+
+  if (!areaNombre) return [];
+
+  let unidadId = (typeof AREA_TO_UNIDAD_MAP !== 'undefined') ? AREA_TO_UNIDAD_MAP[areaNombre] : null;
+  let unidad = null;
+  if (unidadId) {
+    unidad = CATALOGO_ORGANICO_SEGEY.find(u => u.id === unidadId);
+  }
+  if (!unidad) {
+    unidad = CATALOGO_ORGANICO_SEGEY.find(u => u.unidad === areaNombre) ||
+             CATALOGO_ORGANICO_SEGEY.find(u => areaNombre.toLowerCase().includes(u.unidad.toLowerCase()) || u.unidad.toLowerCase().includes(areaNombre.toLowerCase()));
+    if (unidad) unidadId = unidad.id;
+  }
+
+  const areasSet = new Set();
+
+  // 1. Incluir el nombre del área seleccionada y el de la unidad oficial
+  if (unidad && unidad.unidad) areasSet.add(unidad.unidad);
+  if (areaNombre && areaNombre !== '__OTRA__') areasSet.add(areaNombre);
+
+  // 2. Mapeo de áreas del catálogo oficial vinculadas a esta misma unidad
+  if (unidadId && typeof AREA_TO_UNIDAD_MAP !== 'undefined') {
+    Object.keys(AREA_TO_UNIDAD_MAP).forEach(k => {
+      if (AREA_TO_UNIDAD_MAP[k] === unidadId) {
+        areasSet.add(k);
+      }
+    });
+  }
+
+  // 3. Departamentos y coordinaciones derivados de mandos y subordinados de la unidad
+  if (unidad && Array.isArray(unidad.subordinados)) {
+    unidad.subordinados.forEach(s => {
+      const p = (s.puesto || '').trim();
+      let a = p;
+      if (/^Jefe de Departamento de /i.test(a)) a = a.replace(/^Jefe de Departamento de /i, 'Departamento de ');
+      else if (/^Jefe de Departamento /i.test(a)) a = a.replace(/^Jefe de Departamento /i, 'Departamento de ');
+      else if (/^Jefa de Departamento de /i.test(a)) a = a.replace(/^Jefa de Departamento de /i, 'Departamento de ');
+      else if (/^Jefa de Departamento /i.test(a)) a = a.replace(/^Jefa de Departamento /i, 'Departamento de ');
+      else if (/^Subdirector de /i.test(a)) a = a.replace(/^Subdirector de /i, 'Subdirección de ');
+      else if (/^Subdirector /i.test(a)) a = a.replace(/^Subdirector /i, 'Subdirección ');
+      else if (/^Subdirectora de /i.test(a)) a = a.replace(/^Subdirectora de /i, 'Subdirección de ');
+      else if (/^Subdirectora /i.test(a)) a = a.replace(/^Subdirectora /i, 'Subdirección ');
+      else if (/^Coordinador General de /i.test(a)) a = a.replace(/^Coordinador General de /i, 'Coordinación General de ');
+      else if (/^Coordinadora General de /i.test(a)) a = a.replace(/^Coordinadora General de /i, 'Coordinación General de ');
+      else if (/^Coordinador de Área de /i.test(a)) a = a.replace(/^Coordinador de Área de /i, 'Coordinación de Área de ');
+      else if (/^Coordinadora de Área de /i.test(a)) a = a.replace(/^Coordinadora de Área de /i, 'Coordinación de Área de ');
+      else if (/^Coordinador de /i.test(a)) a = a.replace(/^Coordinador de /i, 'Coordinación de ');
+      else if (/^Coordinadora de /i.test(a)) a = a.replace(/^Coordinadora de /i, 'Coordinación de ');
+      else if (/^Responsable de Área de /i.test(a)) a = a.replace(/^Responsable de Área de /i, 'Área de ');
+      else if (/^Encargado de Área de /i.test(a)) a = a.replace(/^Encargado de Área de /i, 'Área de ');
+      else if (/^Director de Plantel de /i.test(a)) a = a.replace(/^Director de Plantel de /i, 'Plantel de ');
+
+      if (a && a !== p && a.length > 5 && !a.startsWith('Supervisor') && !a.startsWith('Subjefe') && !a.startsWith('Asesor')) {
+        areasSet.add(a);
+      }
+    });
+  }
+
+  return Array.from(areasSet).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+}
+
+/**
+ * Llena el menú desplegable de Áreas a dar de Baja vinculadas con el área que notifica o elabora.
+ */
+function poblarSelectAreaBaja(areaNombre) {
+  const selectBaja = document.getElementById('selectAreaBaja');
+  const badgeBaja = document.getElementById('badgeAreasBaja');
+  if (!selectBaja) return;
+
+  const areas = getAreasVinculadasPorUnidad(areaNombre);
+
+  let html = '<option value="" selected>-- Seleccione el Área o Departamento a dar de baja --</option>';
+
+  if (areas.length > 0) {
+    areas.forEach(area => {
+      html += `<option value="${escapeHtml(area)}">${escapeHtml(area)}</option>`;
+    });
+  }
+
+  html += '<option value="__OTRA__">✏️ Otra área (escribir manualmente en el cuadro inferior)...</option>';
+  selectBaja.innerHTML = html;
+
+  if (badgeBaja) {
+    if (areas.length > 0) {
+      badgeBaja.className = 'text-[10px] bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full font-semibold border border-rose-300';
+      badgeBaja.innerHTML = `<i class="fa-solid fa-list-check text-rose-600 mr-1"></i>${areas.length} áreas vinculadas`;
+    } else {
+      badgeBaja.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
+      badgeBaja.textContent = 'Seleccione el Área Notificadora arriba';
+    }
+  }
+}
+
+function handleSelectAreaBaja(selectElem) {
+  if (!selectElem) return;
+  const val = selectElem.value;
+  const ndTextarea = document.getElementById('nuevaDenominacion');
+  if (!ndTextarea) return;
+
+  if (val === '__OTRA__') {
+    ndTextarea.value = '';
+    ndTextarea.focus();
+    showToast('Escriba el nombre del área a dar de baja en el cuadro inferior.');
+  } else if (val) {
+    ndTextarea.value = val.toUpperCase();
+    vincularJefeInmediatoConArea(val);
+  }
+
+  renderDocument(getCurrentFormDataForPreview());
+}
+
+/**
+ * Llena el menú desplegable de Áreas que cambian de nombre vinculadas con el área que notifica o elabora.
+ */
+function poblarSelectAreaCambioNombre(areaNombre) {
+  const selectCambio = document.getElementById('selectAreaCambioNombre');
+  const badgeCambio = document.getElementById('badgeAreasCambioNombre');
+  if (!selectCambio) return;
+
+  const areas = getAreasVinculadasPorUnidad(areaNombre);
+
+  let html = '<option value="" selected>-- Seleccione el Área o Departamento que cambia de nombre --</option>';
+
+  if (areas.length > 0) {
+    areas.forEach(area => {
+      html += `<option value="${escapeHtml(area)}">${escapeHtml(area)}</option>`;
+    });
+  }
+
+  html += '<option value="__OTRA__">✏️ Otra área (escribir manualmente en el cuadro inferior)...</option>';
+  selectCambio.innerHTML = html;
+
+  if (badgeCambio) {
+    if (areas.length > 0) {
+      badgeCambio.className = 'text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold border border-amber-300';
+      badgeCambio.innerHTML = `<i class="fa-solid fa-list-check text-amber-600 mr-1"></i>${areas.length} áreas vinculadas`;
+    } else {
+      badgeCambio.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
+      badgeCambio.textContent = 'Seleccione el Área Notificadora arriba';
+    }
+  }
+}
+
+function handleSelectAreaCambioNombre(selectElem) {
+  if (!selectElem) return;
+  const val = selectElem.value;
+  const ndTextarea = document.getElementById('nuevaDenominacion');
+  const nuevoNombreTextarea = document.getElementById('nuevoNombre');
+
+  if (val === '__OTRA__') {
+    if (ndTextarea) {
+      ndTextarea.value = '';
+      ndTextarea.focus();
+    }
+    showToast('Escriba el nombre actual del área en el primer cuadro.');
+    return;
+  }
+
+  if (val && ndTextarea) {
+    ndTextarea.value = val.toUpperCase();
+    showToast(`Nombre actual seleccionado: ${val}. Escriba el nuevo nombre en el segundo cuadro.`);
+    if (nuevoNombreTextarea && !nuevoNombreTextarea.value.trim()) {
+      setTimeout(() => nuevoNombreTextarea.focus(), 150);
+    }
+  }
+
+  // Vincular automáticamente el Jefe Inmediato en el Apartado II con la selección
+  if (val) {
+    vincularJefeInmediatoConArea(val);
+  }
+
+  renderDocument(getCurrentFormDataForPreview());
+}
+
+/**
+ * Vincula automáticamente el Jefe Inmediato de acuerdo con el Área que Cambia de Nombre,
+ * seleccionando su mando superior en selectTitularUnidad2 pero dejando siempre la libertad
+ * de cambiarlo o elegir otro en el Apartado II.
+ */
+function vincularJefeInmediatoConArea(areaNombre) {
+  if (!areaNombre) return;
+
+  const selectT2 = document.getElementById('selectTitularUnidad2');
+  const u2Nom = document.getElementById('titularUnidad2Nombre');
+  const u2Car = document.getElementById('titularUnidad2Cargo');
+  if (!selectT2) return;
+
+  // 1. Obtener el Área Notificadora actual para desambiguar si existen áreas homónimas
+  const selNotif = document.getElementById('areaNotificadoraSelect');
+  const custNotif = document.getElementById('areaNotificadora');
+  const areaNotificadora = (selNotif && selNotif.value && selNotif.value !== '__OTRA__') 
+    ? selNotif.value 
+    : (custNotif ? custNotif.value : '');
+
+  // 2. Consultar el Mapa Oficial de Jerarquía SEGEY (el que está a la izquierda en la jerarquía, Nivel K-1)
+  let jefeEncontrado = null;
+  if (typeof buscarJefeInmediatoPorArea === 'function') {
+    jefeEncontrado = buscarJefeInmediatoPorArea(areaNombre, areaNotificadora);
+  }
+
+  if (jefeEncontrado && jefeEncontrado.jefe_nombre && jefeEncontrado.jefe_nombre !== 'None' && jefeEncontrado.jefe_nombre.toLowerCase() !== 'vacante') {
+    const jNom = jefeEncontrado.jefe_nombre;
+    const jCar = jefeEncontrado.jefe_cargo || 'Titular Superior';
+    const jNomNorm = normalizeText(jNom);
+
+    // Buscar si ya existe una opción en selectTitularUnidad2 con este jefe
+    let matchIdx = -1;
+    for (let i = 1; i < selectT2.options.length; i++) {
+      const opt = selectT2.options[i];
+      if (opt.value === '__MANUAL__') continue;
+      const optNom = opt.dataset && opt.dataset.nombre ? normalizeText(opt.dataset.nombre) : '';
+      const optText = normalizeText(opt.textContent);
+      if (optNom && (optNom === jNomNorm || optNom.includes(jNomNorm) || jNomNorm.includes(optNom))) {
+        matchIdx = i;
+        break;
+      }
+      if (optText.includes(jNomNorm)) {
+        matchIdx = i;
+        break;
+      }
+    }
+
+    if (matchIdx !== -1) {
+      selectT2.selectedIndex = matchIdx;
+    } else {
+      // Insertar la opción vinculada en el selector para que esté visible en la lista
+      const newOpt = document.createElement('option');
+      newOpt.value = `jefe_vinculado_${Date.now()}`;
+      newOpt.textContent = `${jCar} — ${jNom}`;
+      newOpt.setAttribute('data-nombre', jNom);
+      newOpt.setAttribute('data-cargo', jCar);
+      if (selectT2.options.length > 1) {
+        selectT2.insertBefore(newOpt, selectT2.options[1]);
+      } else {
+        selectT2.appendChild(newOpt);
+      }
+      selectT2.selectedIndex = 1;
+    }
+
+    // Actualizar campos de texto en el Apartado II (siempre editables)
+    if (u2Nom) {
+      u2Nom.value = jNom;
+      u2Nom.removeAttribute('readonly');
+      u2Nom.disabled = false;
+    }
+    if (u2Car) {
+      u2Car.value = jCar;
+      u2Car.removeAttribute('readonly');
+      u2Car.disabled = false;
+    }
+
+    selectT2.disabled = false;
+    selectT2.dispatchEvent(new Event('change', { bubbles: true }));
+    showToast(`Jefe Inmediato vinculado: ${jCar} — ${jNom}. Puedes cambiarlo o editarlo libremente en el Apartado II.`);
+    renderDocument(getCurrentFormDataForPreview());
+    return;
+  }
+
+  // Fallback: Si no hubo coincidencia en el mapa detallado, buscar en las opciones de selectTitularUnidad2
+  const aNorm = normalizeText(areaNombre);
+  let bestIdx = -1;
+  let bestLabel = '';
+
+  for (let i = 1; i < selectT2.options.length; i++) {
+    const opt = selectT2.options[i];
+    if (opt.value === '__MANUAL__') continue;
+    const optTextNorm = normalizeText(opt.textContent);
+    const cargo = opt.dataset ? normalizeText(opt.dataset.cargo || '') : '';
+
+    if (cargo.includes('subdirector') || cargo.includes('coordinador general') || cargo.includes('director')) {
+      const palabrasArea = aNorm.split(/\s+/).filter(w => w.length > 3 && !['departamento', 'direccion', 'coordinacion', 'area', 'para'].includes(w));
+      const coincide = palabrasArea.some(w => optTextNorm.includes(w));
+      if (coincide) {
+        bestIdx = i;
+        bestLabel = opt.textContent.trim();
+        break;
+      }
+    }
+  }
+
+  if (bestIdx === -1) {
+    for (let i = 1; i < selectT2.options.length; i++) {
+      const opt = selectT2.options[i];
+      if (opt.value === 'titular_unidad' || (opt.dataset && opt.dataset.cargo && (opt.dataset.cargo.includes('Director') || opt.dataset.cargo.includes('Secretario') || opt.dataset.cargo.includes('Coordinador')))) {
+        bestIdx = i;
+        bestLabel = opt.textContent.trim();
+        break;
+      }
+    }
+  }
+
+  if (bestIdx !== -1) {
+    selectT2.selectedIndex = bestIdx;
+    handleTitularUnidad2Select(selectT2);
+    showToast(`Jefe Inmediato vinculado: ${bestLabel}. Puedes cambiarlo o editarlo libremente en el Apartado II.`);
+  }
+}
+
+window.poblarSelectAreaCambioNombre = poblarSelectAreaCambioNombre;
+window.handleSelectAreaCambioNombre = handleSelectAreaCambioNombre;
+window.vincularJefeInmediatoConArea = vincularJefeInmediatoConArea;
+
+/**
+ * Actualiza automáticamente Titular de Unidad Administrativa (1) y filtra
+ * el catálogo de Titular de Área de acuerdo al Área que Notifica o Elabora seleccionada arriba.
+ */
+function actualizarTitularesPorArea(areaNombre) {
+  if (typeof CATALOGO_ORGANICO_SEGEY === 'undefined' || !areaNombre) return;
+
+  // 1. Obtener la Unidad Administrativa oficial
+  let unidadId = AREA_TO_UNIDAD_MAP[areaNombre];
+  let unidad = null;
+
+  if (unidadId) {
+    unidad = CATALOGO_ORGANICO_SEGEY.find(u => u.id === unidadId);
+  }
+
+  if (!unidad) {
+    unidad = CATALOGO_ORGANICO_SEGEY.find(u => u.unidad === areaNombre) ||
+             CATALOGO_ORGANICO_SEGEY.find(u => areaNombre.toLowerCase().includes(u.unidad.toLowerCase()) || u.unidad.toLowerCase().includes(areaNombre.toLowerCase()));
+  }
+
+  if (!unidad) {
+    setupManualTitulares();
+    return;
+  }
+
+  // 2. Actualizar lista desplegable de Titular de Unidad Administrativa (1)
+  const selectT1 = document.getElementById('selectTitularUnidad1');
+  const badgeT1 = document.getElementById('badgeTitular1');
+  const u1Nom = document.getElementById('titularUnidad1Nombre');
+  const u1Car = document.getElementById('titularUnidad1Cargo');
+
+  if (badgeT1) {
+    badgeT1.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i>${escapeHtml(unidad.unidad)}`;
+  }
+
+  if (selectT1) {
+    let t1Html = '';
+    // Opción principal: Titular de la Unidad (Puesto — Nombre)
+    t1Html += `<option value="${escapeHtml(unidad.id)}" data-nombre="${escapeHtml(unidad.titular.nombre)}" data-cargo="${escapeHtml(unidad.titular.cargo)}" selected>${escapeHtml(unidad.titular.cargo)} — ${escapeHtml(unidad.titular.nombre)}</option>`;
+
+    // Subtitulares conocidos
+    if (areaNombre === 'Subdirección de Organización y Administración de Personal' || areaNombre === 'Departamento de Recursos Humanos') {
+      t1Html += `<option value="subdir_personal" data-nombre="C.P. Sonia Noemi Vallejos Albornoz" data-cargo="Subdirectora de Organización y Administración de Personal">Subdirectora de Organización y Administración de Personal — C.P. Sonia Noemi Vallejos Albornoz</option>`;
+    }
+
+    t1Html += '<option value="__MANUAL__">✏️ Ingresar otro nombre y cargo manualmente...</option>';
+    selectT1.innerHTML = t1Html;
+  }
+
+  // Autocompletar inputs de Titular (1)
+  if (u1Nom) u1Nom.value = unidad.titular.nombre || '';
+  if (u1Car) u1Car.value = unidad.titular.cargo || '';
+
+  // 3. Filtrar y cargar menú desplegable dependiente de "Titular de Área" (Puesto — Nombre)
+  const selectArea = document.getElementById('selectTitularArea');
+  const badgeArea = document.getElementById('badgeAreaSubordinados');
+  if (selectArea) {
+    selectArea.disabled = false;
+    selectArea.classList.remove('bg-slate-50', 'text-slate-700');
+    selectArea.classList.add('bg-white', 'text-slate-800');
+
+    const rawSubs = unidad.subordinados || [];
+    const subs = rawSubs.filter(s => esMandoAlto(s.puesto));
+
+    // Priorizar puestos directamente asociados al área específica elegida arriba
+    const keywords = areaNombre.toLowerCase()
+      .replace('departamento de ', '')
+      .replace('coordinación de ', '')
+      .replace('coordinación general de ', '')
+      .replace('dirección de ', '')
+      .replace('dirección general de ', '')
+      .split(' ')
+      .filter(w => w.length > 3);
+    const prioritarios = subs.filter(s => keywords.some(k => s.puesto.toLowerCase().includes(k)));
+    const otrosMandos = subs.filter(s => !prioritarios.includes(s));
+
+    if (badgeArea) {
+      badgeArea.className = 'text-[10.5px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-semibold flex items-center gap-1';
+      badgeArea.innerHTML = `<i class="fa-solid fa-check-circle text-emerald-600"></i> ${subs.length} puestos disponibles`;
+    }
+
+    let areaHtml = '<option value="" selected>-- Seleccione Puesto y Subordinado del Área --</option>';
+
+    // Listar puestos prioritarios del área y luego los demás puestos de la unidad
+    const allSubsOrdered = [...prioritarios, ...otrosMandos];
+    allSubsOrdered.forEach((s, idx) => {
+      const esVacante = s.es_vacante || (s.nombre && s.nombre.toLowerCase().trim() === 'vacante');
+      const displayNombre = esVacante ? 'Vacante' : s.nombre;
+      const displayLabel = `${s.puesto} — ${displayNombre}`;
+      areaHtml += `<option value="p_${idx}" data-nombre="${escapeHtml(displayNombre)}" data-puesto="${escapeHtml(s.puesto)}">${escapeHtml(displayLabel)}</option>`;
+    });
+
+    areaHtml += '<option value="__MANUAL__">✏️ + Ingresar otro puesto y nombre manualmente...</option>';
+    selectArea.innerHTML = areaHtml;
+
+    // Limpiar campos de titular de área para que el usuario elija
+    const aNom = document.getElementById('titularAreaNombre');
+    const aCar = document.getElementById('titularAreaCargo');
+    if (aNom) aNom.value = '';
+    if (aCar) aCar.value = '';
+  }
+
+  // 4. Actualizar Responsable de Captura exclusivo del Área (1 por área, sin mezclar)
+  const selectResp = document.getElementById('selectResponsableCaptura');
+  const respInput = document.getElementById('responsableCaptura');
+  const customRespWrapper = document.getElementById('responsableCapturaCustomWrapper');
+  const customRespInput = document.getElementById('responsableCapturaCustom');
+  const badgeResp = document.getElementById('badgeResponsableEnlaces');
+
+  if (selectResp) {
+    const catalogResp = getResponsablesCatalog();
+    const respAsignado = catalogResp[areaNombre] || '';
+
+    let respHtml = '<option value="" disabled>-- Responsable oficial asignado a esta Área --</option>';
+    if (respAsignado) {
+      respHtml += `<option value="${escapeHtml(respAsignado)}" selected>${escapeHtml(respAsignado)}</option>`;
+    }
+    respHtml += '<option value="__MANUAL__">✏️ Ingresar otro responsable manualmente...</option>';
+    selectResp.innerHTML = respHtml;
+
+    if (respAsignado) {
+      selectResp.value = respAsignado;
+      if (respInput) respInput.value = respAsignado;
+      if (badgeResp) {
+        badgeResp.className = 'text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-semibold border border-emerald-200';
+        badgeResp.innerHTML = `<i class="fa-solid fa-user-check text-emerald-600 mr-1"></i>1 responsable asignado`;
+      }
+      if (customRespWrapper) customRespWrapper.classList.add('hidden');
+    } else {
+      selectResp.value = '';
+      if (respInput) respInput.value = '';
+      if (badgeResp) {
+        badgeResp.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
+        badgeResp.innerHTML = `<i class="fa-solid fa-circle-info text-slate-400 mr-1"></i>Sin responsable asignado`;
+      }
+    }
+
+    if (customRespInput) {
+      customRespInput.value = '';
+    }
+  }
+
+  // 5. Si el movimiento actual es Alta, Baja o Cambio de nombre, actualizar el catálogo de Jefe Inmediato
+  const selectedMov = document.querySelector('input[name="tipoMovimiento"]:checked');
+  const tipoMovVal = selectedMov ? selectedMov.value : 'Alta';
+  if (tipoMovVal === 'Alta' || tipoMovVal === 'Baja' || tipoMovVal === 'Cambio de nombre') {
+    poblarSelectJefeInmediato(areaNombre);
+  }
+  if (tipoMovVal === 'Baja') {
+    poblarSelectAreaBaja(areaNombre);
+  }
+  if (tipoMovVal === 'Cambio de nombre') {
+    poblarSelectAreaCambioNombre(areaNombre);
+  }
+
+  // 6. Actualizar listas desplegables de Testigos (1 y 2) con el personal del Área
+  poblarSelectTestigos(areaNombre);
+
+  showToast(`Área: ${areaNombre}. Responsable, titulares y testigos actualizados.`);
+}
+
+function setupManualTitulares() {
+  const selectResp = document.getElementById('selectResponsableCaptura');
+  const customRespWrapper = document.getElementById('responsableCapturaCustomWrapper');
+  const customRespInput = document.getElementById('responsableCapturaCustom');
+  const respInput = document.getElementById('responsableCaptura');
+  const badgeResp = document.getElementById('badgeResponsableEnlaces');
+
+  if (badgeResp) {
+    badgeResp.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
+    badgeResp.innerHTML = '<i class="fa-solid fa-pen mr-1"></i>Captura manual';
+  }
+  if (selectResp) {
+    selectResp.innerHTML = '<option value="__MANUAL__" selected>✏️ Ingresar otro responsable manualmente...</option>';
+  }
+  if (customRespWrapper) {
+    customRespWrapper.classList.remove('hidden');
+  }
+  if (customRespInput) {
+    customRespInput.value = '';
+    customRespInput.focus();
+  }
+  if (respInput) {
+    respInput.value = '';
+  }
+
+  const selectT1 = document.getElementById('selectTitularUnidad1');
+  const badgeT1 = document.getElementById('badgeTitular1');
+  if (badgeT1) {
+    badgeT1.innerHTML = '<i class="fa-solid fa-pen mr-1"></i>Captura Libre';
+  }
+  if (selectT1) {
+    selectT1.innerHTML = '<option value="__MANUAL__" selected>✏️ Captura manual de Titular de Unidad...</option>';
+  }
+
+  const selectArea = document.getElementById('selectTitularArea');
+  const badgeArea = document.getElementById('badgeAreaSubordinados');
+  if (badgeArea) {
+    badgeArea.className = 'text-[10.5px] bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full font-medium';
+    badgeArea.innerHTML = '<i class="fa-solid fa-pen mr-1"></i>Captura Libre';
+  }
+  if (selectArea) {
+    selectArea.disabled = false;
+    selectArea.classList.remove('bg-slate-50', 'text-slate-700');
+    selectArea.classList.add('bg-white', 'text-slate-800');
+    selectArea.innerHTML = '<option value="__MANUAL__" selected>✏️ Captura manual de Titular de Área...</option>';
+  }
+
+  const selT1 = document.getElementById('selectTestigo1');
+  if (selT1) {
+    selT1.innerHTML = '<option value="__MANUAL__" selected>✏️ Captura manual de Testigo (1)...</option>';
+  }
+  const badgeTestigo1 = document.getElementById('badgeTestigo1');
+  if (badgeTestigo1) {
+    badgeTestigo1.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
+    badgeTestigo1.innerHTML = '<i class="fa-solid fa-pen mr-1"></i>Captura Libre';
+  }
+
+  const selT2 = document.getElementById('selectTestigo2');
+  if (selT2) {
+    selT2.innerHTML = '<option value="__MANUAL__" selected>✏️ Captura manual de Testigo (2)...</option>';
+  }
+  const badgeTestigo2 = document.getElementById('badgeTestigo2');
+  if (badgeTestigo2) {
+    badgeTestigo2.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
+    badgeTestigo2.innerHTML = '<i class="fa-solid fa-pen mr-1"></i>Captura Libre';
+  }
+}
+
+function handleResponsableCapturaSelect(selectElem) {
+  if (!selectElem) return;
+  const val = selectElem.value;
+  const customWrapper = document.getElementById('responsableCapturaCustomWrapper');
+  const customInput = document.getElementById('responsableCapturaCustom');
+  const respInput = document.getElementById('responsableCaptura');
+
+  if (!val) {
+    if (customWrapper) customWrapper.classList.add('hidden');
+    if (customInput) customInput.value = '';
+    if (respInput) respInput.value = '';
+  } else if (val === '__MANUAL__') {
+    // Si selecciona ingresar otro manualmente, se habilita y muestra el segundo cuadro (el de abajo)
+    if (customWrapper) customWrapper.classList.remove('hidden');
+    if (customInput) {
+      customInput.value = '';
+      customInput.focus();
+    }
+    if (respInput) {
+      respInput.value = '';
+    }
+    showToast('Escriba el nombre del responsable de captura en el cuadro inferior.');
+  } else if (val) {
+    // Si selecciona uno de la lista oficial, se oculta el segundo cuadro y no se repite
+    if (customWrapper) customWrapper.classList.add('hidden');
+    if (customInput) customInput.value = '';
+    if (respInput) {
+      respInput.value = val;
+    }
+  }
+
+  renderDocument(getCurrentFormDataForPreview());
+}
+
+function handleResponsableCustomInput(inputElem) {
+  const respInput = document.getElementById('responsableCaptura');
+  if (respInput && inputElem) {
+    respInput.value = inputElem.value.trim();
+  }
+  renderDocument(getCurrentFormDataForPreview());
+}
+
+function setResponsableCapturaValue(val) {
+  const hiddenInput = document.getElementById('responsableCaptura');
+  const select = document.getElementById('selectResponsableCaptura');
+  const customWrapper = document.getElementById('responsableCapturaCustomWrapper');
+  const customInput = document.getElementById('responsableCapturaCustom');
+
+  if (hiddenInput) hiddenInput.value = val || '';
+  if (!select) return;
+
+  if (!val) {
+    select.value = '';
+    if (customWrapper) customWrapper.classList.add('hidden');
+    if (customInput) customInput.value = '';
+    return;
+  }
+
+  let matched = false;
+  for (let i = 0; i < select.options.length; i++) {
+    if (select.options[i].value === val) {
+      select.selectedIndex = i;
+      matched = true;
+      break;
+    }
+  }
+
+  if (matched) {
+    if (customWrapper) customWrapper.classList.add('hidden');
+    if (customInput) customInput.value = '';
+  } else {
+    // Si no coincide con las opciones oficiales, mostrar el cuadro de texto manual
+    select.value = '__MANUAL__';
+    if (customWrapper) customWrapper.classList.remove('hidden');
+    if (customInput) customInput.value = val;
+  }
+}
+
+function handleTitularUnidad1Select(selectElem) {
+  if (!selectElem) return;
+  const val = selectElem.value;
+  const opt = selectElem.options[selectElem.selectedIndex];
+  const u1Nom = document.getElementById('titularUnidad1Nombre');
+  const u1Car = document.getElementById('titularUnidad1Cargo');
+
+  if (val === '__MANUAL__') {
+    if (u1Nom) { u1Nom.value = ''; u1Nom.focus(); }
+    if (u1Car) { u1Car.value = ''; }
+    showToast('Ingrese el nombre y cargo del Titular (1) manualmente.');
+  } else if (opt && opt.dataset && opt.dataset.nombre) {
+    if (u1Nom) u1Nom.value = opt.dataset.nombre;
+    if (u1Car) u1Car.value = opt.dataset.cargo || '';
+  }
+
+  // Actualizar listas desplegables de Testigos omitiendo al Titular seleccionado
+  poblarSelectTestigos();
+  renderDocument(getCurrentFormDataForPreview());
+}
+
+function handleTitularUnidad2Select(selectElem) {
+  if (!selectElem) return;
+  const val = selectElem.value;
+  const opt = selectElem.options[selectElem.selectedIndex];
+  const u2Nom = document.getElementById('titularUnidad2Nombre');
+  const u2Car = document.getElementById('titularUnidad2Cargo');
+
+  const selectedRadio = document.querySelector('input[name="tipoMovimiento"]:checked');
+  const tipo = selectedRadio ? selectedRadio.value : 'Alta';
+  const isJefeInmediato = (tipo === 'Alta' || tipo === 'Baja' || tipo === 'Cambio de nombre');
+
+  if (val === '__MANUAL__') {
+    if (u2Nom) { u2Nom.value = ''; u2Nom.focus(); }
+    if (u2Car) { u2Car.value = ''; }
+    showToast(isJefeInmediato ? 'Ingrese el nombre y cargo del Jefe Inmediato manualmente.' : 'Ingrese el nombre y cargo del Titular (2) de Destino manualmente.');
+  } else if (opt && opt.dataset && opt.dataset.nombre) {
+    if (u2Nom) u2Nom.value = opt.dataset.nombre;
+    if (u2Car) u2Car.value = opt.dataset.cargo || '';
+  }
+
+  // Si es Cambio de dependencia jerárquica, sincronizar lista de Titular de Área (2) con la unidad de destino
+  if (tipo === 'Cambio de dependencia jerárquica') {
+    poblarSelectTitularArea2();
+  }
+
+  // Actualizar listas de Testigos con el personal correspondiente omitiendo al Titular (2) / Jefe Inmediato
+  poblarSelectTestigos();
+  renderDocument(getCurrentFormDataForPreview());
+}
+
+function handleTitularAreaSelect(selectElem) {
+  if (!selectElem) return;
+  const val = selectElem.value;
+  const selectedOption = selectElem.options[selectElem.selectedIndex];
+  const aNom = document.getElementById('titularAreaNombre');
+  const aCar = document.getElementById('titularAreaCargo');
+
+  if (val === '__MANUAL__') {
+    if (aNom) { aNom.value = ''; aNom.focus(); }
+    if (aCar) aCar.value = '';
+    showToast('Ingrese el nombre y cargo del Titular de Área manualmente.');
+  } else if (selectedOption && selectedOption.dataset && selectedOption.dataset.nombre) {
+    if (aNom) aNom.value = selectedOption.dataset.nombre;
+    if (aCar) aCar.value = selectedOption.dataset.puesto;
+  }
+
+  renderDocument(getCurrentFormDataForPreview());
+}
+
+function poblarSelectTitularArea2(unidadDestino) {
+  const selectArea2 = document.getElementById('selectTitularArea2');
+  const badgeArea2 = document.getElementById('badgeAreaSubordinados2');
+  if (!selectArea2) return;
+
+  if (!unidadDestino) {
+    const selT2 = document.getElementById('selectTitularUnidad2');
+    const unidadDestinoId = selT2 ? selT2.value : '';
+    if (unidadDestinoId && unidadDestinoId !== '__MANUAL__' && typeof CATALOGO_ORGANICO_SEGEY !== 'undefined') {
+      unidadDestino = CATALOGO_ORGANICO_SEGEY.find(u => u.id === unidadDestinoId);
+    }
+    if (!unidadDestino && typeof CATALOGO_ORGANICO_SEGEY !== 'undefined') {
+      const t2Nom = (document.getElementById('titularUnidad2Nombre')?.value || '').trim().toLowerCase();
+      if (t2Nom) {
+        unidadDestino = CATALOGO_ORGANICO_SEGEY.find(u => u.titular && u.titular.nombre && u.titular.nombre.toLowerCase().trim() === t2Nom);
+      }
+    }
+  }
+
+  if (!unidadDestino) {
+    selectArea2.innerHTML = '<option value="">-- Primero elija la Dependencia Jerárquica de Destino arriba --</option>';
+    selectArea2.disabled = true;
+    if (badgeArea2) {
+      badgeArea2.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
+      badgeArea2.innerHTML = '<i class="fa-solid fa-filter text-slate-400 mr-1"></i>Pendiente de Unidad de Destino (2)';
+    }
+    return;
+  }
+
+  selectArea2.disabled = false;
+  const rawSubs = unidadDestino.subordinados || [];
+  const subs = rawSubs.filter(s => esMandoAlto(s.puesto));
+
+  if (badgeArea2) {
+    badgeArea2.className = 'text-[10.5px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-semibold flex items-center gap-1';
+    badgeArea2.innerHTML = `<i class="fa-solid fa-check-circle text-emerald-600"></i> ${subs.length} puestos disponibles (Destino)`;
+  }
+
+  let areaHtml = '<option value="" selected>-- Seleccione Puesto y Subordinado de Unidad de Destino (2) --</option>';
+
+  subs.forEach((s, idx) => {
+    const esVacante = s.es_vacante || (s.nombre && s.nombre.toLowerCase().trim() === 'vacante');
+    const displayNombre = esVacante ? 'Vacante' : s.nombre;
+    const displayLabel = `${s.puesto} — ${displayNombre}`;
+    areaHtml += `<option value="p2_${idx}" data-nombre="${escapeHtml(displayNombre)}" data-puesto="${escapeHtml(s.puesto)}">${escapeHtml(displayLabel)}</option>`;
+  });
+
+  areaHtml += '<option value="__MANUAL__">✏️ + Ingresar otro puesto y nombre de destino manualmente...</option>';
+  selectArea2.innerHTML = areaHtml;
+}
+
+function handleTitularArea2Select(selectElem) {
+  if (!selectElem) return;
+  const val = selectElem.value;
+  const selectedOption = selectElem.options[selectElem.selectedIndex];
+  const a2Nom = document.getElementById('titularArea2Nombre');
+  const a2Car = document.getElementById('titularArea2Cargo');
+
+  if (val === '__MANUAL__') {
+    if (a2Nom) { a2Nom.value = ''; a2Nom.focus(); }
+    if (a2Car) a2Car.value = '';
+    showToast('Ingrese el nombre y cargo del Titular de Área (2) manualmente.');
+  } else if (selectedOption && selectedOption.dataset && selectedOption.dataset.nombre) {
+    if (a2Nom) a2Nom.value = selectedOption.dataset.nombre;
+    if (a2Car) a2Car.value = selectedOption.dataset.puesto;
+  }
+
+  renderDocument(getCurrentFormDataForPreview());
+}
+
+window.poblarSelectTitularArea2 = poblarSelectTitularArea2;
+window.handleTitularArea2Select = handleTitularArea2Select;
+
+/**
+ * =========================================================================
+ * CONTROL LATERAL DE NAVEGACIÓN EN BITÁCORA Y CONTROL (ADMINISTRADOR)
+ * =========================================================================
+ */
+let currentRegistrySection = 'constancias';
+
+function switchRegistrySection(sectionId) {
+  currentRegistrySection = sectionId;
+  const sections = ['constancias', 'areas', 'responsables', 'justificaciones', 'layouts'];
+
+  sections.forEach(sec => {
+    const el = document.getElementById(`sec-registry-${sec}`);
+    const btn = document.getElementById(`btn-reg-sec-${sec}`);
+    if (el) {
+      if (sec === sectionId) {
+        el.classList.remove('hidden');
+      } else {
+        el.classList.add('hidden');
+      }
+    }
+    if (btn) {
+      if (sec === sectionId) {
+        btn.className = 'w-full text-left px-3 py-2.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-all bg-segey-800 text-white shadow-xs';
+      } else {
+        btn.className = 'w-full text-left px-3 py-2.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-between transition-all';
+      }
+    }
+  });
+
+  updateRegistrySidebarBadges();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateRegistrySidebarBadges() {
+  const badgeConstancias = document.getElementById('sidebar-badge-constancias');
+  if (badgeConstancias && typeof records !== 'undefined') {
+    badgeConstancias.textContent = records.length;
+  }
+  const badgeAreas = document.getElementById('sidebar-badge-areas');
+  if (badgeAreas && typeof predefinedAreas !== 'undefined') {
+    badgeAreas.textContent = predefinedAreas.length;
+  }
+  const badgeResp = document.getElementById('sidebar-badge-responsables');
+  if (badgeResp && typeof getResponsablesCatalog === 'function') {
+    const catalog = getResponsablesCatalog();
+    badgeResp.textContent = Object.keys(catalog).length;
+  }
+  const badgeMotivos = document.getElementById('sidebar-badge-motivos');
+  if (badgeMotivos && typeof getCustomJustificacionesCatalog === 'function') {
+    const justCatalog = getCustomJustificacionesCatalog();
+    let totalMotivos = 0;
+    Object.values(justCatalog).forEach(arr => { if (Array.isArray(arr)) totalMotivos += arr.length; });
+    badgeMotivos.textContent = totalMotivos;
+  }
+  const badgeLayouts = document.getElementById('sidebar-badge-layouts');
+  if (badgeLayouts && typeof getActiveLayoutTemplate === 'function') {
+    const activeLayout = getActiveLayoutTemplate();
+    badgeLayouts.textContent = (activeLayout && activeLayout.name === 'Oficial (Por defecto)') ? 'Oficial' : 'Activo';
+  }
+}
+
+window.switchRegistrySection = switchRegistrySection;
+window.updateRegistrySidebarBadges = updateRegistrySidebarBadges;
+
+/**
+ * =========================================================================
+ * SINCRONIZACIÓN EN CALIENTE CON EL CATÁLOGO EXCEL MAESTRO
+ * Sincroniza información de funcionarios, titulares y enlaces directamente
+ * desde Catalogo_Funcionarios_y_Puestos.xlsx sin tener que reiniciar el sitio.
+ * =========================================================================
+ */
+async function sincronizarDesdeExcel() {
+  const btn = document.getElementById('btn-sync-excel');
+  const icon = document.getElementById('sync-excel-icon');
+
+  if (btn) btn.classList.add('opacity-75', 'pointer-events-none');
+  if (icon) icon.classList.add('fa-spin');
+
+  showToast('Leyendo datos de Catalogo_Funcionarios_y_Puestos.xlsx...', 'info');
+
+  try {
+    const res = await fetch('/api/sync-excel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store'
+    });
+
+    if (!res.ok) {
+      throw new Error(`Error en servidor (${res.status}): ${res.statusText}`);
+    }
+
+    const data = await res.json();
+    if (data.status !== 'ok') {
+      throw new Error(data.message || 'Error procesando el archivo Excel');
+    }
+
+    // 1. Si vienen responsables en el payload, actualizar el almacenamiento local
+    if (data.responsables && typeof data.responsables === 'object') {
+      saveResponsablesCatalog(data.responsables);
+    }
+
+    // 2. Recargar scripts en memoria dinámicamente con timestamp anticaché
+    await new Promise((resolve) => {
+      const s1 = document.createElement('script');
+      s1.src = 'assets/catalogo_organico.js?t=' + Date.now();
+      s1.onload = () => {
+        const s2 = document.createElement('script');
+        s2.src = 'assets/mapa_jefes_inmediatos.js?t=' + Date.now();
+        s2.onload = resolve;
+        s2.onerror = resolve;
+        document.body.appendChild(s2);
+      };
+      s1.onerror = resolve;
+      document.body.appendChild(s1);
+    });
+
+    // 3. Refrescar selectores y componentes dependientes en la interfaz
+    if (typeof initCatalogoOrganico === 'function') {
+      initCatalogoOrganico();
+    }
+    if (typeof poblarSelectAreaCambioNombre === 'function') {
+      poblarSelectAreaCambioNombre();
+    }
+    if (typeof renderAdminResponsablesList === 'function') {
+      renderAdminResponsablesList();
+    }
+    if (typeof updateRegistrySidebarBadges === 'function') {
+      updateRegistrySidebarBadges();
+    }
+
+    // Si hay un área notificadora seleccionada en el formulario, re-vincular sus datos
+    const areaSelect = document.getElementById('areaNotificadoraSelect');
+    if (areaSelect && areaSelect.value && areaSelect.value !== '__OTRA__') {
+      if (typeof actualizarTitularesPorArea === 'function') {
+        actualizarTitularesPorArea(areaSelect.value);
+      }
+    }
+
+    const totalFunc = data.funcionarios_totales || 2928;
+    const totalUnits = data.unidades_actualizadas || 33;
+    const totalResp = data.responsables_enlace || 58;
+
+    showToast(`¡Catálogo actualizado desde Excel! ${totalFunc} puestos, ${totalUnits} unidades y ${totalResp} enlaces sincronizados.`);
+  } catch (err) {
+    console.error('Error al sincronizar desde Excel:', err);
+    showToast(`No se pudo sincronizar desde Excel: ${err.message}`, 'error');
+  } finally {
+    if (btn) btn.classList.remove('opacity-75', 'pointer-events-none');
+    if (icon) icon.classList.remove('fa-spin');
+  }
+}
+window.sincronizarDesdeExcel = sincronizarDesdeExcel;
+
+function renderAdminAreasList() {
+  const container = document.getElementById('admin-areas-list');
+  const badge = document.getElementById('badge-total-areas');
+  if (badge) badge.textContent = `${predefinedAreas.length} áreas`;
+  updateRegistrySidebarBadges();
+
+  if (!container) return;
+
+  if (predefinedAreas.length === 0) {
+    container.innerHTML = `<span class="text-xs text-slate-400 italic p-2">No hay áreas predefinidas. Presione "Restablecer Oficiales" para recargar las 58 áreas institucionales del Listado de Enlaces.</span>`;
+    return;
+  }
+
+  // Ordenar alfabéticamente para presentación ordenada en el panel
+  const sortedAreas = [...predefinedAreas].sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+
+  container.innerHTML = sortedAreas.map((area) => `
+    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs bg-slate-800 text-slate-200 border border-slate-700 hover:border-amber-500/50 transition">
+      <i class="fa-solid fa-building text-[10px] text-amber-400"></i>
+      <span class="truncate max-w-[280px]" title="${escapeHtml(area)}">${escapeHtml(area)}</span>
+      <button onclick="editAreaNamePrompt('${escapeHtml(area)}')" title="Modificar nombre de ${escapeHtml(area)}" class="ml-1 text-slate-400 hover:text-amber-300 text-xs px-1 rounded hover:bg-slate-700/50 transition">
+        <i class="fa-solid fa-pen-to-square"></i>
+      </button>
+      <button onclick="deleteAreaByName('${escapeHtml(area)}')" title="Eliminar ${escapeHtml(area)}" class="text-slate-400 hover:text-rose-400 text-xs px-1 rounded hover:bg-slate-700/50 transition">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </span>
+  `).join('');
+}
+
+function editAreaNamePrompt(oldName) {
+  if (!oldName) return;
+  const newName = prompt(`Modificar nombre del Área Notificadora:\n"${oldName}"`, oldName);
+  if (newName === null) return;
+  const trimmed = newName.trim();
+  if (!trimmed) {
+    showToast('El nombre del área no puede estar vacío.', 'error');
+    return;
+  }
+  if (trimmed.toLowerCase() === oldName.toLowerCase()) {
+    return;
+  }
+  if (predefinedAreas.some(a => a.toLowerCase() === trimmed.toLowerCase())) {
+    showToast(`El área "${trimmed}" ya existe en el catálogo.`, 'error');
+    return;
+  }
+  updateAreaName(oldName, trimmed);
+}
+
+function updateAreaName(oldName, newName) {
+  // 1. Actualizar en predefinedAreas
+  const idx = predefinedAreas.indexOf(oldName);
+  if (idx !== -1) {
+    predefinedAreas[idx] = newName;
+  } else {
+    predefinedAreas.push(newName);
+  }
+  saveAreasToStorage();
+
+  // 2. Sincronizar catálogo de responsables de captura: transferir responsable asignado
+  const respCatalog = getResponsablesCatalog();
+  if (respCatalog[oldName] !== undefined) {
+    respCatalog[newName] = respCatalog[oldName];
+    delete respCatalog[oldName];
+  } else {
+    if (!respCatalog[newName]) respCatalog[newName] = '';
+  }
+  saveResponsablesCatalog(respCatalog);
+
+  // 3. Sincronizar AREA_TO_UNIDAD_MAP si aplica
+  if (typeof AREA_TO_UNIDAD_MAP !== 'undefined' && AREA_TO_UNIDAD_MAP[oldName]) {
+    AREA_TO_UNIDAD_MAP[newName] = AREA_TO_UNIDAD_MAP[oldName];
+    delete AREA_TO_UNIDAD_MAP[oldName];
+  }
+
+  // 4. Actualizar formulario si el área actual coincide
+  const currentArea = document.getElementById('areaNotificadora')?.value;
+  if (currentArea === oldName) {
+    setAreaNotificadoraValue(newName);
+  }
+
+  // 5. Refrescar vistas y selectores
+  populateAreaSelect();
+  renderAdminAreasList();
+  renderAdminResponsablesList();
+  populateAreaFilter();
+
+  showToast(`Área modificada a "${newName}" y sincronizada con sus responsables.`);
+}
+
+function deleteAreaByName(areaName) {
+  if (!areaName) return;
+  if (confirm(`¿Desea eliminar "${areaName}" del catálogo de áreas?`)) {
+    // 1. Eliminar de predefinedAreas
+    predefinedAreas = predefinedAreas.filter(a => a !== areaName);
+    saveAreasToStorage();
+
+    // 2. Sincronizar eliminación con catálogo de responsables
+    const respCatalog = getResponsablesCatalog();
+    if (respCatalog[areaName] !== undefined) {
+      delete respCatalog[areaName];
+      saveResponsablesCatalog(respCatalog);
+    }
+
+    // 3. Limpiar AREA_TO_UNIDAD_MAP si aplica
+    if (typeof AREA_TO_UNIDAD_MAP !== 'undefined' && AREA_TO_UNIDAD_MAP[areaName]) {
+      delete AREA_TO_UNIDAD_MAP[areaName];
+    }
+
+    // 4. Si el formulario tenía seleccionada esta área, resetear
+    const currentArea = document.getElementById('areaNotificadora')?.value;
+    if (currentArea === areaName) {
+      setAreaNotificadoraValue('');
+    }
+
+    // 5. Refrescar vistas
+    populateAreaSelect();
+    renderAdminAreasList();
+    renderAdminResponsablesList();
+    populateAreaFilter();
+
+    showToast(`Área "${areaName}" eliminada del catálogo y removida de los responsables.`);
+  }
+}
+
+function deleteAreaByIndex(idx) {
+  if (idx < 0 || idx >= predefinedAreas.length) return;
+  const areaName = predefinedAreas[idx];
+  deleteAreaByName(areaName);
+}
+
+function addNewAreaFromAdmin() {
+  const input = document.getElementById('new-area-name-input');
+  if (!input) return;
+  const name = input.value.trim();
+  if (!name) {
+    showToast('Por favor escriba el nombre del área.', 'error');
+    input.focus();
+    return;
+  }
+
+  if (predefinedAreas.some(a => a.toLowerCase() === name.toLowerCase())) {
+    showToast('Esta área ya existe en el catálogo.', 'error');
+    input.focus();
+    return;
+  }
+
+  predefinedAreas.push(name);
+  saveAreasToStorage();
+
+  // Inicializar entrada en responsables de captura para la nueva área
+  const respCatalog = getResponsablesCatalog();
+  if (!respCatalog[name]) {
+    respCatalog[name] = '';
+    saveResponsablesCatalog(respCatalog);
+  }
+
+  populateAreaSelect();
+  renderAdminAreasList();
+  renderAdminResponsablesList();
+  populateAreaFilter();
+
+  input.value = '';
+  showToast(`Área "${name}" agregada al catálogo.`);
+}
+
+function restoreDefaultAreas() {
+  if (confirm('¿Restablecer el catálogo con las 58 áreas oficiales del Listado de Enlaces de la SEGEY?')) {
+    predefinedAreas = [...DEFAULT_AREAS_NOTIFICADORAS];
+    saveAreasToStorage();
+    // Restablecer responsables correspondientes
+    saveResponsablesCatalog(ENLACE_DIRECTO_POR_AREA);
+    populateAreaSelect();
+    renderAdminAreasList();
+    renderAdminResponsablesList();
+    populateAreaFilter();
+    showToast('Catálogo de 58 áreas oficiales y sus responsables restablecido.');
+  }
+}
+
+window.editAreaNamePrompt = editAreaNamePrompt;
+window.updateAreaName = updateAreaName;
+
+
+/**
+ * =========================================================================
+ * NORMALIZADOR DE INMUEBLE QUE OCUPA
+ * Verifica si se incluye artículo determinante (el, la, los, las, un, una)
+ * y en caso contrario le antepone automáticamente "el "
+ * =========================================================================
+ */
+function formatearInmueble(texto) {
+  if (!texto) return '';
+  const trimmed = texto.trim();
+  if (!trimmed) return '';
+  // Si ya empieza con un artículo determinante o indeterminante, se respeta
+  if (/^(el|la|los|las|un|una)\s+/i.test(trimmed)) {
+    return trimmed;
+  }
+  // Si no tiene artículo inicial, anteponer 'el '
+  return 'el ' + trimmed;
+}
+
+/**
+ * =========================================================================
+ * CATÁLOGO DE JUSTIFICACIONES Y MOTIVOS PREDEFINIDOS
+ * Categorizado por Tipo de Movimiento (Alta, Baja, Cambio de nombre, Dependencia jerárquica)
+ * =========================================================================
+ */
+const JUSTIFICACIONES_STORAGE_KEY = 'segey_constancias_justificaciones_v1';
+
+const CATALOGO_JUSTIFICACIONES_DEFAULT = {
+  'Alta': [
+    'Por cambios en la Normatividad',
+    'Para mejorar el funcionamiento de la Unidad Administrativa',
+    'Por unificación con otra Área'
+  ],
+  'Baja': [
+    'Por cambios en la Normatividad',
+    'Por redistribución de recursos',
+    'Por conclusión de actividades',
+    'Por transferencia a otra Unidad Administrativa',
+    'Por unificación con otra Área'
+  ],
+  'Cambio de nombre': [
+    'Por cambios en la Normatividad',
+    'Para reflejar los objetivos del Área'
+  ],
+  'Cambio de dependencia jerárquica': [
+    'Por cambios en la Normatividad',
+    'Para cubrir los fines operativos y administrativos del área',
+    'Por transferencia a otra Unidad Administrativa',
+    'Por vinculación de objetivos del área',
+    'Para mejorar el funcionamiento de la Unidad Administrativa'
+  ]
+};
+
+function getJustificacionesCatalog() {
+  try {
+    const stored = localStorage.getItem(JUSTIFICACIONES_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed && typeof parsed === 'object') {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.warn('Error al leer catálogo de justificaciones:', e);
+  }
+  return JSON.parse(JSON.stringify(CATALOGO_JUSTIFICACIONES_DEFAULT));
+}
+
+function saveJustificacionesCatalog(catalog) {
+  try {
+    localStorage.setItem(JUSTIFICACIONES_STORAGE_KEY, JSON.stringify(catalog));
+  } catch (e) {
+    console.error('Error al guardar catálogo de justificaciones:', e);
+  }
+}
+
+function restoreDefaultJustificaciones() {
+  if (confirm('¿Desea restablecer todas las justificaciones y motivos predefinidos a los valores iniciales?')) {
+    saveJustificacionesCatalog(CATALOGO_JUSTIFICACIONES_DEFAULT);
+    renderAdminJustificacionesList(currentAdminJustCat);
+    const selectedRadio = document.querySelector('input[name="tipoMovimiento"]:checked');
+    if (selectedRadio) {
+      poblarSelectJustificaciones(selectedRadio.value);
+    }
+    showToast('Catálogo de justificaciones restablecido a los valores iniciales.');
+  }
+}
+
+function poblarSelectJustificaciones(tipoMovimiento) {
+  const select = document.getElementById('selectJustificacionPredefinida');
+  const badge = document.getElementById('badgeTotalJustificaciones');
+  if (!select) return;
+
+  const catalog = getJustificacionesCatalog();
+  const opciones = catalog[tipoMovimiento] || [];
+
+  select.innerHTML = '<option value="">-- Seleccione una opción predefinida para autocompletar --</option>';
+
+  opciones.forEach((opc, idx) => {
+    const optEl = document.createElement('option');
+    optEl.value = opc;
+    optEl.textContent = `${idx + 1}. ${opc}`;
+    select.appendChild(optEl);
+  });
+
+  if (badge) {
+    badge.textContent = `${opciones.length} opción${opciones.length === 1 ? '' : 'es'} (${tipoMovimiento})`;
+  }
+}
+
+function handleSelectJustificacionPredefinida(selectEl) {
+  if (!selectEl) return;
+  const val = selectEl.value;
+  if (!val) return;
+
+  const justTextarea = document.getElementById('justificacion');
+  if (justTextarea) {
+    justTextarea.value = val.toUpperCase();
+    justTextarea.focus();
+    justTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+    renderDocument(getCurrentFormDataForPreview());
+    showToast('Motivo predefinido cargado en el cuadro de justificación.');
+  }
+}
+
+let currentAdminJustCat = 'Alta';
+
+function switchAdminJustificacionesTab(categoria) {
+  currentAdminJustCat = categoria;
+  document.querySelectorAll('.admin-just-tab').forEach(btn => {
+    const cat = btn.getAttribute('data-cat');
+    if (cat === categoria) {
+      btn.className = 'admin-just-tab px-3 py-2 text-xs font-bold text-white border-b-2 border-purple-500 bg-slate-800/60 rounded-t';
+    } else {
+      btn.className = 'admin-just-tab px-3 py-2 text-xs font-semibold text-slate-400 hover:text-white border-b-2 border-transparent';
+    }
+  });
+
+  const catLabel = document.getElementById('admin-just-current-cat');
+  if (catLabel) catLabel.textContent = categoria;
+
+  renderAdminJustificacionesList(categoria);
+}
+
+function updateAdminJustificacionesCounters() {
+  const catalog = getJustificacionesCatalog();
+  const countAlta = document.getElementById('admin-count-alta');
+  if (countAlta) countAlta.textContent = (catalog['Alta'] || []).length;
+
+  const countBaja = document.getElementById('admin-count-baja');
+  if (countBaja) countBaja.textContent = (catalog['Baja'] || []).length;
+
+  const countNom = document.getElementById('admin-count-nombre');
+  if (countNom) countNom.textContent = (catalog['Cambio de nombre'] || []).length;
+
+  const countDep = document.getElementById('admin-count-dep');
+  if (countDep) countDep.textContent = (catalog['Cambio de dependencia jerárquica'] || []).length;
+
+  updateRegistrySidebarBadges();
+}
+
+function renderAdminJustificacionesList(categoria) {
+  if (!categoria) categoria = currentAdminJustCat;
+  currentAdminJustCat = categoria;
+
+  updateAdminJustificacionesCounters();
+
+  const container = document.getElementById('admin-justificaciones-list');
+  if (!container) return;
+
+  const catalog = getJustificacionesCatalog();
+  const items = catalog[categoria] || [];
+
+  if (items.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-4 text-xs text-slate-500 italic">
+        No hay motivos predefinidos configurados para esta categoría.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = items.map((item, idx) => `
+    <div class="flex items-center justify-between p-2 rounded bg-slate-900 border border-slate-700/80 hover:border-purple-500/50 transition">
+      <div class="flex items-center gap-2 overflow-hidden text-xs text-slate-200">
+        <span class="w-5 h-5 rounded-full bg-purple-900/60 text-purple-300 font-bold flex items-center justify-center text-[10px] shrink-0 border border-purple-700">
+          ${idx + 1}
+        </span>
+        <span class="truncate">${escapeHtml(item)}</span>
+      </div>
+      <button onclick="deleteJustificacionFromAdmin('${categoria}', ${idx})" title="Eliminar opción"
+        class="text-slate-400 hover:text-red-400 p-1 rounded hover:bg-slate-800 transition ml-2 shrink-0">
+        <i class="fa-solid fa-trash-can text-xs"></i>
+      </button>
+    </div>
+  `).join('');
+}
+
+function addNewJustificacionFromAdmin() {
+  const input = document.getElementById('new-justificacion-input');
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) {
+    showToast('Por favor escriba la justificación o motivo antes de agregar.', 'error');
+    input.focus();
+    return;
+  }
+
+  const catalog = getJustificacionesCatalog();
+  if (!catalog[currentAdminJustCat]) {
+    catalog[currentAdminJustCat] = [];
+  }
+
+  if (catalog[currentAdminJustCat].some(item => item.toLowerCase() === val.toLowerCase())) {
+    showToast('Este motivo ya existe en esta categoría.', 'error');
+    input.focus();
+    return;
+  }
+
+  catalog[currentAdminJustCat].push(val);
+  saveJustificacionesCatalog(catalog);
+  input.value = '';
+
+  renderAdminJustificacionesList(currentAdminJustCat);
+
+  const selectedRadio = document.querySelector('input[name="tipoMovimiento"]:checked');
+  if (selectedRadio && selectedRadio.value === currentAdminJustCat) {
+    poblarSelectJustificaciones(currentAdminJustCat);
+  }
+
+  showToast(`Motivo agregado exitosamente a ${currentAdminJustCat}.`);
+}
+
+function deleteJustificacionFromAdmin(categoria, idx) {
+  const catalog = getJustificacionesCatalog();
+  const items = catalog[categoria] || [];
+  if (idx < 0 || idx >= items.length) return;
+
+  const itemToDelete = items[idx];
+  if (!confirm(`¿Eliminar la opción "${itemToDelete}" de ${categoria}?`)) return;
+
+  items.splice(idx, 1);
+  catalog[categoria] = items;
+  saveJustificacionesCatalog(catalog);
+
+  renderAdminJustificacionesList(categoria);
+
+  const selectedRadio = document.querySelector('input[name="tipoMovimiento"]:checked');
+  if (selectedRadio && selectedRadio.value === categoria) {
+    poblarSelectJustificaciones(categoria);
+  }
+
+  showToast('Opción eliminada del catálogo.');
+}
+
+// Exponer explícitamente en window para controladores onclick en HTML
+window.handleSelectJustificacionPredefinida = handleSelectJustificacionPredefinida;
+window.switchAdminJustificacionesTab = switchAdminJustificacionesTab;
+window.addNewJustificacionFromAdmin = addNewJustificacionFromAdmin;
+window.deleteJustificacionFromAdmin = deleteJustificacionFromAdmin;
+window.restoreDefaultJustificaciones = restoreDefaultJustificaciones;
+
+/**
+ * =========================================================================
+ * GESTIÓN DE RESPONSABLES DE CAPTURA POR ÁREA NOTIFICADORA
+ * Asigna un único responsable oficial por cada Área Notificadora (1 por área)
+ * Evita mezclar enlaces de diferentes áreas en el formulario.
+ * =========================================================================
+ */
+const RESPONSABLES_STORAGE_KEY = 'segey_constancias_responsables_area_v1';
+
+function getResponsablesCatalog() {
+  try {
+    const stored = localStorage.getItem(RESPONSABLES_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed && typeof parsed === 'object') {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.warn('Error al leer catálogo de responsables de captura:', e);
+  }
+  return { ...ENLACE_DIRECTO_POR_AREA };
+}
+
+function saveResponsablesCatalog(catalog) {
+  try {
+    localStorage.setItem(RESPONSABLES_STORAGE_KEY, JSON.stringify(catalog));
+  } catch (e) {
+    console.error('Error al guardar catálogo de responsables:', e);
+  }
+}
+
+function restoreDefaultResponsables() {
+  if (confirm('¿Desea restablecer a los 58 Enlaces de Captura oficiales iniciales de la SEGEY?')) {
+    saveResponsablesCatalog(ENLACE_DIRECTO_POR_AREA);
+    renderAdminResponsablesList();
+    const areaSel = document.getElementById('areaNotificadoraSelect');
+    if (areaSel && areaSel.value && areaSel.value !== '__OTRA__') {
+      actualizarTitularesPorArea(areaSel.value);
+    }
+    showToast('Catálogo de 58 responsables de captura oficiales restablecido.');
+  }
+}
+
+function updateResponsableForArea(areaNombre, nuevoResponsable) {
+  if (!areaNombre) return;
+  const catalog = getResponsablesCatalog();
+  catalog[areaNombre] = nuevoResponsable.trim();
+  saveResponsablesCatalog(catalog);
+  renderAdminResponsablesList();
+
+  const currentArea = document.getElementById('areaNotificadora')?.value;
+  if (currentArea === areaNombre) {
+    actualizarTitularesPorArea(areaNombre);
+  }
+  showToast(`Responsable de captura guardado para "${areaNombre}".`);
+}
+
+function saveResponsableFromRow(areaNombre, inputId) {
+  const inp = document.getElementById(inputId);
+  if (!inp) return;
+  const val = inp.value.trim();
+  if (!val) {
+    showToast('Por favor ingrese el nombre del responsable antes de guardar.', 'error');
+    inp.focus();
+    return;
+  }
+  updateResponsableForArea(areaNombre, val);
+}
+
+function renderAdminResponsablesList(filterText = '') {
+  const container = document.getElementById('admin-responsables-list');
+  const badge = document.getElementById('badge-total-responsables-admin');
+  if (!container) return;
+
+  const catalog = getResponsablesCatalog();
+  const q = normalizeText(filterText);
+
+  const areas = (predefinedAreas && predefinedAreas.length > 0) ? predefinedAreas : DEFAULT_AREAS_NOTIFICADORAS;
+
+  const filtered = areas.filter(area => {
+    if (!q) return true;
+    const resp = catalog[area] || '';
+    return normalizeText(area).includes(q) || normalizeText(resp).includes(q);
+  });
+
+  if (badge) {
+    badge.textContent = `${areas.length} áreas configuradas`;
+  }
+  updateRegistrySidebarBadges();
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-4 text-xs text-slate-500 italic">
+        No se encontraron áreas ni responsables que coincidan con "${escapeHtml(filterText)}".
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = filtered.map((area, idx) => {
+    const currentResp = catalog[area] || '';
+    const inputId = `resp-input-${idx}`;
+    return `
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between p-2.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-emerald-500/50 gap-2 transition">
+        <div class="sm:w-1/2 text-xs text-slate-200">
+          <span class="font-bold text-white block text-[11.5px]">${escapeHtml(area)}</span>
+          <span class="text-[10px] text-slate-400">Área Notificadora Oficial</span>
+        </div>
+        <div class="sm:w-1/2 flex items-center gap-2">
+          <input type="text" id="${inputId}" value="${escapeHtml(currentResp)}" placeholder="Nombre del enlace o responsable..."
+            class="w-full text-xs px-2.5 py-1.5 rounded bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-medium">
+          <button onclick="saveResponsableFromRow('${escapeHtml(area)}', '${inputId}')" title="Guardar cambios para esta área"
+            class="px-2.5 py-1.5 text-xs font-semibold rounded bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center gap-1 shrink-0 shadow">
+            <i class="fa-solid fa-floppy-disk text-xs"></i> Guardar
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/**
+ * =========================================================================
+ * FILTRADO Y SELECTORES DE TESTIGOS (1 Y 2)
+ * Personal con puestos correspondientes a:
+ * - Mandos Altos
+ * - Mandos Medios Altos
+ * - Mandos Medios Bajos
+ * =========================================================================
+ */
+const PUESTOS_ELEGIBLES_TESTIGOS = [
+  // 1. Mandos Altos
+  'Secretario de Educación', 'Subsecretario', 'Jefe del Despacho', 'Director General',
+  'Coordinador General', 'Director', 'Director Jurídico', 'Subdirector', 'Jefe de Departamento',
+  'Coordinador', 'Coordinador de Soporte Técnico (TIC)', 'Director de Plantel', 'Director de Centro',
+  // 2. Mandos Medios Altos
+  'Secretario Particular', 'Secretario Técnico', 'Subdirector Administrativo del Centro',
+  'Subdirector Académico del Centro', 'Subjefe', 'Coordinador Regional', 'Coordinador de Área',
+  'Supervisor de Zona', 'Encargado de Área', 'Enlace', 'Supervisor Administrativo',
+  'Responsable de Área', 'Supervisor de Área', 'Supervisor de Infraestructura', 'Jefe de Oficina',
+  'Administrador de Conectividad (TIC)', 'Administrador de Servidores (TIC)',
+  'Desarrollador de Software (TIC)', 'Asesor Especializado', 'Administrativo Especializado',
+  'Validador de Infraestructura', 'Asesor', 'Asistente Administrativo', 'Enlace Técnico',
+  'Técnico de Soporte Especializado (TIC)',
+  // 3. Mandos Medios Bajos
+  'Responsable', 'Tutor', 'Analista Administrativo', 'Asesor de Sector', 'Asesor Académico',
+  'Asesor Técnico', 'Docente Académico', 'Docente en Enseñanza Artística', 'Psicólogo Educativo',
+  'Orientador Educativo', 'Sensibilizador Cultural', 'Promotor Académico/Cultural', 'Evaluador Educativo'
+];
+
+function esPuestoElegibleTestigo(puesto) {
+  if (!puesto) return false;
+  const pNorm = normalizeText(puesto);
+
+  // Exclusión de mandos operativos / bajos
+  const excluidos = [
+    'intendente', 'vigilante', 'chofer', 'diligenciero', 'operador telefonico',
+    'archivista', 'recepcionista', 'prefecto', 'bibliotecario', 'operador audiovisual',
+    'reportero', 'auxiliar operativo', 'tecnico en mantenimiento'
+  ];
+  for (const exc of excluidos) {
+    if (pNorm.includes(exc)) return false;
+  }
+
+  return PUESTOS_ELEGIBLES_TESTIGOS.some(pTarget => {
+    const tNorm = normalizeText(pTarget);
+    return pNorm.includes(tNorm) || tNorm.includes(pNorm);
+  });
+}
+
+function limpiarNombreParaComparacion(str) {
+  if (!str) return '';
+  return normalizeText(str)
+    .replace(/\b(lic|licenciado|licenciada|mtro|mtra|maestro|maestra|dr|dra|doctor|doctora|ing|ingeniero|ingeniera|cp|c\.p\.|abog|abogado|abogada|prof|profr|profa|profesor|profesora|lcc|l\.c\.c\.|lae|l\.a\.e\.|psic|psicologo|psicologa|tec|tecnico|tecnica)\b/gi, '')
+    .replace(/[^a-z0-9]/gi, '')
+    .trim();
+}
+
+function esTitularSeleccionado(nombreCandidato, listaTitulares) {
+  if (!nombreCandidato || !listaTitulares || !Array.isArray(listaTitulares) || listaTitulares.length === 0) return false;
+  const cleanCand = limpiarNombreParaComparacion(nombreCandidato);
+  if (!cleanCand || cleanCand.length < 3) return false;
+
+  return listaTitulares.some(tit => {
+    if (!tit) return false;
+    const cleanTit = limpiarNombreParaComparacion(tit);
+    if (!cleanTit || cleanTit.length < 3) return false;
+    return cleanCand === cleanTit || cleanCand.includes(cleanTit) || cleanTit.includes(cleanCand);
+  });
+}
+
+function getTitularesSeleccionadosParaOmitir() {
+  const lista = [];
+
+  // 1. Titular de Unidad Administrativa (1)
+  const u1Input = document.getElementById('titularUnidad1Nombre');
+  const u1Nom = u1Input ? u1Input.value.trim() : '';
+  if (u1Nom && u1Nom !== '___________________________') {
+    lista.push(u1Nom);
+  }
+
+  // 2. Titular de Unidad Administrativa (2) / Jefe Inmediato
+  const u2Input = document.getElementById('titularUnidad2Nombre');
+  const u2Nom = u2Input ? u2Input.value.trim() : '';
+  if (u2Nom && u2Nom !== '___________________________' && u2Nom.toLowerCase() !== 'no aplica' && u2Nom.toLowerCase() !== 'n/a') {
+    lista.push(u2Nom);
+  }
+
+  // 3. Titulares oficiales de las unidades según el catálogo
+  const areaSelect = document.getElementById('areaNotificadoraSelect');
+  const areaNombre = areaSelect ? areaSelect.value : '';
+  const unidadOrigenId = (typeof AREA_TO_UNIDAD_MAP !== 'undefined') ? AREA_TO_UNIDAD_MAP[areaNombre] : null;
+  if (typeof CATALOGO_ORGANICO_SEGEY !== 'undefined') {
+    let uOrigen = unidadOrigenId ? CATALOGO_ORGANICO_SEGEY.find(u => u.id === unidadOrigenId) : null;
+    if (!uOrigen && areaNombre) {
+      uOrigen = CATALOGO_ORGANICO_SEGEY.find(u => u.unidad === areaNombre) ||
+                CATALOGO_ORGANICO_SEGEY.find(u => areaNombre.toLowerCase().includes(u.unidad.toLowerCase()));
+    }
+    if (uOrigen && uOrigen.titular && uOrigen.titular.nombre) {
+      lista.push(uOrigen.titular.nombre);
+    }
+
+    const selT2 = document.getElementById('selectTitularUnidad2');
+    const uDestinoId = selT2 ? selT2.value : '';
+    if (uDestinoId && uDestinoId !== '__MANUAL__') {
+      const uDest = CATALOGO_ORGANICO_SEGEY.find(u => u.id === uDestinoId);
+      if (uDest && uDest.titular && uDest.titular.nombre) {
+        lista.push(uDest.titular.nombre);
+      }
+    }
+  }
+
+  return lista;
+}
+
+function poblarSelectTestigos(areaNombre) {
+  if (typeof CATALOGO_ORGANICO_SEGEY === 'undefined' || !Array.isArray(CATALOGO_ORGANICO_SEGEY)) return;
+
+  if (!areaNombre) {
+    const areaSelect = document.getElementById('areaNotificadoraSelect');
+    areaNombre = areaSelect ? areaSelect.value : '';
+  }
+
+  const selectedRadio = document.querySelector('input[name="tipoMovimiento"]:checked');
+  const tipoMov = selectedRadio ? selectedRadio.value : 'Alta';
+
+  // 1. Obtener la Unidad Notificadora (Origen)
+  let unidadOrigenId = AREA_TO_UNIDAD_MAP[areaNombre];
+  let unidadOrigen = null;
+  if (unidadOrigenId) {
+    unidadOrigen = CATALOGO_ORGANICO_SEGEY.find(u => u.id === unidadOrigenId);
+  }
+  if (!unidadOrigen && areaNombre) {
+    unidadOrigen = CATALOGO_ORGANICO_SEGEY.find(u => u.unidad === areaNombre) ||
+                   CATALOGO_ORGANICO_SEGEY.find(u => areaNombre.toLowerCase().includes(u.unidad.toLowerCase()) || u.unidad.toLowerCase().includes(areaNombre.toLowerCase()));
+  }
+
+  // Poblar Testigo 1 siempre con la Unidad Notificadora
+  poblarDropdownTestigo(1, unidadOrigen, 'Área Notificadora');
+
+  // Para Testigo 2:
+  if (tipoMov === 'Cambio de dependencia jerárquica') {
+    const selT2 = document.getElementById('selectTitularUnidad2');
+    const unidadDestinoId = selT2 ? selT2.value : '';
+    let unidadDestino = null;
+    if (unidadDestinoId && unidadDestinoId !== '__MANUAL__') {
+      unidadDestino = CATALOGO_ORGANICO_SEGEY.find(u => u.id === unidadDestinoId);
+    }
+    poblarDropdownTestigo(2, unidadDestino, 'Dependencia de Destino');
+  } else {
+    // Alta, Baja o Cambio de nombre: Unidad Notificadora
+    poblarDropdownTestigo(2, unidadOrigen, 'Área Notificadora');
+  }
+}
+
+function poblarDropdownTestigo(num, unidad, etiqueta) {
+  const select = document.getElementById(`selectTestigo${num}`);
+  const badge = document.getElementById(`badgeTestigo${num}`);
+  if (!select) return;
+
+  if (!unidad) {
+    const isDestino = (num === 2 && etiqueta.includes('Destino'));
+    const msg = isDestino ? 'la Dependencia de Destino en Titular (2) arriba' : 'el Área que Notifica o Elabora arriba';
+    select.innerHTML = `<option value="">-- Primero elija ${msg} --</option>`;
+    if (badge) {
+      badge.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
+      badge.innerHTML = `<i class="fa-solid fa-users text-slate-400 mr-1"></i>${isDestino ? 'Pendiente de Titular (2)' : 'Pendiente de Área (1)'}`;
+    }
+    return;
+  }
+
+  // Lista de titulares de unidad administrativa seleccionados a omitir de los testigos
+  const listaTitularesOmitir = getTitularesSeleccionadosParaOmitir();
+
+  const subs = unidad.subordinados || [];
+  // Filtrar subordinados elegibles omitiendo vacantes y a los titulares seleccionados
+  const elegibles = subs.filter(s => {
+    if (!s || !s.nombre) return false;
+    if (s.nombre.toLowerCase().includes('vacante')) return false;
+    if (!esPuestoElegibleTestigo(s.puesto)) return false;
+    if (esTitularSeleccionado(s.nombre, listaTitularesOmitir)) return false;
+    return true;
+  });
+
+  const unidadTag = (num === 2 && etiqueta.includes('Destino')) ? 'Unidad (2) Destino' : 'Unidad (1)';
+  let html = `<option value="" selected>-- Seleccione Testigo (${num}) de ${unidadTag} --</option>`;
+
+  // Opción del Titular de la Unidad solo si aplica, es elegible y NO es uno de los titulares seleccionados
+  if (unidad.titular && unidad.titular.nombre && esPuestoElegibleTestigo(unidad.titular.cargo)) {
+    if (!esTitularSeleccionado(unidad.titular.nombre, listaTitularesOmitir)) {
+      html += `<option value="titular_unidad" data-nombre="${escapeHtml(unidad.titular.nombre)}" data-cargo="${escapeHtml(unidad.titular.cargo)}">${escapeHtml(unidad.titular.cargo)} — ${escapeHtml(unidad.titular.nombre)}</option>`;
+    }
+  }
+
+  elegibles.forEach((s, idx) => {
+    const displayLabel = `${s.puesto} — ${s.nombre}`;
+    html += `<option value="sub_${idx}" data-nombre="${escapeHtml(s.nombre)}" data-cargo="${escapeHtml(s.puesto)}">${escapeHtml(displayLabel)}</option>`;
+  });
+
+  html += `<option value="__MANUAL__">✏️ + Ingresar otro puesto y nombre manualmente...</option>`;
+  select.innerHTML = html;
+
+  // Si el Testigo actualmente seleccionado coincide con alguno de los titulares seleccionados, deseleccionarlo
+  const tInput = document.getElementById(`testigo${num}Nombre`);
+  const tCarInput = document.getElementById(`testigo${num}Cargo`);
+  if (tInput && tInput.value.trim() && esTitularSeleccionado(tInput.value.trim(), listaTitularesOmitir)) {
+    tInput.value = '';
+    if (tCarInput) tCarInput.value = '';
+    select.value = '';
+    select.selectedIndex = 0;
+    const comboboxInput = document.querySelector(`.segey-combobox[data-for="selectTestigo${num}"] .combobox-input`);
+    if (comboboxInput) comboboxInput.value = '';
+    const comboboxClear = document.querySelector(`.segey-combobox[data-for="selectTestigo${num}"] .combobox-clear`);
+    if (comboboxClear) comboboxClear.classList.add('hidden');
+    showToast(`El Testigo (${num}) se deseleccionó automáticamente porque fue asignado como Titular de Unidad Administrativa.`, 'warning');
+  }
+
+  if (badge) {
+    badge.className = 'text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-semibold border border-emerald-200';
+    badge.innerHTML = `<i class="fa-solid fa-user-check text-emerald-600 mr-1"></i>${elegibles.length} puestos (${unidadTag})`;
+  }
+}
+
+function handleTestigoSelect(selectElem, num) {
+  if (!selectElem) return;
+  const val = selectElem.value;
+  const opt = selectElem.options[selectElem.selectedIndex];
+  const nomInput = document.getElementById(`testigo${num}Nombre`);
+  const carInput = document.getElementById(`testigo${num}Cargo`);
+
+  if (val === '__MANUAL__') {
+    if (nomInput) {
+      nomInput.value = '';
+      nomInput.focus();
+    }
+    if (carInput) {
+      carInput.value = '';
+    }
+    showToast(`Ingrese el nombre y cargo del Testigo (${num}) manualmente.`);
+  } else if (opt && opt.dataset && opt.dataset.nombre) {
+    if (nomInput) nomInput.value = opt.dataset.nombre;
+    if (carInput) carInput.value = opt.dataset.cargo || '';
+  }
+
+  renderDocument(getCurrentFormDataForPreview());
+}
+
+window.handleTestigoSelect = handleTestigoSelect;
+window.saveResponsableFromRow = saveResponsableFromRow;
+window.restoreDefaultResponsables = restoreDefaultResponsables;
+window.renderAdminResponsablesList = renderAdminResponsablesList;
+window.poblarSelectTestigos = poblarSelectTestigos;
+
+function handleAreaSelectChange(selectEl) {
+  const customWrapper = document.getElementById('areaNotificadoraCustomWrapper');
+  const customInput = document.getElementById('areaNotificadoraCustom');
+  const hiddenInput = document.getElementById('areaNotificadora');
+  const areaVal = selectEl.value;
+
+  if (areaVal === '__OTRA__') {
+    if (customWrapper) customWrapper.classList.remove('hidden');
+    if (customInput) {
+      customInput.focus();
+      if (hiddenInput) hiddenInput.value = customInput.value.trim();
+    }
+    setupManualTitulares();
+    renderDocument(getCurrentFormDataForPreview());
+    return;
+  }
+
+  if (customWrapper) customWrapper.classList.add('hidden');
+  if (customInput) customInput.value = '';
+  if (hiddenInput) hiddenInput.value = areaVal;
+
+  // Actualizar automáticamente Titular (1) y catálogo de subordinados de Titular de Área
+  actualizarTitularesPorArea(areaVal);
+  renderDocument(getCurrentFormDataForPreview());
+}
+
+function handleAreaCustomInput(inputEl) {
+  const hiddenInput = document.getElementById('areaNotificadora');
+  if (hiddenInput) {
+    hiddenInput.value = inputEl.value.trim();
+  }
+}
+
+function setAreaNotificadoraValue(val) {
+  const hiddenInput = document.getElementById('areaNotificadora');
+  const select = document.getElementById('areaNotificadoraSelect');
+  const customWrapper = document.getElementById('areaNotificadoraCustomWrapper');
+  const customInput = document.getElementById('areaNotificadoraCustom');
+
+  if (hiddenInput) hiddenInput.value = val || '';
+
+  if (!select) return;
+
+  if (!val) {
+    select.value = '';
+    if (customWrapper) customWrapper.classList.add('hidden');
+    if (customInput) customInput.value = '';
+    return;
+  }
+
+  let found = false;
+  for (let i = 0; i < select.options.length; i++) {
+    if (select.options[i].value === val) {
+      select.selectedIndex = i;
+      found = true;
+      break;
+    }
+  }
+
+  if (found) {
+    if (customWrapper) customWrapper.classList.add('hidden');
+    if (customInput) customInput.value = '';
+    actualizarTitularesPorArea(val);
+  } else {
+    select.value = '__OTRA__';
+    if (customWrapper) customWrapper.classList.remove('hidden');
+    if (customInput) customInput.value = val;
+    setupManualTitulares();
+  }
+}
+
+/**
+ * =========================================================================
+ * FORMULARIO Y CONTROL DE DATOS
+ * =========================================================================
+ */
+function initFormDefaults() {
+  const now = new Date();
+  const fechaInput = document.getElementById('fechaActa');
+  const horaInput = document.getElementById('horaActa');
+  const folioInput = document.getElementById('folioControl');
+
+  if (fechaInput && !fechaInput.value) {
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    fechaInput.value = `${yyyy}-${mm}-${dd}`;
+  }
+
+  if (horaInput && !horaInput.value) {
+    const hh = String(now.getHours()).padStart(2, '0');
+    const min = String(now.getMinutes()).padStart(2, '0');
+    horaInput.value = `${hh}:${min}`;
+  }
+
+  if (folioInput && !folioInput.value) {
+    folioInput.value = generateNextFolio();
+  }
+
+  // Vincular eventos de Tipo de Movimiento para Titular (2)
+  document.querySelectorAll('input[name="tipoMovimiento"]').forEach(radio => {
+    radio.removeEventListener('change', handleTipoMovimientoChange);
+    radio.addEventListener('change', handleTipoMovimientoChange);
+  });
+  handleTipoMovimientoChange();
+
+  // Forzar restricción estricta a mayúsculas en Apartados II y III y actualizar vista previa en vivo
+  const ndInput = document.getElementById('nuevaDenominacion');
+  if (ndInput) {
+    ndInput.addEventListener('input', () => {
+      ndInput.value = ndInput.value.toUpperCase();
+      renderDocument(getCurrentFormDataForPreview());
+    });
+  }
+  const nnInput = document.getElementById('nuevoNombre');
+  if (nnInput) {
+    nnInput.addEventListener('input', () => {
+      nnInput.value = nnInput.value.toUpperCase();
+      renderDocument(getCurrentFormDataForPreview());
+    });
+  }
+  const justInput = document.getElementById('justificacion');
+  if (justInput) {
+    justInput.addEventListener('input', () => {
+      justInput.value = justInput.value.toUpperCase();
+      renderDocument(getCurrentFormDataForPreview());
+    });
+  }
+
+  // Sincronizar listas de Testigos si se edita manualmente el nombre de Titular (1) o Titular (2)
+  const u1NomInput = document.getElementById('titularUnidad1Nombre');
+  if (u1NomInput) {
+    u1NomInput.addEventListener('input', () => {
+      poblarSelectTestigos();
+      renderDocument(getCurrentFormDataForPreview());
+    });
+  }
+  const u2NomInput = document.getElementById('titularUnidad2Nombre');
+  if (u2NomInput) {
+    u2NomInput.addEventListener('input', () => {
+      poblarSelectTestigos();
+      renderDocument(getCurrentFormDataForPreview());
+    });
+  }
+
+  // Sincronizar Titulares de Área manuales con la vista previa
+  const taNomInput = document.getElementById('titularAreaNombre');
+  if (taNomInput) {
+    taNomInput.addEventListener('input', () => {
+      renderDocument(getCurrentFormDataForPreview());
+    });
+  }
+  const taCarInput = document.getElementById('titularAreaCargo');
+  if (taCarInput) {
+    taCarInput.addEventListener('input', () => {
+      renderDocument(getCurrentFormDataForPreview());
+    });
+  }
+  const ta2NomInput = document.getElementById('titularArea2Nombre');
+  if (ta2NomInput) {
+    ta2NomInput.addEventListener('input', () => {
+      renderDocument(getCurrentFormDataForPreview());
+    });
+  }
+  const ta2CarInput = document.getElementById('titularArea2Cargo');
+  if (ta2CarInput) {
+    ta2CarInput.addEventListener('input', () => {
+      renderDocument(getCurrentFormDataForPreview());
+    });
+  }
+
+  // Auto-verificación de artículo en Inmueble que Ocupa (ej: 'Edificio...' -> 'el Edificio...')
+  const inmInput = document.getElementById('inmueble');
+  if (inmInput) {
+    inmInput.addEventListener('blur', () => {
+      if (inmInput.value.trim()) {
+        inmInput.value = formatearInmueble(inmInput.value);
+        renderDocument(getCurrentFormDataForPreview());
+      }
+    });
+  }
+}
+
+/**
+ * Controla la configuración dinámica del formulario según el Tipo de Movimiento:
+ * - Para "Alta": el Titular de Área se captura manualmente (se oculta el dropdown selectTitularArea).
+ * - Para "Alta", "Baja" o "Cambio de nombre": Titular (2) se convierte en "Jefe Inmediato", habilitado
+ *   con lista desplegable del personal y mandos vinculados a la Unidad Administrativa.
+ * - Para "Cambio de dependencia jerárquica": Titular (2) es la Unidad de Destino (catálogo completo de unidades).
+ */
+function handleTipoMovimientoChange() {
+  const selectedRadio = document.querySelector('input[name="tipoMovimiento"]:checked');
+  if (!selectedRadio) return;
+  const val = selectedRadio.value;
+
+  const containerT2 = document.getElementById('containerTitularUnidad2');
+  const lblT2 = document.getElementById('lblTitularUnidad2');
+  const badgeT2 = document.getElementById('badgeTitular2');
+  const lblSelectT2 = document.getElementById('lblSelectTitularUnidad2');
+  const selectT2 = document.getElementById('selectTitularUnidad2');
+  const lblT2Nom = document.getElementById('lblTitularUnidad2Nombre');
+  const lblT2Car = document.getElementById('lblTitularUnidad2Cargo');
+  const t2NomInput = document.getElementById('titularUnidad2Nombre');
+  const t2CarInput = document.getElementById('titularUnidad2Cargo');
+
+  // 1. Control de Titulares de Área (1 y 2)
+  const contSelectArea = document.getElementById('containerSelectTitularArea');
+  const aNom = document.getElementById('titularAreaNombre');
+  const aCar = document.getElementById('titularAreaCargo');
+  const badgeArea = document.getElementById('badgeAreaSubordinados');
+  const lblArea1 = document.getElementById('lblTitularArea1');
+  const wrapTitularesArea = document.getElementById('wrapperTitularesArea');
+  const contArea2 = document.getElementById('containerTitularArea2');
+  const a2Nom = document.getElementById('titularArea2Nombre');
+  const a2Car = document.getElementById('titularArea2Cargo');
+
+  const contTestigo2 = document.getElementById('containerTestigo2');
+  const test2Nom = document.getElementById('testigo2Nombre');
+  const test2Car = document.getElementById('testigo2Cargo');
+  const lblTestigo1 = document.getElementById('lblTestigo1');
+  const badgeTestigo1 = document.getElementById('badgeTestigo1');
+
+  if (val === 'Cambio de dependencia jerárquica') {
+    if (lblArea1) lblArea1.innerHTML = '<i class="fa-solid fa-user-tie text-segey-700"></i> Titular de Área <span class="text-red-500">*</span>';
+    if (wrapTitularesArea) wrapTitularesArea.className = 'space-y-4';
+    if (contArea2) contArea2.classList.add('hidden');
+    if (contSelectArea) contSelectArea.classList.remove('hidden');
+    if (aNom) aNom.placeholder = 'Nombre completo del Titular del Área';
+    if (aCar) aCar.placeholder = 'Cargo o puesto del Titular del Área';
+    if (a2Nom) { a2Nom.required = false; a2Nom.value = ''; }
+    if (a2Car) a2Car.value = '';
+
+    // En Cambio de Dependencia Jerárquica: Solo hay 1 Testigo (Testigo 1)
+    if (contTestigo2) contTestigo2.classList.add('hidden');
+    if (test2Nom) { test2Nom.required = false; test2Nom.value = ''; }
+    if (test2Car) { test2Car.required = false; test2Car.value = ''; }
+    if (lblTestigo1) lblTestigo1.innerHTML = '<i class="fa-solid fa-users text-segey-700"></i> Testigo (1) <span class="text-red-500">*</span>';
+    if (badgeTestigo1) badgeTestigo1.innerHTML = '<i class="fa-solid fa-check mr-1 text-emerald-600"></i>Testigo del Trámite';
+  } else {
+    if (lblArea1) lblArea1.innerHTML = '<i class="fa-solid fa-user-tie text-segey-700"></i> Titular de Área <span class="text-red-500">*</span>';
+    if (wrapTitularesArea) wrapTitularesArea.className = 'space-y-4';
+    if (contArea2) contArea2.classList.add('hidden');
+    if (a2Nom) {
+      a2Nom.required = false;
+      a2Nom.value = '';
+    }
+    if (a2Car) a2Car.value = '';
+
+    // Restaurar Testigo 2 para Alta, Baja y Cambio de nombre
+    if (contTestigo2) contTestigo2.classList.remove('hidden');
+    if (test2Nom) test2Nom.required = true;
+    if (test2Car) test2Car.required = true;
+    if (lblTestigo1) lblTestigo1.innerHTML = '<i class="fa-solid fa-users text-segey-700"></i> Testigo (1) <span class="text-red-500">*</span>';
+    if (badgeTestigo1) badgeTestigo1.innerHTML = '<i class="fa-solid fa-filter text-slate-400 mr-1"></i>Según Área que Notifica';
+
+    if (val === 'Alta') {
+      if (contSelectArea) contSelectArea.classList.add('hidden');
+      if (aNom) {
+        aNom.removeAttribute('readonly');
+        aNom.placeholder = 'Escriba el nombre completo del Titular del Área';
+      }
+      if (aCar) {
+        aCar.removeAttribute('readonly');
+        aCar.classList.remove('bg-slate-50', 'text-slate-700');
+        aCar.classList.add('bg-white', 'text-slate-800');
+        aCar.placeholder = 'Escriba el cargo o puesto del Titular del Área';
+      }
+      if (badgeArea) {
+        badgeArea.className = 'text-[10.5px] bg-sky-50 text-sky-700 border border-sky-200 px-2.5 py-0.5 rounded-full font-semibold flex items-center gap-1';
+        badgeArea.innerHTML = '<i class="fa-solid fa-pen mr-1 text-sky-600"></i>Captura directa habilitada (Trámite de Alta)';
+      }
+    } else {
+      if (contSelectArea) contSelectArea.classList.remove('hidden');
+      if (aNom) {
+        aNom.placeholder = 'Nombre completo del Titular del Área';
+      }
+      if (aCar) {
+        aCar.placeholder = 'Cargo o puesto del Titular del Área';
+      }
+    }
+  }
+
+  // 2. Control de Titular 2 / Jefe Inmediato
+  if (val === 'Cambio de dependencia jerárquica') {
+    if (containerT2) {
+      containerT2.className = 'bg-emerald-50/40 p-3.5 rounded-xl border border-emerald-300 space-y-2.5 shadow-xs transition-all ring-1 ring-emerald-200';
+    }
+    if (lblT2) lblT2.textContent = 'Titular de Unidad Administrativa (2)';
+    if (badgeT2) {
+      badgeT2.className = 'text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold shadow-2xs';
+      badgeT2.innerHTML = '<i class="fa-solid fa-arrow-right-arrow-left mr-1"></i>Dependencia de Destino (Requerida)';
+    }
+    if (lblSelectT2) lblSelectT2.textContent = 'Seleccionar Dependencia Jerárquica de Destino:';
+    if (lblT2Nom) lblT2Nom.textContent = '1. Nombre Completo (Destino):';
+    if (lblT2Car) lblT2Car.textContent = '2. Cargo o Puesto (Destino):';
+
+    if (selectT2) {
+      selectT2.disabled = false;
+      selectT2.className = 'hidden';
+      selectT2.style.display = 'none';
+      selectT2.setAttribute('data-combobox-hidden', 'true');
+      initSelectTitularUnidad2();
+    }
+    if (t2NomInput) {
+      if (t2NomInput.value === 'No Aplica' || t2NomInput.value === 'No aplica') {
+        t2NomInput.value = '';
+      }
+      t2NomInput.removeAttribute('readonly');
+      t2NomInput.className = 'w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-white';
+      t2NomInput.placeholder = 'Nombre completo del Titular de la Unidad de Destino';
+    }
+    if (t2CarInput) {
+      t2CarInput.removeAttribute('readonly');
+      t2CarInput.className = 'w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-slate-50 text-slate-700';
+      t2CarInput.placeholder = 'Cargo o puesto del Titular de la Unidad de Destino';
+    }
+  } else {
+    // Alta, Baja o Cambio de nombre: Jefe Inmediato
+    if (containerT2) {
+      containerT2.className = 'bg-white p-3.5 rounded-xl border border-slate-200 space-y-2.5 shadow-xs transition-all';
+    }
+    if (lblT2) lblT2.textContent = 'Jefe Inmediato';
+    if (badgeT2) {
+      badgeT2.className = 'text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-semibold border border-emerald-200';
+      badgeT2.innerHTML = '<i class="fa-solid fa-user-shield mr-1"></i>Jefe Inmediato';
+    }
+    if (lblSelectT2) lblSelectT2.textContent = 'Seleccionar Jefe Inmediato de la Unidad:';
+    if (lblT2Nom) lblT2Nom.textContent = '1. Nombre Completo:';
+    if (lblT2Car) lblT2Car.textContent = '2. Cargo o Puesto:';
+
+    if (selectT2) {
+      selectT2.disabled = false;
+      selectT2.className = 'hidden';
+      selectT2.style.display = 'none';
+      selectT2.setAttribute('data-combobox-hidden', 'true');
+      poblarSelectJefeInmediato();
+    }
+    if (t2NomInput) {
+      if (t2NomInput.value === 'No Aplica' || t2NomInput.value === 'No aplica') {
+        t2NomInput.value = '';
+      }
+      t2NomInput.removeAttribute('readonly');
+      t2NomInput.className = 'w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-white';
+      t2NomInput.placeholder = 'Nombre completo del Jefe Inmediato';
+    }
+    if (t2CarInput) {
+      t2CarInput.removeAttribute('readonly');
+      t2CarInput.className = 'w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-slate-50 text-slate-700';
+      t2CarInput.placeholder = 'Cargo o puesto del Jefe Inmediato';
+    }
+  }
+
+  // 3. Control de Selector de Áreas vinculadas para "Baja" y "Cambio de nombre"
+  const containerAreaBaja = document.getElementById('containerSelectAreaBaja');
+  if (val === 'Baja') {
+    if (containerAreaBaja) {
+      containerAreaBaja.classList.remove('hidden');
+      poblarSelectAreaBaja();
+      const selBaja = document.getElementById('selectAreaBaja');
+      if (selBaja && selBaja.value && selBaja.value !== '__OTRA__') {
+        vincularJefeInmediatoConArea(selBaja.value);
+      }
+    }
+  } else {
+    if (containerAreaBaja) {
+      containerAreaBaja.classList.add('hidden');
+    }
+  }
+
+  const containerAreaCambio = document.getElementById('containerSelectAreaCambioNombre');
+  const containerNuevoNombre = document.getElementById('containerNuevoNombre');
+  const lblNuevaDenom = document.getElementById('lblNuevaDenominacion');
+  const ndInputElem = document.getElementById('nuevaDenominacion');
+  const nnInputElem = document.getElementById('nuevoNombre');
+
+  if (val === 'Cambio de nombre') {
+    if (containerAreaCambio) {
+      containerAreaCambio.classList.remove('hidden');
+      poblarSelectAreaCambioNombre();
+      const selCambio = document.getElementById('selectAreaCambioNombre');
+      if (selCambio && selCambio.value && selCambio.value !== '__OTRA__') {
+        vincularJefeInmediatoConArea(selCambio.value);
+      }
+    }
+    if (containerNuevoNombre) {
+      containerNuevoNombre.classList.remove('hidden');
+    }
+    if (lblNuevaDenom) {
+      lblNuevaDenom.innerHTML = '<i class="fa-solid fa-pen-nib text-amber-600 mr-1"></i>1. Nombre Actual del Área o Adscripción (Seleccionado en la lista superior o editable) <span class="text-red-500">*</span>';
+    }
+    if (ndInputElem) {
+      ndInputElem.placeholder = 'NOMBRE ACTUAL DEL ÁREA (SELECCIONADO EN LA LISTA SUPERIOR O EDITE AQUÍ)...';
+    }
+    if (nnInputElem) {
+      nnInputElem.required = true;
+    }
+  } else {
+    if (containerAreaCambio) {
+      containerAreaCambio.classList.add('hidden');
+    }
+    if (containerNuevoNombre) {
+      containerNuevoNombre.classList.add('hidden');
+    }
+    if (lblNuevaDenom) {
+      lblNuevaDenom.innerHTML = 'Nombre del Área o Adscripción <span class="text-red-500">*</span>';
+    }
+    if (ndInputElem) {
+      ndInputElem.placeholder = 'ESPECIFIQUE CON PRECISIÓN EL NOMBRE DEL ÁREA, CLAVE O ADSCRIPCIÓN DETERMINADA...';
+    }
+    if (nnInputElem) {
+      nnInputElem.required = false;
+      nnInputElem.value = '';
+    }
+  }
+
+  // 4. Control de Justificaciones Predefinidas según Tipo de Movimiento
+  const selJust = document.getElementById('selectJustificacionPredefinida');
+  if (selJust) selJust.value = '';
+  poblarSelectJustificaciones(val);
+
+  // 5. Control de Listas Desplegables de Testigos (1 y 2)
+  poblarSelectTestigos();
+
+  renderDocument(getCurrentFormDataForPreview());
+}
+
+function initQueryParams() {
+  const params = new URLSearchParams(window.location.search);
+  const mode = params.get('mode');
+  const id = params.get('id');
+
+  if (mode === 'form') {
+    switchTab('tab-form');
+    const banner = document.getElementById('shared-mode-banner');
+    if (banner) banner.classList.remove('hidden');
+  } else if (id) {
+    const record = records.find(r => r.id === id);
+    if (record) {
+      renderDocument(record);
+      switchTab('tab-preview', true);
+    }
+  } else if (records.length > 0) {
+    renderDocument(records[0]);
+  }
+}
+
+let isSubmittingForm = false;
+
+function generateNextFolio() {
+  const anio = new Date().getFullYear();
+  let maxNum = 0;
+
+  records.forEach(r => {
+    if (r.folio) {
+      const match = r.folio.match(/(\d+)$/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (!isNaN(num) && num > maxNum) {
+          maxNum = num;
+        }
+      }
+    }
+  });
+
+  let nextCandidate = maxNum + 1;
+  let candidateFolio = `DIMC-CC-${anio}-${String(nextCandidate).padStart(3, '0')}`;
+
+  // Garantizar unicidad matemática absoluta contra toda la bitácora
+  while (records.some(r => r.folio === candidateFolio)) {
+    nextCandidate++;
+    candidateFolio = `DIMC-CC-${anio}-${String(nextCandidate).padStart(3, '0')}`;
+  }
+
+  return candidateFolio;
+}
+
+function switchTab(tabId, preserveRecord = false) {
+  // Protección de acceso a la Bitácora y Control (Solo Administrador)
+  if (tabId === 'tab-registry' && !isAdminLoggedIn()) {
+    openAdminLoginModal();
+    showToast('Inicie sesión como Administrador para acceder a la Bitácora.', 'info');
+    return;
+  }
+
+  // Si se regresa al formulario para capturar un nuevo documento, asegurar folio libre no duplicado
+  if (tabId === 'tab-form' && !editingRecordId) {
+    const folioInput = document.getElementById('folioControl');
+    if (folioInput && (!folioInput.value || records.some(r => r.folio === folioInput.value))) {
+      folioInput.value = generateNextFolio();
+    }
+  }
+
+  // Si se ingresa a la Vista del Documento sin solicitar un registro histórico específico,
+  // compilar y renderizar de inmediato la información actual que se está llenando en el formulario
+  if (tabId === 'tab-preview' && !preserveRecord) {
+    const liveFormData = getCurrentFormDataForPreview();
+    renderDocument(liveFormData);
+  }
+
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('block'));
+
+  const target = document.getElementById(tabId);
+  if (target) {
+    target.classList.remove('hidden');
+    target.classList.add('block');
+  }
+
+  document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+  const activeBtn = document.getElementById(`btn-${tabId}`);
+  if (activeBtn) activeBtn.classList.add('active');
+
+  if (tabId === 'tab-registry') {
+    renderTable();
+    updateStats();
+    populateAreaFilter();
+    populateLayoutSelector();
+    updateLayoutUIBadge();
+    renderAdminAreasList();
+    renderAdminJustificacionesList();
+    renderAdminResponsablesList();
+    updateRegistrySidebarBadges();
+    if (!currentRegistrySection) {
+      switchRegistrySection('constancias');
+    }
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function handleFormSubmit(event) {
+  event.preventDefault();
+
+  if (isSubmittingForm) return;
+  isSubmittingForm = true;
+
+  const areaNotificadora = document.getElementById('areaNotificadora').value.trim();
+  const areaSelect = document.getElementById('areaNotificadoraSelect');
+  if (areaSelect && areaSelect.value === '__OTRA__' && !areaNotificadora) {
+    showToast('Por favor especifique el nombre del área notificadora.', 'error');
+    const customInp = document.getElementById('areaNotificadoraCustom');
+    if (customInp) customInp.focus();
+    isSubmittingForm = false;
+    return;
+  }
+
+  const responsableCaptura = document.getElementById('responsableCaptura').value.trim();
+  const respSelect = document.getElementById('selectResponsableCaptura');
+  if (respSelect && respSelect.value === '__MANUAL__' && !responsableCaptura) {
+    showToast('Por favor especifique el nombre del responsable de captura en el recuadro inferior.', 'error');
+    const customRespInp = document.getElementById('responsableCapturaCustom');
+    if (customRespInp) customRespInp.focus();
+    isSubmittingForm = false;
+    return;
+  }
+  if (!responsableCaptura) {
+    showToast('Por favor seleccione el responsable de captura de la lista.', 'error');
+    if (respSelect) respSelect.focus();
+    isSubmittingForm = false;
+    return;
+  }
+  
+  // Validación estricta anti-duplicados:
+  // Si no se proporcionó folio o si ya existe en la bitácora asignado a otro registro, generar automáticamente el siguiente
+  let folio = document.getElementById('folioControl').value.trim();
+  const folioExists = records.some(r => r.folio === folio && r.id !== editingRecordId);
+  if (!folio || folioExists) {
+    folio = generateNextFolio();
+    const folioInp = document.getElementById('folioControl');
+    if (folioInp) folioInp.value = folio;
+  }
+
+  const municipio = document.getElementById('municipio').value.trim();
+  const fechaActaStr = document.getElementById('fechaActa').value;
+  const horaActaStr = document.getElementById('horaActa').value;
+  let inmueble = document.getElementById('inmueble').value.trim();
+  inmueble = formatearInmueble(inmueble);
+  const inmEl = document.getElementById('inmueble');
+  if (inmEl && inmueble) inmEl.value = inmueble;
+
+  // Comparecientes: Nombre y Cargo por separado
+  const titularUnidad1Nombre = document.getElementById('titularUnidad1Nombre').value.trim();
+  const titularUnidad1Cargo = document.getElementById('titularUnidad1Cargo').value.trim();
+
+  const titularUnidad2Nombre = document.getElementById('titularUnidad2Nombre').value.trim();
+  const titularUnidad2Cargo = document.getElementById('titularUnidad2Cargo').value.trim();
+
+  const titularAreaNombre = document.getElementById('titularAreaNombre').value.trim();
+  const titularAreaCargo = document.getElementById('titularAreaCargo').value.trim();
+
+  const titularArea2Nombre = document.getElementById('titularArea2Nombre')?.value.trim() || '';
+  const titularArea2Cargo = document.getElementById('titularArea2Cargo')?.value.trim() || '';
+
+  const testigo1Nombre = document.getElementById('testigo1Nombre').value.trim();
+  const testigo1Cargo = document.getElementById('testigo1Cargo').value.trim();
+
+  const testigo2Nombre = document.getElementById('testigo2Nombre').value.trim();
+  const testigo2Cargo = document.getElementById('testigo2Cargo').value.trim();
+
+  const tipoMovimientoEl = document.querySelector('input[name="tipoMovimiento"]:checked');
+  const tipoMovimiento = tipoMovimientoEl ? tipoMovimientoEl.value : 'Alta';
+
+
+
+  const nuevaDenominacion = document.getElementById('nuevaDenominacion').value.trim().toUpperCase();
+  const nuevoNombreInput = document.getElementById('nuevoNombre');
+  const nuevoNombre = nuevoNombreInput ? nuevoNombreInput.value.trim().toUpperCase() : '';
+
+  if (tipoMovimiento === 'Cambio de nombre' && !nuevoNombre) {
+    showToast('Por favor especifique el nuevo nombre o denominación propuesta para el área.', 'error');
+    if (nuevoNombreInput) nuevoNombreInput.focus();
+    isSubmittingForm = false;
+    return;
+  }
+
+  const justificacion = document.getElementById('justificacion').value.trim().toUpperCase();
+  const estatus = document.getElementById('estatus').value;
+
+  // Regla institucional: Usuarios estándar emiten "Generada para Firma" (las demás se habilitarán con la carga de folios)
+  if (!isAdminLoggedIn() && estatus !== 'Generada para Firma') {
+    showToast('Los nuevos trámites se emiten con estatus "Generada (Listo para Firmar)".', 'error');
+    document.getElementById('estatus').value = 'Generada para Firma';
+    isSubmittingForm = false;
+    return;
+  }
+
+  const observaciones = document.getElementById('observaciones').value.trim();
+
+  // Procesar fecha y hora
+  const dateObj = new Date(fechaActaStr + 'T12:00:00');
+  const dia = dateObj.getDate();
+  const mes = MESES[dateObj.getMonth()];
+  const anio = String(dateObj.getFullYear()).slice(-2);
+  const anioCompleto = dateObj.getFullYear();
+
+  const [horas, minutos] = (horaActaStr || '10:00').split(':');
+
+  const titularUnidad1 = titularUnidad1Cargo ? `${titularUnidad1Nombre} - ${titularUnidad1Cargo}` : titularUnidad1Nombre;
+  const titularUnidad2 = titularUnidad2Nombre ? (titularUnidad2Cargo ? `${titularUnidad2Nombre} - ${titularUnidad2Cargo}` : titularUnidad2Nombre) : '';
+  const titularArea = titularAreaCargo ? `${titularAreaNombre} - ${titularAreaCargo}` : titularAreaNombre;
+  const titularArea2 = titularArea2Cargo ? `${titularArea2Nombre} - ${titularArea2Cargo}` : titularArea2Nombre;
+  const testigo1 = testigo1Cargo ? `${testigo1Nombre} - ${testigo1Cargo}` : testigo1Nombre;
+  const testigo2 = testigo2Cargo ? `${testigo2Nombre} - ${testigo2Cargo}` : testigo2Nombre;
+
+  const recordData = {
+    id: editingRecordId || 'rec_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+    folio: folio,
+    fechaRegistro: new Date().toISOString(),
+    areaNotificadora,
+    responsableCaptura,
+    municipio,
+    fechaActa: fechaActaStr,
+    fechaConstancia: fechaActaStr,
+    dia,
+    mes,
+    anio,
+    anioCompleto,
+    horaActa: horaActaStr,
+    horas,
+    minutos,
+    inmueble,
+
+    titularUnidad1Nombre,
+    titularUnidad1Cargo,
+    titularUnidad2Nombre,
+    titularUnidad2Cargo,
+    titularAreaNombre,
+    titularAreaCargo,
+    titularArea2Nombre,
+    titularArea2Cargo,
+    testigo1Nombre,
+    testigo1Cargo,
+    testigo2Nombre,
+    testigo2Cargo,
+
+    titularUnidad1,
+    titularUnidad2,
+    titularArea,
+    titularArea2,
+    testigo1,
+    testigo2,
+
+    tipoMovimiento,
+    esCambioNombre: (tipoMovimiento === 'Cambio de nombre'),
+    noEsCambioNombre: (tipoMovimiento !== 'Cambio de nombre'),
+    nombreActual: (tipoMovimiento === 'Cambio de nombre') ? nuevaDenominacion : '',
+    nuevoNombre: (tipoMovimiento === 'Cambio de nombre') ? nuevoNombre : '',
+    nuevaDenominacion: (tipoMovimiento === 'Cambio de nombre') ? `${nuevaDenominacion} ➔ ${nuevoNombre}` : nuevaDenominacion,
+    justificacion,
+    estatus,
+    observaciones
+  };
+
+  if (editingRecordId) {
+    const idx = records.findIndex(r => r.id === editingRecordId);
+    if (idx !== -1) {
+      const existing = records[idx];
+      recordData.id = existing.id;
+      recordData.fechaRegistro = existing.fechaRegistro || recordData.fechaRegistro;
+
+      // Registrar historial de estatus e indicador de cambios
+      if (existing.estatus !== estatus) {
+        recordData.estatusAnterior = existing.estatus;
+      } else if (existing.estatusAnterior) {
+        recordData.estatusAnterior = existing.estatusAnterior;
+      }
+
+      recordData.fechaModificacion = new Date().toISOString();
+      recordData.vecesEditado = (existing.vecesEditado || 0) + 1;
+
+      // Si estaba inactivo y se actualiza a un estatus activo, registrar reactivación
+      if (existing.estatus === 'Inactivo' && estatus !== 'Inactivo') {
+        recordData.fechaReactivacion = new Date().toISOString();
+      }
+
+      records[idx] = { ...existing, ...recordData };
+    } else {
+      records.unshift(recordData);
+    }
+    showToast(`Constancia ${folio} actualizada.`);
+    editingRecordId = null;
+  } else {
+    records.unshift(recordData);
+    showToast(`Constancia ${folio} guardada en bitácora.`);
+  }
+
+  saveRecordsToStorage();
+  updateStats();
+  renderTable();
+  populateAreaFilter();
+
+  // Avanzar folio de control al siguiente número libre para evitar duplicados en capturas subsecuentes
+  const nextFolio = generateNextFolio();
+  const folioControlInput = document.getElementById('folioControl');
+  if (folioControlInput) {
+    folioControlInput.value = nextFolio;
+  }
+
+  setTimeout(() => {
+    isSubmittingForm = false;
+  }, 1200);
+
+  sendToGoogleSheetsWebhook(recordData);
+
+  renderDocument(recordData);
+  switchTab('tab-preview', true);
+
+  setTimeout(() => {
+    downloadCurrentDocumentPDF();
+  }, 400);
+}
+
+function getCurrentFormDataForPreview() {
+  const fechaActaStr = document.getElementById('fechaActa')?.value || new Date().toISOString().split('T')[0];
+  const dateObj = new Date(fechaActaStr + 'T12:00:00');
+  const [horas, minutos] = (document.getElementById('horaActa')?.value || '10:00').split(':');
+
+  const tipoMovimientoEl = document.querySelector('input[name="tipoMovimiento"]:checked');
+  const tipoMovimiento = tipoMovimientoEl ? tipoMovimientoEl.value : 'Alta';
+
+  const u1Nom = document.getElementById('titularUnidad1Nombre')?.value.trim() || '';
+  const u1Car = document.getElementById('titularUnidad1Cargo')?.value.trim() || '';
+  let u2Nom = document.getElementById('titularUnidad2Nombre')?.value.trim() || '';
+  let u2Car = document.getElementById('titularUnidad2Cargo')?.value.trim() || '';
+  const areaNom = document.getElementById('titularAreaNombre')?.value.trim() || '';
+  const areaCar = document.getElementById('titularAreaCargo')?.value.trim() || '';
+  const area2Nom = document.getElementById('titularArea2Nombre')?.value.trim() || '';
+  const area2Car = document.getElementById('titularArea2Cargo')?.value.trim() || '';
+  const t1Nom = document.getElementById('testigo1Nombre')?.value.trim() || '';
+  const t1Car = document.getElementById('testigo1Cargo')?.value.trim() || '';
+  const t2Nom = document.getElementById('testigo2Nombre')?.value.trim() || '';
+  const t2Car = document.getElementById('testigo2Cargo')?.value.trim() || '';
+
+  const isJefeInmediato = (tipoMovimiento === 'Alta' || tipoMovimiento === 'Baja' || tipoMovimiento === 'Cambio de nombre');
+  const isNoAplica = (!isJefeInmediato && (u2Nom.trim().toLowerCase() === 'no aplica' || u2Nom.trim().toLowerCase() === 'n/a'));
+  if (isNoAplica) {
+    u2Nom = 'No Aplica';
+    u2Car = '';
+  }
+
+  const ndRaw = (document.getElementById('nuevaDenominacion')?.value.trim() || '').toUpperCase();
+  const nnRaw = (document.getElementById('nuevoNombre')?.value.trim() || '').toUpperCase();
+
+  let finalNuevaDenominacion = ndRaw || '___________________________';
+  if (tipoMovimiento === 'Cambio de nombre') {
+    if (ndRaw && nnRaw) {
+      finalNuevaDenominacion = `${ndRaw} ➔ ${nnRaw}`;
+    } else if (ndRaw) {
+      finalNuevaDenominacion = ndRaw;
+    } else if (nnRaw) {
+      finalNuevaDenominacion = nnRaw;
+    }
+  }
+
+  return {
+    id: editingRecordId || 'preview_current',
+    folio: document.getElementById('folioControl')?.value.trim() || generateNextFolio(),
+    areaNotificadora: document.getElementById('areaNotificadora')?.value.trim() || 'Área no especificada',
+    responsableCaptura: document.getElementById('responsableCaptura')?.value.trim() || '',
+    municipio: document.getElementById('municipio')?.value.trim() || 'Mérida',
+    fechaActa: fechaActaStr,
+    fechaConstancia: fechaActaStr,
+    dia: isNaN(dateObj.getDate()) ? '10' : String(dateObj.getDate()),
+    mes: isNaN(dateObj.getMonth()) ? 'Noviembre' : MESES[dateObj.getMonth()],
+    anio: isNaN(dateObj.getFullYear()) ? '26' : String(dateObj.getFullYear()).slice(-2),
+    anioCompleto: isNaN(dateObj.getFullYear()) ? 2026 : dateObj.getFullYear(),
+    horaActa: document.getElementById('horaActa')?.value || '10:00',
+    horas: horas || '10',
+    minutos: minutos || '00',
+    inmueble: formatearInmueble(document.getElementById('inmueble')?.value.trim()) || 'el Edificio Central de la Secretaría de Educación',
+
+    titularUnidad1Nombre: u1Nom || '___________________________',
+    titularUnidad1Cargo: u1Car || '___________________________',
+    titularUnidad2Nombre: u2Nom,
+    titularUnidad2Cargo: u2Car,
+    titularAreaNombre: areaNom || '___________________________',
+    titularAreaCargo: areaCar || '___________________________',
+    titularArea2Nombre: area2Nom,
+    titularArea2Cargo: area2Car,
+    testigo1Nombre: t1Nom || '___________________________',
+    testigo1Cargo: t1Car || '___________________________',
+    testigo2Nombre: t2Nom || '___________________________',
+    testigo2Cargo: t2Car || '___________________________',
+
+    titularUnidad1: u1Nom ? (u1Car ? `${u1Nom} (${u1Car})` : u1Nom) : '___________________________',
+    titularUnidad2: isNoAplica ? 'No Aplica' : (u2Nom ? (u2Car ? `${u2Nom} (${u2Car})` : u2Nom) : ''),
+    titularArea: areaNom ? (areaCar ? `${areaNom} (${areaCar})` : areaNom) : '___________________________',
+    titularArea2: area2Nom ? (area2Car ? `${area2Nom} (${area2Car})` : area2Nom) : '',
+    testigo1: t1Nom ? (t1Car ? `${t1Nom} (${t1Car})` : t1Nom) : '___________________________',
+    testigo2: t2Nom ? (t2Car ? `${t2Nom} (${t2Car})` : t2Nom) : '___________________________',
+
+    tipoMovimiento: tipoMovimiento,
+    esCambioDependenciaJerarquica: (tipoMovimiento === 'Cambio de dependencia jerárquica' || tipoMovimiento === 'cambio_dependencia_jerarquica'),
+    noEsCambioDependenciaJerarquica: (tipoMovimiento !== 'Cambio de dependencia jerárquica' && tipoMovimiento !== 'cambio_dependencia_jerarquica'),
+    tieneTestigo2: (tipoMovimiento !== 'Cambio de dependencia jerárquica' && tipoMovimiento !== 'cambio_dependencia_jerarquica') && Boolean(t2Nom),
+    noTieneTestigo2: (tipoMovimiento === 'Cambio de dependencia jerárquica' || tipoMovimiento === 'cambio_dependencia_jerarquica') || !t2Nom,
+    esCambioNombre: (tipoMovimiento === 'Cambio de nombre'),
+    noEsCambioNombre: (tipoMovimiento !== 'Cambio de nombre'),
+    nombreActual: ndRaw || '—',
+    nuevoNombre: nnRaw || '—',
+    nuevaDenominacion: finalNuevaDenominacion,
+    justificacion: (document.getElementById('justificacion')?.value.trim() || '___________________________').toUpperCase(),
+    estatus: document.getElementById('estatus')?.value || 'Generada para Firma',
+    observaciones: document.getElementById('observaciones')?.value.trim() || ''
+  };
+}
+
+function previewCurrentForm() {
+  const previewData = getCurrentFormDataForPreview();
+  renderDocument(previewData);
+  switchTab('tab-preview', true);
+  showToast('Vista previa actualizada con los datos del formulario.');
+}
+
+function formatPersonText(nombre, cargo) {
+  if (!nombre && !cargo) return '—';
+  if (nombre && cargo) return `${nombre}, ${cargo}`;
+  return nombre || cargo;
+}
+
+/**
+ * RENDERIZA EL DOCUMENTO EN BASE AL LAYOUT ACTIVO
+ */
+function renderDocument(data) {
+  currentRenderedRecord = data;
+
+  const container = document.getElementById('print-sheet');
+  if (!container) return;
+
+  const activeTemplate = getActiveLayoutHtml();
+  const compiledHtml = compileLayout(activeTemplate, data);
+  container.innerHTML = compiledHtml;
+}
+
+/**
+ * GENERA Y DESCARGA DIRECTAMENTE EL PDF CON EL LAYOUT ACTIVO
+ */
+/**
+ * GENERA Y DESCARGA EL PDF OFICIAL
+ * Primero intenta con el motor oficial de Word en el servidor local (PDF nativo 100% idéntico).
+ * Si el servidor no está corriendo, genera inmediatamente con html2pdf.js en el navegador.
+ */
+async function downloadCurrentDocumentPDF() {
+  const element = document.getElementById('print-sheet');
+  if (!element || !currentRenderedRecord) return;
+
+  const btn = document.getElementById('btn-download-pdf');
+  const originalBtnHtml = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Generando PDF...';
+  }
+
+  const folio = (currentRenderedRecord.folio || 'DIMC').replace(/[/\?%*:|"<>]/g, '_');
+  const filename = `Constancia_Cambios_${folio}.pdf`;
+
+  showToast(`Generando PDF oficial (${folio})...`, 'info');
+
+  // 1. Intentar con el servidor local Word COM (tiempo límite de 60 segundos)
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+    const res = await fetch('/api/generate-word-pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(currentRenderedRecord),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      showToast(`¡PDF oficial generado exitosamente!`, 'success');
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalBtnHtml;
+      }
+      return;
+    }
+  } catch (e) {
+    console.warn('El servidor Word no respondió a tiempo o no está disponible. Usando generador alternativo:', e);
+  }
+
+  // 2. Generación de respaldo en navegador mediante html2pdf.js centrado y sin recortes
+  showToast('Generando PDF alternativo en navegador...', 'warning');
+  generateClientSidePDF(element, filename);
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = originalBtnHtml;
+  }
+}
+
+function generateClientSidePDF(element, filename) {
+  if (typeof html2pdf === 'undefined') {
+    alert('La librería generadora de PDF aún se está cargando. Por favor espere un momento.');
+    return;
+  }
+
+  // Clonar el elemento en un contenedor temporal fijo sin desfasamientos horizontales de margen
+  const clone = element.cloneNode(true);
+  clone.style.position = 'fixed';
+  clone.style.top = '0';
+  clone.style.left = '0';
+  clone.style.margin = '0';
+  clone.style.width = '780px';
+  clone.style.zIndex = '-9999';
+  clone.style.background = '#ffffff';
+  document.body.appendChild(clone);
+
+  const opt = {
+    margin: [6, 8, 6, 8],
+    filename: filename,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      letterRendering: true,
+      scrollX: 0,
+      scrollY: 0,
+      x: 0,
+      y: 0
+    },
+    jsPDF: {
+      unit: 'mm',
+      format: 'letter',
+      orientation: 'portrait'
+    },
+    pagebreak: { mode: ['avoid-all', 'css'] }
+  };
+
+  html2pdf().set(opt).from(clone).save().then(() => {
+    try { document.body.removeChild(clone); } catch (e) {}
+    showToast(`¡Documento ${filename} descargado!`, 'success');
+  }).catch(err => {
+    try { document.body.removeChild(clone); } catch (e) {}
+    console.error('Error al generar el PDF con html2pdf:', err);
+    showToast('Inconveniente al generar el PDF.', 'error');
+  });
+}
+
+/**
+ * DESCARGA DIRECTA DEL ARCHIVO WORD (.DOCX) RELLENO
+ */
+async function downloadCurrentDocumentDOCX() {
+  if (!currentRenderedRecord) {
+    showToast('Seleccione un registro o llene el formulario primero.', 'warning');
+    return;
+  }
+  const folio = (currentRenderedRecord.folio || 'DIMC').replace(/[/\?%*:|"<>]/g, '_');
+  const filename = `Constancia_Cambios_${folio}.docx`;
+
+  showToast(`Generando archivo Word (.docx) oficial...`, 'info');
+
+  try {
+    const res = await fetch('/api/generate-docx', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(currentRenderedRecord)
+    });
+    if (res.ok) {
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      showToast(`¡Archivo Word "${filename}" descargado con éxito!`, 'success');
+      return;
+    }
+  } catch (e) {
+    console.error('Error al conectar con servidor para docx:', e);
+  }
+  showToast('Para descargar el formato Word (.docx), ejecute el servidor local con: python server.py', 'warning');
+}
+
+/**
+ * Descarga el PDF de un registro histórico
+ */
+function downloadPDFForRecord(id) {
+  const record = records.find(r => r.id === id);
+  if (!record) return;
+
+  renderDocument(record);
+  switchTab('tab-preview');
+  setTimeout(() => {
+    downloadCurrentDocumentPDF();
+  }, 350);
+}
+
+/**
+ * Descarga el DOCX de un registro histórico
+ */
+function downloadDOCXForRecord(id) {
+  const record = records.find(r => r.id === id);
+  if (!record) return;
+
+  currentRenderedRecord = record;
+  downloadCurrentDocumentDOCX();
+}
+
+/**
+ * =========================================================================
+ * BITÁCORA Y TABLA
+ * =========================================================================
+ */
+function renderTable() {
+  const tbody = document.getElementById('registry-table-body');
+  if (!tbody) return;
+
+  const searchQuery = (document.getElementById('filter-search')?.value || '').toLowerCase().trim();
+  const areaFilter = document.getElementById('filter-area')?.value || '';
+  const movimientoFilter = document.getElementById('filter-movimiento')?.value || '';
+  const estatusFilter = document.getElementById('filter-estatus')?.value || '';
+
+  const filtered = records.filter(r => {
+    const areaNom = r.titularAreaNombre || r.titularArea || '';
+    const matchSearch = !searchQuery ||
+      (r.folio && r.folio.toLowerCase().includes(searchQuery)) ||
+      (r.areaNotificadora && r.areaNotificadora.toLowerCase().includes(searchQuery)) ||
+      (areaNom && areaNom.toLowerCase().includes(searchQuery)) ||
+      (r.nuevaDenominacion && r.nuevaDenominacion.toLowerCase().includes(searchQuery)) ||
+      (r.justificacion && r.justificacion.toLowerCase().includes(searchQuery)) ||
+      (r.estatus && r.estatus.toLowerCase().includes(searchQuery)) ||
+      (r.estatusAnterior && r.estatusAnterior.toLowerCase().includes(searchQuery)) ||
+      (r.motivoInactivacion && r.motivoInactivacion.toLowerCase().includes(searchQuery));
+
+    const matchArea = !areaFilter || r.areaNotificadora === areaFilter;
+    const matchMovimiento = !movimientoFilter || r.tipoMovimiento === movimientoFilter;
+
+    let matchEstatus = true;
+    if (estatusFilter === 'solo_activos') {
+      matchEstatus = r.estatus !== 'Inactivo';
+    } else if (estatusFilter) {
+      matchEstatus = r.estatus === estatusFilter;
+    }
+
+    return matchSearch && matchArea && matchMovimiento && matchEstatus;
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="9" class="text-center py-10 text-slate-400">
+          <i class="fa-solid fa-inbox text-3xl mb-2 block"></i>
+          No se encontraron registros que coincidan con la búsqueda.
+        </td>
+      </tr>
+    `;
+    updateSelectedRecordsUI();
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(r => {
+    const isInactive = r.estatus === 'Inactivo';
+    const isSelected = selectedRecordIds.has(r.id);
+    const badgeColor = getMovimientoBadgeColor(r.tipoMovimiento);
+    const estatusColor = getEstatusBadgeColor(r.estatus);
+    const fechaFormatted = r.fechaActa ? r.fechaActa : (r.fechaRegistro ? r.fechaRegistro.split('T')[0] : '—');
+    const areaTitularDisplay = r.titularAreaNombre || r.titularArea || '—';
+
+    // Indicador visual detallado del último estatus / historial
+    let estatusHtml = '';
+    if (isInactive) {
+      estatusHtml = `
+        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700 border border-slate-300 shadow-sm">
+          <i class="fa-solid fa-ban text-slate-500 text-[9px]"></i> Inactivo
+        </span>
+        <div class="text-[9.5px] text-slate-500 mt-1 font-medium leading-tight">
+          <span class="text-slate-400">Último:</span> ${r.estatusAnterior || 'Generada para Firma'}
+        </div>
+        ${r.motivoInactivacion ? `
+          <div class="text-[9.5px] text-rose-800 bg-rose-50 border border-rose-200/80 rounded-md px-2 py-1 mt-1 max-w-[210px] leading-tight" title="Motivo de inactivación: ${escapeHtml(r.motivoInactivacion)}">
+            <span class="font-bold text-rose-900 block text-[8.5px] uppercase tracking-wider"><i class="fa-solid fa-comment-dots text-[8px] mr-1"></i>Motivo Inactivación:</span>
+            <span class="text-slate-700 italic block mt-0.5">${escapeHtml(r.motivoInactivacion)}</span>
+          </div>
+        ` : ''}
+        ${r.fechaInactivacion ? `<div class="text-[9px] text-slate-400 mt-1" title="Inactivado: ${new Date(r.fechaInactivacion).toLocaleString('es-MX')}">Inact: ${new Date(r.fechaInactivacion).toLocaleDateString('es-MX')}</div>` : ''}
+      `;
+    } else {
+      estatusHtml = `
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${estatusColor}">
+          ${r.estatus || 'Generada para Firma'}
+        </span>
+        ${r.estatusAnterior && r.estatusAnterior !== r.estatus ? `
+          <div class="text-[9.5px] text-slate-500 mt-1 font-normal leading-tight" title="Estatus anterior antes de la modificación">
+            <span class="text-slate-400">Previo:</span> ${r.estatusAnterior}
+          </div>
+        ` : ''}
+        ${r.fechaModificacion ? `
+          <div class="text-[9px] text-amber-700 font-semibold mt-0.5 flex items-center gap-1" title="Última modificación: ${new Date(r.fechaModificacion).toLocaleString('es-MX')}">
+            <i class="fa-solid fa-clock-rotate-left text-[8.5px]"></i> Editado ${r.vecesEditado > 1 ? `(${r.vecesEditado})` : ''}
+          </div>
+        ` : ''}
+        ${r.fechaReactivacion ? `
+          <div class="text-[9px] text-emerald-700 font-semibold mt-0.5 flex items-center gap-1" title="Reactivado el ${new Date(r.fechaReactivacion).toLocaleString('es-MX')}">
+            <i class="fa-solid fa-rotate-left text-[8.5px]"></i> Reactivado
+          </div>
+        ` : ''}
+      `;
+    }
+
+    // Columna Folio con indicador si está inactivo
+    const folioHtml = isInactive
+      ? `<div>
+           <span class="font-mono font-bold text-slate-400 line-through mr-1">${r.folio}</span>
+           <span class="inline-block text-[8.5px] font-bold px-1.5 py-0.2 bg-slate-200 text-slate-600 rounded">INACTIVO</span>
+         </div>`
+      : `<span class="font-mono font-bold text-slate-800">${r.folio}</span>`;
+
+    // Botón de acción: Inactivar (conservando folio) o Reactivar
+    const actionDeleteOrReactivate = isInactive
+      ? `<button onclick="reactivateRecord('${r.id}')" title="Reactivar Constancia (Recuperar Folio Activo)" class="p-1.5 rounded-md hover:bg-emerald-50 text-emerald-600 hover:text-emerald-800 transition">
+           <i class="fa-solid fa-rotate-left"></i>
+         </button>`
+      : `<button onclick="deleteRecord('${r.id}')" title="Inactivar Constancia (Conserva Folio Consecutivo)" class="p-1.5 rounded-md hover:bg-red-50 text-slate-400 hover:text-red-600 transition">
+           <i class="fa-solid fa-ban"></i>
+         </button>`;
+
+    const rowBgClass = isSelected
+      ? 'bg-rose-50/70 border-rose-200'
+      : (isInactive ? 'bg-slate-50/70 text-slate-400 hover:bg-slate-100' : 'hover:bg-slate-50');
+
+    return `
+      <tr class="transition border-b border-slate-100 ${rowBgClass}" data-record-id="${r.id}">
+        <td class="py-3 px-3 text-center">
+          <input type="checkbox" class="record-checkbox w-4 h-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500 cursor-pointer"
+            value="${r.id}" onchange="handleRecordCheckboxChange(this)" ${isSelected ? 'checked' : ''}
+            title="Seleccionar constancia ${escapeHtml(r.folio || '')}">
+        </td>
+        <td class="py-3 px-4">${folioHtml}</td>
+        <td class="py-3 px-4 ${isInactive ? 'text-slate-400' : 'text-slate-600'}">${fechaFormatted}</td>
+        <td class="py-3 px-4 font-semibold ${isInactive ? 'text-slate-500' : 'text-slate-800'}">${r.areaNotificadora}</td>
+        <td class="py-3 px-4">
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold ${badgeColor} ${isInactive ? 'opacity-60' : ''}">
+            ${r.tipoMovimiento}
+          </span>
+        </td>
+        <td class="py-3 px-4 ${isInactive ? 'text-slate-400' : 'text-slate-700'} max-w-[200px] truncate" title="${r.nuevaDenominacion}">${r.nuevaDenominacion}</td>
+        <td class="py-3 px-4 ${isInactive ? 'text-slate-400' : 'text-slate-700'}">${areaTitularDisplay}</td>
+        <td class="py-3 px-4">${estatusHtml}</td>
+        <td class="py-3 px-4 text-center">
+          <div class="flex items-center justify-center gap-1.5">
+            <button onclick="downloadPDFForRecord('${r.id}')" title="Descargar PDF Oficial" class="p-1.5 rounded-md hover:bg-red-50 text-red-600 hover:text-red-800 transition">
+              <i class="fa-solid fa-file-pdf"></i>
+            </button>
+            <button onclick="downloadDOCXForRecord('${r.id}')" title="Descargar Word (.docx) Oficial" class="p-1.5 rounded-md hover:bg-blue-50 text-blue-600 hover:text-blue-800 transition">
+              <i class="fa-solid fa-file-word"></i>
+            </button>
+            <button onclick="viewRecord('${r.id}')" title="Ver con Layout Activo" class="p-1.5 rounded-md hover:bg-rose-50 text-segey-700 hover:text-segey-900 transition">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+            <button onclick="showDetailsModal('${r.id}')" title="Detalles del Registro" class="p-1.5 rounded-md hover:bg-blue-50 text-blue-600 hover:text-blue-800 transition">
+              <i class="fa-solid fa-circle-info"></i>
+            </button>
+            <button onclick="editRecord('${r.id}')" title="Editar Registro" class="p-1.5 rounded-md hover:bg-amber-50 text-amber-600 hover:text-amber-800 transition">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            ${actionDeleteOrReactivate}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  updateSelectedRecordsUI();
+}
+
+/**
+ * =========================================================================
+ * SELECCIÓN MÚLTIPLE Y ELIMINACIÓN DEFINITIVA DE CONSTANCIAS
+ * Permite seleccionar individual o masivamente registros y confirmar su borrado.
+ * =========================================================================
+ */
+const selectedRecordIds = new Set();
+
+function handleRecordCheckboxChange(checkbox) {
+  if (!checkbox) return;
+  const id = checkbox.value;
+  if (checkbox.checked) {
+    selectedRecordIds.add(id);
+  } else {
+    selectedRecordIds.delete(id);
+  }
+  updateSelectedRecordsUI();
+}
+
+function toggleSelectAllRecords(masterCheckbox) {
+  if (!masterCheckbox) return;
+  const checkboxes = document.querySelectorAll('.record-checkbox');
+  checkboxes.forEach(cb => {
+    cb.checked = masterCheckbox.checked;
+    if (masterCheckbox.checked) {
+      selectedRecordIds.add(cb.value);
+    } else {
+      selectedRecordIds.delete(cb.value);
+    }
+  });
+  updateSelectedRecordsUI();
+}
+
+function updateSelectedRecordsUI() {
+  const count = selectedRecordIds.size;
+  const btnEliminar = document.getElementById('btn-eliminar-seleccionados');
+  const badgeCount = document.getElementById('badge-eliminar-count');
+  const txtEliminar = document.getElementById('btn-eliminar-texto');
+  const masterCb = document.getElementById('select-all-records');
+  const checkboxes = document.querySelectorAll('.record-checkbox');
+
+  // Actualizar estado del botón de eliminación en la barra de herramientas
+  if (btnEliminar) {
+    if (count > 0) {
+      btnEliminar.disabled = false;
+      btnEliminar.classList.remove('bg-slate-100', 'text-slate-400', 'border-slate-200', 'cursor-not-allowed', 'opacity-60');
+      btnEliminar.classList.add('bg-rose-600', 'hover:bg-rose-700', 'text-white', 'shadow-sm', 'cursor-pointer', 'opacity-100');
+      if (badgeCount) {
+        badgeCount.textContent = count;
+        badgeCount.classList.remove('hidden');
+      }
+      if (txtEliminar) {
+        txtEliminar.textContent = `Eliminar Seleccionados (${count})`;
+      }
+    } else {
+      btnEliminar.disabled = true;
+      btnEliminar.classList.add('bg-slate-100', 'text-slate-400', 'border-slate-200', 'cursor-not-allowed', 'opacity-60');
+      btnEliminar.classList.remove('bg-rose-600', 'hover:bg-rose-700', 'text-white', 'shadow-sm', 'cursor-pointer', 'opacity-100');
+      if (badgeCount) {
+        badgeCount.classList.add('hidden');
+      }
+      if (txtEliminar) {
+        txtEliminar.textContent = 'Eliminar Seleccionados';
+      }
+    }
+  }
+
+  // Actualizar checkbox maestro superior
+  if (masterCb && checkboxes.length > 0) {
+    let allChecked = true;
+    let anyChecked = false;
+    checkboxes.forEach(cb => {
+      if (cb.checked) {
+        anyChecked = true;
+      } else {
+        allChecked = false;
+      }
+    });
+    masterCb.checked = allChecked;
+    masterCb.indeterminate = !allChecked && anyChecked;
+  } else if (masterCb) {
+    masterCb.checked = false;
+    masterCb.indeterminate = false;
+  }
+
+  // Resaltar visualmente las filas seleccionadas
+  checkboxes.forEach(cb => {
+    const tr = cb.closest('tr');
+    if (!tr) return;
+    if (cb.checked) {
+      tr.classList.add('bg-rose-50/70', 'border-rose-200');
+    } else {
+      tr.classList.remove('bg-rose-50/70', 'border-rose-200');
+    }
+  });
+}
+
+function abrirModalEliminarSeleccionados() {
+  if (selectedRecordIds.size === 0) {
+    showToast('Seleccione al menos una constancia con la casilla de la izquierda para eliminar.', 'warning');
+    return;
+  }
+
+  const modal = document.getElementById('modal-eliminar-seleccionados');
+  const countEl = document.getElementById('modal-eliminar-total');
+  const listaEl = document.getElementById('modal-eliminar-lista');
+  const btnConfirm = document.getElementById('btn-confirmar-borrado-definitivo');
+  if (!modal || !countEl || !listaEl) return;
+
+  const count = selectedRecordIds.size;
+  countEl.textContent = `${count} constancia${count > 1 ? 's' : ''}`;
+  if (btnConfirm) {
+    btnConfirm.innerHTML = `<i class="fa-solid fa-trash-can"></i> Sí, Eliminar Definitivamente (${count})`;
+  }
+
+  // Obtener y listar registros seleccionados
+  const recordsToDelete = records.filter(r => selectedRecordIds.has(r.id));
+  listaEl.innerHTML = recordsToDelete.map(r => {
+    const badgeColor = getMovimientoBadgeColor(r.tipoMovimiento);
+    return `
+      <div class="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200 text-xs shadow-2xs">
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-[11px] shrink-0">${escapeHtml(r.folio || 'SIN FOLIO')}</span>
+          <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold ${badgeColor} shrink-0">${escapeHtml(r.tipoMovimiento || 'Movimiento')}</span>
+          <span class="text-slate-700 truncate font-medium" title="${escapeHtml(r.nuevaDenominacion || r.areaNotificadora || '')}">
+            ${escapeHtml(r.nuevaDenominacion || r.areaNotificadora || 'Sin descripción')}
+          </span>
+        </div>
+        <div class="text-[11px] text-slate-400 shrink-0 ml-2">
+          ${escapeHtml(r.fechaActa || (r.fechaRegistro ? r.fechaRegistro.split('T')[0] : ''))}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  modal.classList.remove('hidden');
+}
+
+function cerrarModalEliminarSeleccionados() {
+  const modal = document.getElementById('modal-eliminar-seleccionados');
+  if (modal) modal.classList.add('hidden');
+}
+
+function confirmarBorradoDefinitivo() {
+  if (selectedRecordIds.size === 0) return;
+
+  const count = selectedRecordIds.size;
+  // Filtrar y eliminar permanentemente del array de registros
+  records = records.filter(r => !selectedRecordIds.has(r.id));
+  selectedRecordIds.clear();
+
+  // Guardar en almacenamiento local y en disco server.py
+  saveRecordsToStorage();
+
+  // Cerrar modal y refrescar vista
+  cerrarModalEliminarSeleccionados();
+  renderTable();
+  updateStats();
+  populateAreaFilter();
+
+  showToast(`¡Se eliminaron definitivamente ${count} constancia(s) de la bitácora institucional!`, 'success');
+}
+
+window.handleRecordCheckboxChange = handleRecordCheckboxChange;
+window.toggleSelectAllRecords = toggleSelectAllRecords;
+window.updateSelectedRecordsUI = updateSelectedRecordsUI;
+window.abrirModalEliminarSeleccionados = abrirModalEliminarSeleccionados;
+window.cerrarModalEliminarSeleccionados = cerrarModalEliminarSeleccionados;
+window.confirmarBorradoDefinitivo = confirmarBorradoDefinitivo;
+
+function getMovimientoBadgeColor(mov) {
+  switch (mov) {
+    case 'Alta':
+      return 'bg-blue-100 text-blue-800 border border-blue-200';
+    case 'Baja':
+      return 'bg-red-100 text-red-800 border border-red-200';
+    case 'Cambio de nombre':
+      return 'bg-amber-100 text-amber-800 border border-amber-200';
+    case 'Cambio de dependencia jerárquica':
+      return 'bg-purple-100 text-purple-800 border border-purple-200';
+    default:
+      return 'bg-slate-100 text-slate-800';
+  }
+}
+
+function getEstatusBadgeColor(estatus) {
+  switch (estatus) {
+    case 'Firmada y Concluida':
+      return 'bg-rose-100 text-segey-800 border border-rose-200';
+    case 'Borrador':
+      return 'bg-amber-100 text-amber-800 border border-amber-200';
+    case 'Inactivo':
+      return 'bg-slate-200 text-slate-700 border border-slate-300';
+    default:
+      return 'bg-blue-50 text-blue-700 border border-blue-200';
+  }
+}
+
+function updateStats() {
+  const total = records.length;
+  updateRegistrySidebarBadges();
+  const inactivos = records.filter(r => r.estatus === 'Inactivo').length;
+  const activos = total - inactivos;
+  const altas = records.filter(r => r.tipoMovimiento === 'Alta' && r.estatus !== 'Inactivo').length;
+  const bajas = records.filter(r => r.tipoMovimiento === 'Baja' && r.estatus !== 'Inactivo').length;
+  const cambios = records.filter(r => (r.tipoMovimiento === 'Cambio de nombre' || r.tipoMovimiento === 'Cambio de dependencia jerárquica') && r.estatus !== 'Inactivo').length;
+
+  document.getElementById('stat-total').textContent = total;
+  const subInactivos = document.getElementById('stat-sub-inactivos');
+  if (subInactivos) {
+    if (inactivos > 0) {
+      subInactivos.innerHTML = `<span class="text-emerald-700 font-semibold">${activos} activas</span> • <span class="text-rose-600 font-semibold">${inactivos} inactiva${inactivos > 1 ? 's' : ''}</span>`;
+    } else {
+      subInactivos.textContent = 'Todas activas';
+    }
+  }
+
+  document.getElementById('stat-altas').textContent = altas;
+  document.getElementById('stat-bajas').textContent = bajas;
+  document.getElementById('stat-cambios').textContent = cambios;
+
+  const badgeTotal = document.getElementById('badge-total-records');
+  if (badgeTotal) badgeTotal.textContent = total;
+}
+
+function populateAreaFilter() {
+  const select = document.getElementById('filter-area');
+  if (!select) return;
+
+  const currentVal = select.value;
+  const areas = [...new Set(records.map(r => r.areaNotificadora).filter(Boolean))].sort();
+
+  select.innerHTML = '<option value="">Todas las áreas notificadoras</option>' +
+    areas.map(a => `<option value="${a}" ${a === currentVal ? 'selected' : ''}>${a}</option>`).join('');
+}
+
+function viewRecord(id) {
+  const record = records.find(r => r.id === id);
+  if (!record) return;
+
+  renderDocument(record);
+  switchTab('tab-preview', true);
+}
+
+function editRecord(id) {
+  const record = records.find(r => r.id === id);
+  if (!record) return;
+
+  editingRecordId = record.id;
+
+  setAreaNotificadoraValue(record.areaNotificadora || '');
+  setResponsableCapturaValue(record.responsableCaptura || '');
+  document.getElementById('folioControl').value = record.folio || '';
+
+  document.getElementById('municipio').value = record.municipio || 'Mérida';
+  document.getElementById('fechaActa').value = record.fechaConstancia || record.fechaActa || '';
+  document.getElementById('horaActa').value = record.horaActa || '';
+  document.getElementById('inmueble').value = record.inmueble || '';
+
+  document.getElementById('titularUnidad1Nombre').value = record.titularUnidad1Nombre || record.titularUnidad1 || '';
+  document.getElementById('titularUnidad1Cargo').value = record.titularUnidad1Cargo || '';
+
+  document.getElementById('titularUnidad2Nombre').value = record.titularUnidad2Nombre || record.titularUnidad2 || '';
+  document.getElementById('titularUnidad2Cargo').value = record.titularUnidad2Cargo || '';
+
+  document.getElementById('titularAreaNombre').value = record.titularAreaNombre || record.titularArea || '';
+  document.getElementById('titularAreaCargo').value = record.titularAreaCargo || '';
+
+  document.getElementById('testigo1Nombre').value = record.testigo1Nombre || record.testigo1 || '';
+  document.getElementById('testigo1Cargo').value = record.testigo1Cargo || '';
+
+  document.getElementById('testigo2Nombre').value = record.testigo2Nombre || record.testigo2 || '';
+  document.getElementById('testigo2Cargo').value = record.testigo2Cargo || '';
+
+  const radio = document.querySelector(`input[name="tipoMovimiento"][value="${record.tipoMovimiento}"]`);
+  if (radio) radio.checked = true;
+  handleTipoMovimientoChange();
+  if (record.titularUnidad2Nombre) {
+    document.getElementById('titularUnidad2Nombre').value = record.titularUnidad2Nombre;
+  }
+  if (record.titularUnidad2Cargo) {
+    document.getElementById('titularUnidad2Cargo').value = record.titularUnidad2Cargo;
+  }
+
+  if (record.tipoMovimiento === 'Cambio de nombre') {
+    let nomAct = record.nombreActual || record.nuevaDenominacion || '';
+    let nomNew = record.nuevoNombre || '';
+    if (!nomNew && nomAct.includes('➔')) {
+      const parts = nomAct.split('➔');
+      nomAct = parts[0].trim();
+      nomNew = parts[1].trim();
+    } else if (!nomNew && nomAct.includes('->')) {
+      const parts = nomAct.split('->');
+      nomAct = parts[0].trim();
+      nomNew = parts[1].trim();
+    }
+    document.getElementById('nuevaDenominacion').value = nomAct;
+    const nnEl = document.getElementById('nuevoNombre');
+    if (nnEl) nnEl.value = nomNew;
+  } else {
+    document.getElementById('nuevaDenominacion').value = record.nuevaDenominacion || '';
+    const nnEl = document.getElementById('nuevoNombre');
+    if (nnEl) nnEl.value = '';
+  }
+
+  document.getElementById('justificacion').value = record.justificacion || '';
+  document.getElementById('estatus').value = record.estatus || 'Generada para Firma';
+  document.getElementById('observaciones').value = record.observaciones || '';
+
+  // Sincronizar selectores orgánicos dependientes
+  if (record.areaNotificadora) {
+    setAreaNotificadoraValue(record.areaNotificadora);
+  }
+  if (record.titularUnidad1Nombre) {
+    document.getElementById('titularUnidad1Nombre').value = record.titularUnidad1Nombre;
+  }
+  if (record.titularUnidad1Cargo) {
+    document.getElementById('titularUnidad1Cargo').value = record.titularUnidad1Cargo;
+  }
+  if (record.titularUnidad2Nombre) {
+    document.getElementById('titularUnidad2Nombre').value = record.titularUnidad2Nombre;
+  }
+  if (record.titularUnidad2Cargo) {
+    document.getElementById('titularUnidad2Cargo').value = record.titularUnidad2Cargo;
+  }
+  if (record.titularAreaNombre) {
+    document.getElementById('titularAreaNombre').value = record.titularAreaNombre;
+  }
+  if (record.titularAreaCargo) {
+    document.getElementById('titularAreaCargo').value = record.titularAreaCargo;
+  }
+  if (record.titularArea2Nombre) {
+    const a2Nom = document.getElementById('titularArea2Nombre');
+    if (a2Nom) a2Nom.value = record.titularArea2Nombre;
+  }
+  if (record.titularArea2Cargo) {
+    const a2Car = document.getElementById('titularArea2Cargo');
+    if (a2Car) a2Car.value = record.titularArea2Cargo;
+  }
+
+  if (record.tipoMovimiento === 'Baja' && record.nuevaDenominacion) {
+    const selBaja = document.getElementById('selectAreaBaja');
+    if (selBaja) {
+      for (let i = 0; i < selBaja.options.length; i++) {
+        if (selBaja.options[i].value && selBaja.options[i].value.toUpperCase() === record.nuevaDenominacion.toUpperCase()) {
+          selBaja.selectedIndex = i;
+          break;
+        }
+      }
+    }
+  }
+
+  if (record.tipoMovimiento === 'Cambio de nombre' && record.nuevaDenominacion) {
+    const selCambio = document.getElementById('selectAreaCambioNombre');
+    if (selCambio) {
+      for (let i = 0; i < selCambio.options.length; i++) {
+        if (selCambio.options[i].value && selCambio.options[i].value.toUpperCase() === record.nuevaDenominacion.toUpperCase()) {
+          selCambio.selectedIndex = i;
+          break;
+        }
+      }
+    }
+  }
+
+  switchTab('tab-form');
+  showToast(`Editando constancia ${record.folio}.`);
+}
+
+let currentInactivarRecordId = null;
+
+function deleteRecord(id) {
+  openInactivarModal(id);
+}
+
+function openInactivarModal(id) {
+  const record = records.find(r => r.id === id);
+  if (!record) return;
+
+  currentInactivarRecordId = id;
+  const modal = document.getElementById('modal-inactivar');
+  if (!modal) return;
+
+  document.getElementById('inactivar-folio').textContent = record.folio;
+  document.getElementById('inactivar-area').textContent = record.areaNotificadora || 'No especificada';
+  document.getElementById('inactivar-movimiento').textContent = record.tipoMovimiento || '—';
+
+  const motivoInput = document.getElementById('inactivar-motivo-input');
+  if (motivoInput) {
+    motivoInput.value = record.motivoInactivacion || '';
+    motivoInput.classList.remove('ring-2', 'ring-rose-500', 'border-rose-500');
+  }
+
+  const errEl = document.getElementById('inactivar-error-msg');
+  if (errEl) errEl.classList.add('hidden');
+
+  modal.classList.remove('hidden');
+  setTimeout(() => {
+    if (motivoInput) motivoInput.focus();
+  }, 100);
+}
+
+function closeInactivarModal() {
+  const modal = document.getElementById('modal-inactivar');
+  if (modal) modal.classList.add('hidden');
+  currentInactivarRecordId = null;
+}
+
+function setMotivoRapido(motivo) {
+  const input = document.getElementById('inactivar-motivo-input');
+  if (input) {
+    input.value = motivo;
+    input.focus();
+    input.classList.remove('ring-2', 'ring-rose-500', 'border-rose-500');
+    const errEl = document.getElementById('inactivar-error-msg');
+    if (errEl) errEl.classList.add('hidden');
+  }
+}
+
+function confirmarInactivacionConMotivo() {
+  if (!currentInactivarRecordId) return;
+  const record = records.find(r => r.id === currentInactivarRecordId);
+  if (!record) return;
+
+  const motivoInput = document.getElementById('inactivar-motivo-input');
+  const motivo = (motivoInput?.value || '').trim();
+  const errEl = document.getElementById('inactivar-error-msg');
+
+  if (!motivo) {
+    if (errEl) errEl.classList.remove('hidden');
+    if (motivoInput) {
+      motivoInput.classList.add('ring-2', 'ring-rose-500', 'border-rose-500');
+      motivoInput.focus();
+    }
+    return;
+  }
+
+  record.estatusAnterior = record.estatus || 'Generada para Firma';
+  record.estatus = 'Inactivo';
+  record.motivoInactivacion = motivo;
+  record.fechaInactivacion = new Date().toISOString();
+
+  saveRecordsToStorage();
+  closeInactivarModal();
+  renderTable();
+  updateStats();
+  populateAreaFilter();
+  showToast(`Constancia ${record.folio} inactivada. Motivo registrado: "${motivo}".`, 'info');
+}
+
+function reactivateRecord(id) {
+  const record = records.find(r => r.id === id);
+  if (!record) return;
+
+  const targetEstatus = (record.estatusAnterior && record.estatusAnterior !== 'Inactivo')
+    ? record.estatusAnterior
+    : 'Generada para Firma';
+
+  const confirmMsg = `¿Desea reactivar la constancia con Folio ${record.folio}?\n\n` +
+    `• El registro regresará a su estatus activo: "${targetEstatus}".\n` +
+    `• Conservará su número consecutivo original sin alteraciones.`;
+
+  if (confirm(confirmMsg)) {
+    record.estatus = targetEstatus;
+    record.fechaReactivacion = new Date().toISOString();
+    saveRecordsToStorage();
+    renderTable();
+    updateStats();
+    populateAreaFilter();
+    showToast(`Constancia ${record.folio} reactivada exitosamente.`, 'success');
+  }
+}
+
+function showDetailsModal(id) {
+  const r = records.find(rec => rec.id === id);
+  if (!r) return;
+
+  const u1Nom = r.titularUnidad1Nombre || r.titularUnidad1 || '—';
+  const u1Car = r.titularUnidad1Cargo || '';
+
+  const u2Nom = r.titularUnidad2Nombre || r.titularUnidad2 || '';
+  const u2Car = r.titularUnidad2Cargo || '';
+
+  const areaNom = r.titularAreaNombre || r.titularArea || '—';
+  const areaCar = r.titularAreaCargo || '';
+
+  const t1Nom = r.testigo1Nombre || r.testigo1 || '—';
+  const t1Car = r.testigo1Cargo || '';
+
+  const t2Nom = r.testigo2Nombre || r.testigo2 || '—';
+  const t2Car = r.testigo2Cargo || '';
+
+  document.getElementById('modal-folio').textContent = r.folio;
+  document.getElementById('modal-title').textContent = `${r.areaNotificadora} - ${r.tipoMovimiento}`;
+
+  const isInactive = r.estatus === 'Inactivo';
+
+  const content = document.getElementById('modal-content');
+  content.innerHTML = `
+    <!-- Panel de Auditoría y Trazabilidad de Folio -->
+    <div class="bg-amber-50/70 p-3.5 rounded-lg border border-amber-200 text-xs text-slate-700 space-y-2">
+      <div class="font-bold text-slate-800 flex items-center justify-between border-b border-amber-200/70 pb-1.5">
+        <span class="flex items-center gap-1.5 text-amber-900"><i class="fa-solid fa-clock-rotate-left text-amber-700"></i> Control de Folio y Trazabilidad</span>
+        <span class="px-2 py-0.5 rounded text-[11px] font-bold ${isInactive ? 'bg-slate-200 text-slate-700 border border-slate-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'}">
+          ${isInactive ? '<i class="fa-solid fa-ban text-slate-500 mr-1"></i> Folio Inactivo (Conservado)' : '<i class="fa-solid fa-check text-emerald-600 mr-1"></i> Folio Activo'}
+        </span>
+      </div>
+      <div class="grid grid-cols-2 gap-2 text-[11.5px]">
+        <div><strong>Estatus Actual:</strong> <span class="font-bold text-slate-900">${r.estatus || 'Generada para Firma'}</span></div>
+        <div><strong>Último Estatus Previo:</strong> <span class="text-slate-800 font-medium">${r.estatusAnterior || 'Original (Sin cambio)'}</span></div>
+        <div><strong>Fecha Registro Inicial:</strong> ${r.fechaRegistro ? new Date(r.fechaRegistro).toLocaleString('es-MX') : (r.fechaActa || '—')}</div>
+        <div><strong>Última Modificación:</strong> ${r.fechaModificacion ? `${new Date(r.fechaModificacion).toLocaleString('es-MX')} (${r.vecesEditado || 1} edic.)` : 'Sin modificaciones'}</div>
+        ${r.fechaInactivacion ? `
+          <div class="col-span-2 text-rose-800 bg-rose-50/90 p-2.5 rounded-lg border border-rose-200 space-y-1">
+            <div class="flex items-center justify-between text-[11.5px]">
+              <strong class="text-rose-900"><i class="fa-solid fa-ban mr-1"></i> Inactivado el:</strong>
+              <span>${new Date(r.fechaInactivacion).toLocaleString('es-MX')}</span>
+            </div>
+            ${r.motivoInactivacion ? `
+              <div class="mt-1 pt-1.5 border-t border-rose-200/60">
+                <strong class="text-rose-900 block text-[10px] uppercase tracking-wider mb-0.5">Motivo Registrado de la Inactivación:</strong>
+                <div class="text-slate-800 italic bg-white/80 p-2 rounded border border-rose-200/40 text-[11px] leading-relaxed">"${escapeHtml(r.motivoInactivacion)}"</div>
+              </div>
+            ` : ''}
+            <div class="text-[10px] text-slate-500 italic mt-0.5">El folio consecutivo permanece registrado y protegido contra duplicados.</div>
+          </div>
+        ` : ''}
+        ${r.fechaReactivacion ? `
+          <div class="col-span-2 text-emerald-800 bg-emerald-50/80 p-2 rounded border border-emerald-200/60 space-y-0.5">
+            <div class="flex items-center justify-between">
+              <strong><i class="fa-solid fa-rotate-left mr-1"></i> Reactivado el:</strong>
+              <span>${new Date(r.fechaReactivacion).toLocaleString('es-MX')}</span>
+            </div>
+            ${r.motivoInactivacion ? `
+              <div class="text-[10.5px] text-slate-600">
+                <strong>Motivo de baja anterior:</strong> "${escapeHtml(r.motivoInactivacion)}"
+              </div>
+            ` : ''}
+          </div>
+        ` : ''}
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200">
+      <div><strong>Área Solicitante:</strong> ${r.areaNotificadora}</div>
+      <div><strong>Responsable:</strong> ${r.responsableCaptura}</div>
+      <div><strong>Fecha de Constancia y Hora:</strong> ${r.fechaConstancia || r.fechaActa} a las ${r.horaActa} hrs</div>
+      <div><strong>Municipio:</strong> ${r.municipio}, Yucatán</div>
+      <div><strong>Inmueble:</strong> ${r.inmueble}</div>
+      <div><strong>Tipo de Movimiento:</strong> <span class="font-bold">${r.tipoMovimiento}</span></div>
+    </div>
+
+    <div class="space-y-1">
+      <div class="font-bold text-slate-800">Nombre del Área o Adscripción:</div>
+      <div class="p-2.5 bg-slate-50 rounded border border-slate-200">${r.nuevaDenominacion}</div>
+    </div>
+
+    <div class="space-y-1">
+      <div class="font-bold text-slate-800">Justificación y Motivos del Cambio:</div>
+      <div class="p-2.5 bg-slate-50 rounded border border-slate-200 whitespace-pre-wrap leading-relaxed">${r.justificacion}</div>
+    </div>
+
+    <div class="space-y-1">
+      <div class="font-bold text-slate-800">Comparecientes (Nombre y Cargo):</div>
+      <ul class="list-disc pl-5 space-y-1 text-slate-600">
+        <li><strong>Titular de Unidad 1:</strong> ${u1Nom} ${u1Car ? `<span class="text-slate-500">(${u1Car})</span>` : ''}</li>
+        ${u2Nom ? `<li><strong>Titular de Unidad 2:</strong> ${u2Nom} ${u2Car ? `<span class="text-slate-500">(${u2Car})</span>` : ''}</li>` : ''}
+        <li><strong>Titular de Área:</strong> ${areaNom} ${areaCar ? `<span class="text-slate-500">(${areaCar})</span>` : ''}</li>
+        <li><strong>Testigo 1:</strong> ${t1Nom} ${t1Car ? `<span class="text-slate-500">(${t1Car})</span>` : ''}</li>
+        <li><strong>Testigo 2:</strong> ${t2Nom} ${t2Car ? `<span class="text-slate-500">(${t2Car})</span>` : ''}</li>
+      </ul>
+    </div>
+  `;
+
+  document.getElementById('modal-btn-view').onclick = () => {
+    closeDetailsModal();
+    viewRecord(r.id);
+  };
+
+  document.getElementById('modal-btn-download').onclick = () => {
+    closeDetailsModal();
+    downloadPDFForRecord(r.id);
+  };
+
+  document.getElementById('modal-details').classList.remove('hidden');
+}
+
+function closeDetailsModal() {
+  document.getElementById('modal-details').classList.add('hidden');
+}
+
+function resetForm() {
+  editingRecordId = null;
+  document.getElementById('constancia-form').reset();
+  setAreaNotificadoraValue('');
+  setResponsableCapturaValue('');
+
+  const selectResp = document.getElementById('selectResponsableCaptura');
+  if (selectResp) {
+    selectResp.innerHTML = '<option value="" disabled selected>-- Seleccione un Enlace oficial de la Unidad --</option>';
+  }
+  const customRespWrapper = document.getElementById('responsableCapturaCustomWrapper');
+  if (customRespWrapper) customRespWrapper.classList.add('hidden');
+  const customRespInput = document.getElementById('responsableCapturaCustom');
+  if (customRespInput) customRespInput.value = '';
+
+  const badgeResp = document.getElementById('badgeResponsableEnlaces');
+  if (badgeResp) {
+    badgeResp.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
+    badgeResp.textContent = 'Enlaces oficiales';
+  }
+  const respInput = document.getElementById('responsableCaptura');
+  if (respInput) {
+    respInput.value = '';
+  }
+
+  const selectT1 = document.getElementById('selectTitularUnidad1');
+  if (selectT1) {
+    selectT1.innerHTML = '<option value="">-- Seleccione primero el Área que Notifica o Elabora arriba --</option>';
+  }
+  const badgeT1 = document.getElementById('badgeTitular1');
+  if (badgeT1) {
+    badgeT1.innerHTML = '<i class="fa-solid fa-link mr-1"></i>Según Área que Notifica';
+  }
+
+  const selectT2 = document.getElementById('selectTitularUnidad2');
+  if (selectT2) {
+    selectT2.value = '';
+    selectT2.disabled = true;
+  }
+
+  const selectArea = document.getElementById('selectTitularArea');
+  if (selectArea) {
+    selectArea.innerHTML = '<option value="">-- Primero elija el Área que Notifica o Elabora arriba --</option>';
+    selectArea.disabled = true;
+    selectArea.classList.remove('bg-white', 'text-slate-800');
+    selectArea.classList.add('bg-slate-50', 'text-slate-700');
+  }
+
+  const badgeArea = document.getElementById('badgeAreaSubordinados');
+  if (badgeArea) {
+    badgeArea.className = 'text-[10.5px] bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full font-medium';
+    badgeArea.innerHTML = '<i class="fa-solid fa-filter text-slate-400 mr-1"></i>Seleccione el Área que Notifica o Elabora arriba';
+  }
+
+  const selectArea2 = document.getElementById('selectTitularArea2');
+  if (selectArea2) {
+    selectArea2.innerHTML = '<option value="">-- Primero elija la Dependencia Jerárquica de Destino arriba --</option>';
+    selectArea2.disabled = true;
+  }
+  const badgeArea2 = document.getElementById('badgeAreaSubordinados2');
+  if (badgeArea2) {
+    badgeArea2.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
+    badgeArea2.innerHTML = '<i class="fa-solid fa-filter text-slate-400 mr-1"></i>Pendiente de Unidad de Destino (2)';
+  }
+  const a2NomEl = document.getElementById('titularArea2Nombre');
+  if (a2NomEl) a2NomEl.value = '';
+  const a2CarEl = document.getElementById('titularArea2Cargo');
+  if (a2CarEl) a2CarEl.value = '';
+
+  const selT1 = document.getElementById('selectTestigo1');
+  if (selT1) {
+    selT1.innerHTML = '<option value="">-- Primero elija el Área que Notifica o Elabora arriba --</option>';
+  }
+  const badgeTestigo1 = document.getElementById('badgeTestigo1');
+  if (badgeTestigo1) {
+    badgeTestigo1.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
+    badgeTestigo1.innerHTML = '<i class="fa-solid fa-filter text-slate-400 mr-1"></i>Según Área que Notifica';
+  }
+
+  const selT2 = document.getElementById('selectTestigo2');
+  if (selT2) {
+    selT2.innerHTML = '<option value="">-- Primero elija el Área que Notifica o Elabora arriba --</option>';
+  }
+  const badgeTestigo2 = document.getElementById('badgeTestigo2');
+  if (badgeTestigo2) {
+    badgeTestigo2.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
+    badgeTestigo2.innerHTML = '<i class="fa-solid fa-filter text-slate-400 mr-1"></i>Según Área / Destino';
+  }
+
+  initFormDefaults();
+  const selectAreaBaja = document.getElementById('selectAreaBaja');
+  if (selectAreaBaja) selectAreaBaja.value = '';
+  const selectAreaCambio = document.getElementById('selectAreaCambioNombre');
+  if (selectAreaCambio) selectAreaCambio.value = '';
+  const nuevoNombreEl = document.getElementById('nuevoNombre');
+  if (nuevoNombreEl) nuevoNombreEl.value = '';
+  const containerNuevoNombre = document.getElementById('containerNuevoNombre');
+  if (containerNuevoNombre) containerNuevoNombre.classList.add('hidden');
+  handleTipoMovimientoChange();
+  renderDocument(getCurrentFormDataForPreview());
+  showToast('Formulario restablecido.');
+}
+
+function loadSampleData() {
+  // 1. Cargar Área que Notifica oficial (desencadena cascada a Titular 1 y Titular de Área)
+  setAreaNotificadoraValue('Dirección de Administración y Finanzas');
+
+  // 2. Seleccionar un mando oficial en el desplegable de Titular de Área
+  const selectArea = document.getElementById('selectTitularArea');
+  if (selectArea && selectArea.options.length > 1) {
+    let targetIdx = 1;
+    for (let i = 0; i < selectArea.options.length; i++) {
+      if (selectArea.options[i].textContent.includes('Recursos Humanos') || selectArea.options[i].textContent.includes('Jefe') || selectArea.options[i].textContent.includes('Coordinador')) {
+        targetIdx = i;
+        break;
+      }
+    }
+    selectArea.selectedIndex = targetIdx;
+    handleTitularAreaSelect(selectArea);
+  } else {
+    document.getElementById('titularAreaNombre').value = 'L.C.C. Mirna Arleny Canché Moo';
+    document.getElementById('titularAreaCargo').value = 'Jefa de Departamento de Recursos Humanos';
+  }
+
+  const selectResp = document.getElementById('selectResponsableCaptura');
+  if (selectResp && selectResp.value && selectResp.value !== '__MANUAL__') {
+    document.getElementById('responsableCaptura').value = selectResp.value;
+  }
+  document.getElementById('municipio').value = 'Mérida';
+  document.getElementById('inmueble').value = 'el Edificio Central de la Secretaría de Educación';
+
+  document.getElementById('testigo1Nombre').value = 'Lic. Rodrigo Marín Pech';
+  document.getElementById('testigo1Cargo').value = 'Coordinador de Asuntos Jurídicos';
+
+  document.getElementById('testigo2Nombre').value = 'Mtra. Elena Burgos Canul';
+  document.getElementById('testigo2Cargo').value = 'Analista Administrativa';
+
+  const radio = document.querySelector('input[name="tipoMovimiento"][value="Cambio de nombre"]');
+  if (radio) radio.checked = true;
+  handleTipoMovimientoChange();
+
+  const selectT2 = document.getElementById('selectTitularUnidad2');
+  if (selectT2 && selectT2.options.length > 1) {
+    selectT2.selectedIndex = 1;
+    handleTitularUnidad2Select(selectT2);
+  }
+
+  document.getElementById('nuevaDenominacion').value = 'DEPARTAMENTO DE RECURSOS HUMANOS';
+  const nuevoNombreSample = document.getElementById('nuevoNombre');
+  if (nuevoNombreSample) {
+    nuevoNombreSample.value = 'DEPARTAMENTO DE GESTIÓN DEL TALENTO Y CONTROL DE INCIDENCIAS';
+  }
+
+  document.getElementById('justificacion').value = 'CON MOTIVO DE LA ACTUALIZACIÓN DEL MANUAL GENERAL DE ORGANIZACIÓN Y EN ATENCIÓN A LOS LINEAMIENTOS DEL PLAN ESTATAL DE DESARROLLO INSTITUCIONAL, SE FORMALIZA LA REESTRUCTURACIÓN ORGÁNICA Y CAMBIO DE DENOMINACIÓN DEL ANTERIOR DEPARTAMENTO DE RECURSOS HUMANOS PARA ASUMIR LA GOBERNANZA INTEGRAL DEL TALENTO HUMANO.';
+
+  document.getElementById('estatus').value = 'Generada para Firma';
+  document.getElementById('observaciones').value = 'Notificado a la Dirección de Personal y a la SAF para la debida actualización de estructuras orgánicas y plantillas de plazas.';
+
+  renderDocument(getCurrentFormDataForPreview());
+  showToast('Datos de ejemplo cargados con catálogo orgánico oficial.');
+}
+
+function exportToCSV() {
+  if (records.length === 0) {
+    alert('No hay registros en la bitácora para exportar.');
+    return;
+  }
+
+  const headers = [
+    'Folio',
+    'Fecha de Registro',
+    'Área Notificadora',
+    'Responsable de Captura',
+    'Municipio',
+    'Fecha de constancia',
+    'Hora',
+    'Inmueble',
+    'Tipo de Movimiento',
+    'Nombre del Área o Adscripción',
+    'Justificación y Motivos',
+    'Titular Unidad (1) - Nombre',
+    'Titular Unidad (1) - Cargo',
+    'Titular Unidad (2) - Nombre',
+    'Titular Unidad (2) - Cargo',
+    'Titular de Área - Nombre',
+    'Titular de Área - Cargo',
+    'Testigo (1) - Nombre',
+    'Testigo (1) - Cargo',
+    'Testigo (2) - Nombre',
+    'Testigo (2) - Cargo',
+    'Estatus',
+    'Motivo de Inactivación',
+    'Fecha de Inactivación',
+    'Observaciones'
+  ];
+
+  const rows = records.map(r => [
+    r.folio || '',
+    r.fechaRegistro || '',
+    r.areaNotificadora || '',
+    r.responsableCaptura || '',
+    r.municipio || '',
+    r.fechaActa || '',
+    r.horaActa || '',
+    r.inmueble || '',
+    r.tipoMovimiento || '',
+    r.nuevaDenominacion || '',
+    r.justificacion || '',
+    r.titularUnidad1Nombre || r.titularUnidad1 || '',
+    r.titularUnidad1Cargo || '',
+    r.titularUnidad2Nombre || r.titularUnidad2 || '',
+    r.titularUnidad2Cargo || '',
+    r.titularAreaNombre || r.titularArea || '',
+    r.titularAreaCargo || '',
+    r.testigo1Nombre || r.testigo1 || '',
+    r.testigo1Cargo || '',
+    r.testigo2Nombre || r.testigo2 || '',
+    r.testigo2Cargo || '',
+    r.estatus || '',
+    r.motivoInactivacion || '',
+    r.fechaInactivacion ? new Date(r.fechaInactivacion).toLocaleString('es-MX') : '',
+    r.observaciones || ''
+  ]);
+
+  const csvContent = [
+    headers.map(h => `"${h.replace(/"/g, '""')}"`).join(','),
+    ...rows.map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))
+  ].join('\r\n');
+
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Bitacora_Constancias_SEGEY_${new Date().toISOString().split('T')[0]}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  showToast('Bitácora exportada a Excel (CSV).');
+}
+
+function exportJSONBackup() {
+  const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(records, null, 2));
+  const a = document.createElement('a');
+  a.href = dataStr;
+  a.download = `Respaldo_SEGEY_Constancias_${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast('Respaldo JSON generado.');
+}
+
+function importJSONBackup(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (Array.isArray(imported)) {
+        records = imported;
+        saveRecordsToStorage();
+        renderTable();
+        updateStats();
+        populateAreaFilter();
+        showToast('Respaldo restaurado exitosamente.');
+      } else {
+        alert('El archivo no contiene un formato de lista válido.');
+      }
+    } catch (err) {
+      alert('Error al leer el archivo JSON: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function saveRecordsToStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  } catch (e) {
+    console.warn('Error al guardar en localStorage:', e);
+  }
+
+  // Sincronización automática con el archivo físico en disco (bitacora_constancias.json) vía servidor local
+  if (window.location.protocol.startsWith('http')) {
+    fetch('/api/records', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(records)
+    }).catch(err => {
+      // Si el servidor está apagado o en modo offline, localStorage ya guardó la copia
+    });
+  }
+}
+
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+  const msgEl = document.getElementById('toast-message');
+  const iconEl = document.getElementById('toast-icon');
+  if (!toast || !msgEl) return;
+
+  msgEl.textContent = message;
+
+  if (iconEl) {
+    if (type === 'info') {
+      iconEl.className = 'fa-solid fa-spinner fa-spin text-amber-400';
+    } else if (type === 'error') {
+      iconEl.className = 'fa-solid fa-circle-exclamation text-red-400';
+    } else {
+      iconEl.className = 'fa-solid fa-circle-check text-rose-400';
+    }
+  }
+
+  toast.classList.remove('translate-y-20', 'opacity-0');
+  toast.classList.add('translate-y-0', 'opacity-100');
+
+  setTimeout(() => {
+    toast.classList.remove('translate-y-0', 'opacity-100');
+    toast.classList.add('translate-y-20', 'opacity-0');
+  }, 3500);
+}
+
+function updateShareLink() {
+  const input = document.getElementById('share-link-input');
+  if (!input) return;
+
+  const url = new URL(window.location.href);
+  url.searchParams.set('mode', 'form');
+  input.value = url.href;
+}
+
+function copyShareLink() {
+  const input = document.getElementById('share-link-input');
+  if (!input) return;
+
+  input.select();
+  input.setSelectionRange(0, 99999);
+  navigator.clipboard.writeText(input.value)
+    .then(() => showToast('¡Enlace copiado al portapapeles!'))
+    .catch(() => alert('Enlace: ' + input.value));
+}
+
+function openGoogleSheetsModal() {
+  const modal = document.getElementById('modal-gsheets');
+  const input = document.getElementById('gsheets-webhook-url');
+  if (modal) {
+    if (input) input.value = localStorage.getItem(WEBHOOK_KEY) || '';
+    modal.classList.remove('hidden');
+  }
+}
+
+function closeGoogleSheetsModal() {
+  const modal = document.getElementById('modal-gsheets');
+  if (modal) modal.classList.add('hidden');
+}
+
+function saveGoogleSheetsWebhook() {
+  const input = document.getElementById('gsheets-webhook-url');
+  if (!input) return;
+
+  const url = input.value.trim();
+  localStorage.setItem(WEBHOOK_KEY, url);
+  closeGoogleSheetsModal();
+  showToast(url ? 'Webhook de Google Sheets configurado.' : 'Webhook eliminado.');
+}
+
+function sendToGoogleSheetsWebhook(recordData) {
+  const webhook = localStorage.getItem(WEBHOOK_KEY);
+  if (!webhook) return;
+
+  fetch(webhook, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(recordData)
+  }).then(() => {
+    console.log('Datos sincronizados con Google Sheets.');
+  }).catch(err => {
+    console.error('Error al sincronizar con Google Sheets:', err);
+  });
+}
+
+function getInitialSampleRecords() {
+  return [
+    {
+      id: 'rec_demo_001',
+      folio: 'DIMC-CC-2026-001',
+      fechaRegistro: '2026-11-05T09:30:00Z',
+      areaNotificadora: 'Dirección General de Administración y Finanzas',
+      responsableCaptura: 'Lic. Carmen María Peniche Solís',
+      municipio: 'Mérida',
+      fechaActa: '2026-11-05',
+      dia: '05',
+      mes: 'Noviembre',
+      anio: '26',
+      anioCompleto: 2026,
+      horaActa: '09:30',
+      horas: '09',
+      minutos: '30',
+      inmueble: 'el Edificio Central de la Secretaría de Educación',
+
+      titularUnidad1Nombre: 'Mtro. Juan Carlos Espadas Alcocer',
+      titularUnidad1Cargo: 'Director General de Administración y Finanzas',
+      titularUnidad2Nombre: 'No Aplica',
+      titularUnidad2Cargo: '',
+      titularAreaNombre: 'Mtra. Silvia Gabriela Morales Canto',
+      titularAreaCargo: 'Jefa del Departamento de Normatividad y Estructuras Orgánicas',
+      testigo1Nombre: 'Lic. Rodrigo Marín Pech',
+      testigo1Cargo: 'Coordinador de Asuntos Jurídicos',
+      testigo2Nombre: 'Mtra. Elena Burgos Canul',
+      testigo2Cargo: 'Analista Administrativa',
+
+      tipoMovimiento: 'Cambio de nombre',
+      nuevaDenominacion: 'DIRECCIÓN DE TECNOLOGÍAS DE LA INFORMACIÓN E INNOVACIÓN DIGITAL',
+      justificacion: 'CON MOTIVO DE LA ACTUALIZACIÓN DEL MANUAL GENERAL DE ORGANIZACIÓN Y EN ATENCIÓN A LOS LINEAMIENTOS DEL PLAN ESTATAL DE DESARROLLO INSTITUCIONAL, SE FORMALIZA LA REESTRUCTURACIÓN ORGÁNICA Y CAMBIO DE DENOMINACIÓN DEL ANTERIOR DEPARTAMENTO DE INFORMÁTICA Y TELECOMUNICACIONES PARA CONSTITUIRSE FORMALMENTE COMO LA DIRECCIÓN DE TECNOLOGÍAS DE LA INFORMACIÓN E INNOVACIÓN DIGITAL, ASUMIENDO LA RECTORÍA DE LA INFRAESTRUCTURA TECNOLÓGICA, GOBERNANZA DE DATOS, CONECTIVIDAD DE LOS CENTROS EDUCATIVOS Y PLATAFORMAS DIGITALES DE LA SECRETARÍA DE EDUCACIÓN.',
+      estatus: 'Firmada y Concluida',
+      observaciones: 'Notificado a la Dirección de Personal y a la Secretaría de Administración y Finanzas (SAF) para la debida actualización de estructuras orgánicas y plantillas de plazas.'
+    },
+    {
+      id: 'rec_demo_002',
+      folio: 'DIMC-CC-2026-002',
+      fechaRegistro: '2026-11-08T11:15:00Z',
+      areaNotificadora: 'Dirección General de Desarrollo Educativo y Gestión Regional',
+      responsableCaptura: 'Lic. Mariana Solís Valle',
+      municipio: 'Mérida',
+      fechaActa: '2026-11-08',
+      dia: '08',
+      mes: 'Noviembre',
+      anio: '26',
+      anioCompleto: 2026,
+      horaActa: '11:15',
+      horas: '11',
+      minutos: '15',
+      inmueble: 'el Complejo Administrativo de la Secretaría de Educación',
+
+      titularUnidad1Nombre: 'Dr. Víctor Manuel Díaz Chan',
+      titularUnidad1Cargo: 'Director General de Desarrollo Educativo y Gestión Regional',
+      titularUnidad2Nombre: 'Mtro. José Luis Rodríguez Méndez',
+      titularUnidad2Cargo: 'Director de Educación Primaria',
+      titularAreaNombre: 'Mtro. Ricardo Antonio May Yah',
+      titularAreaCargo: 'Jefe del Departamento de Servicios Regionales',
+      testigo1Nombre: 'Lic. Patricia Arceo Mena',
+      testigo1Cargo: 'Abogada Adscrita a la Dirección Jurídica',
+      testigo2Nombre: 'C. Carlos Tuz Cupul',
+      testigo2Cargo: 'Auxiliar Administrativo',
+
+      tipoMovimiento: 'Cambio de dependencia jerárquica',
+      nuevaDenominacion: 'COORDINACIÓN DE CENTROS DE DESARROLLO EDUCATIVO (CEDE), ADSCRITA A LA DIRECCIÓN GENERAL DE DESARROLLO EDUCATIVO Y GESTIÓN REGIONAL.',
+      justificacion: 'A EFECTO DE OPTIMIZAR LA DESCONCENTRACIÓN DE TRÁMITES ESCOLARES Y FORTALECER LA VINCULACIÓN TERRITORIAL CON LOS MUNICIPIOS DEL INTERIOR DEL ESTADO, LA UNIDAD ADMINISTRATIVA DENOMINADA COORDINACIÓN DE CENTROS DE DESARROLLO EDUCATIVO TRANSFIERE FORMALMENTE SU DEPENDENCIA JERÁRQUICA Y OPERATIVA DE LA DIRECCIÓN DE EDUCACIÓN PRIMARIA A LA DIRECCIÓN GENERAL DE DESARROLLO EDUCATIVO Y GESTIÓN REGIONAL, UNIFICANDO LA ADMINISTRACIÓN DE SERVICIOS EDUCATIVOS Y RECURSOS ASIGNADOS.',
+      estatus: 'Generada para Firma',
+      observaciones: 'Se turna expediente de transferencia presupuestal y de bienes muebles a la Dirección de Administración y Finanzas.'
+    }
+  ];
+}
