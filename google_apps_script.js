@@ -8,13 +8,12 @@
  * 1. Entra a Google Drive y crea una Hoja de Cálculo nueva llamada "Bitácora Constancias SEGEY".
  * 2. Ve al menú superior: Extensiones > Apps Script.
  * 3. Borra el código existente y pega todo este código.
- * 4. Haz clic en el botón azul "Implementar" (arriba a la derecha) > "Nueva implementación".
+ * 4. Haz clic en el botón azul "Implementar" (arriba a la derecha) > "Gestionar implementaciones" (o "Nueva implementación").
  * 5. Selecciona Tipo: "Aplicación web".
  *    - Descripción: "Webhook Constancias SEGEY"
  *    - Ejecutar como: "Yo" (tu cuenta)
  *    - Quién tiene acceso: "Cualquier persona" (Anyone)
- * 6. Haz clic en "Implementar", autoriza los permisos y COPIA LA "URL DE LA APLICACIÓN WEB".
- * 7. En la herramienta web, ve a la pestaña "Compartir Enlace" > "Conexión con Google Sheets" y pega esa URL.
+ * 6. Haz clic en "Implementar", autoriza los permisos y copia la URL.
  * 
  * ¡Listo! Cada vez que alguien guarde una constancia en la web, se agregará un renglón nuevo aquí.
  */
@@ -23,7 +22,7 @@ function doPost(e) {
   try {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
     
-    // Si la hoja está vacía, crear encabezados oficiales
+    // Si la hoja está vacía, crear encabezados oficiales actualizados (19 columnas)
     if (sheet.getLastRow() === 0) {
       sheet.appendRow([
         "Folio",
@@ -37,17 +36,18 @@ function doPost(e) {
         "Tipo de Movimiento",
         "Nueva Denominación",
         "Justificación y Motivos",
-        "Titular Unidad 1",
-        "Titular Unidad 2",
+        "Titular de Unidad Administrativa (1)",
+        "Jefe Inmediato",
+        "Titular de Unidad Administrativa (2)",
         "Titular de Área",
-        "Testigo 1",
-        "Testigo 2",
+        "Testigo (1)",
+        "Testigo (2)",
         "Estatus",
         "Observaciones"
       ]);
       
       // Dar formato a encabezados
-      var headerRange = sheet.getRange(1, 1, 1, 18);
+      var headerRange = sheet.getRange(1, 1, 1, 19);
       headerRange.setBackground("#0e3b43");
       headerRange.setFontColor("#ffffff");
       headerRange.setFontWeight("bold");
@@ -56,6 +56,14 @@ function doPost(e) {
     
     // Leer los datos enviados desde la aplicación web
     var data = JSON.parse(e.postData.contents);
+    
+    // Lógica dinámica de firmas según el trámite del Apartado I:
+    // - En "Cambio de dependencia jerárquica": Hay 2 Titulares de Unidad, 1 Titular de Área y 1 Testigo (no hay Jefe Inmediato ni Testigo 2).
+    // - En los demás trámites: Hay Titular de Unidad (1), Jefe Inmediato, Titular de Área, Testigo (1) y Testigo (2).
+    var esCambioJerarquico = (data.tipoMovimiento === 'Cambio de dependencia jerárquica');
+    var jefeInmediato = data.jefeInmediato || (!esCambioJerarquico ? (data.titularUnidad2 || "") : "");
+    var titularUnidad2 = esCambioJerarquico ? (data.titularUnidad2 || "") : "";
+    var testigo2 = esCambioJerarquico ? "" : (data.testigo2 || "");
     
     sheet.appendRow([
       data.folio || "",
@@ -70,10 +78,11 @@ function doPost(e) {
       data.nuevaDenominacion || "",
       data.justificacion || "",
       data.titularUnidad1 || "",
-      data.titularUnidad2 || "",
+      jefeInmediato || "",
+      titularUnidad2 || "",
       data.titularArea || "",
       data.testigo1 || "",
-      data.testigo2 || "",
+      testigo2 || "",
       data.estatus || "Generada para Firma",
       data.observaciones || ""
     ]);
