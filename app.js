@@ -4300,6 +4300,11 @@ function handleFormSubmit(event) {
   const testigo1 = testigo1Cargo ? `${testigo1Nombre} - ${testigo1Cargo}` : testigo1Nombre;
   const testigo2 = testigo2Cargo ? `${testigo2Nombre} - ${testigo2Cargo}` : testigo2Nombre;
 
+  const isCambioJerarquico = (tipoMovimiento === 'Cambio de dependencia jerárquica');
+  const jefeInmediato = !isCambioJerarquico ? titularUnidad2 : '';
+  const jefeInmediatoNombre = !isCambioJerarquico ? titularUnidad2Nombre : '';
+  const jefeInmediatoCargo = !isCambioJerarquico ? titularUnidad2Cargo : '';
+
   const recordData = {
     id: editingRecordId || 'rec_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
     folio: folio,
@@ -4322,21 +4327,24 @@ function handleFormSubmit(event) {
     titularUnidad1Cargo,
     titularUnidad2Nombre,
     titularUnidad2Cargo,
+    jefeInmediatoNombre,
+    jefeInmediatoCargo,
     titularAreaNombre,
     titularAreaCargo,
     titularArea2Nombre,
     titularArea2Cargo,
     testigo1Nombre,
     testigo1Cargo,
-    testigo2Nombre,
-    testigo2Cargo,
+    testigo2Nombre: isCambioJerarquico ? '' : testigo2Nombre,
+    testigo2Cargo: isCambioJerarquico ? '' : testigo2Cargo,
 
     titularUnidad1,
-    titularUnidad2,
+    titularUnidad2: isCambioJerarquico ? titularUnidad2 : '',
+    jefeInmediato,
     titularArea,
     titularArea2,
     testigo1,
-    testigo2,
+    testigo2: isCambioJerarquico ? '' : testigo2,
 
     tipoMovimiento,
     esCambioNombre: (tipoMovimiento === 'Cambio de nombre'),
