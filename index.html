@@ -1023,10 +1023,29 @@
                 </span>
                 <span id="sidebar-badge-layouts" class="text-[10px] bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded-full font-mono font-semibold">Oficial</span>
               </button>
+
+              <!-- 6. AVISOS POR CORREO -->
+              <button type="button" onclick="switchRegistrySection('notificaciones')" id="btn-reg-sec-notificaciones"
+                class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-between transition-all">
+                <span class="flex items-center gap-2.5">
+                  <i class="fa-solid fa-envelope text-blue-600 text-sm"></i>
+                  <span>Avisos por Correo</span>
+                </span>
+                <span id="sidebar-badge-notificaciones" class="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full font-mono font-semibold">0</span>
+              </button>
             </nav>
 
             <!-- Acciones rápidas -->
             <div class="pt-3 border-t border-slate-100 space-y-1.5">
+              <button type="button" onclick="syncRecordsFromGoogleSheets(true)" id="btn-sync-gsheets-sidebar" title="Descargar y sincronizar todos los folios emitidos desde Google Sheets"
+                class="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-blue-900 bg-blue-50 hover:bg-blue-100 border border-blue-200 flex items-center justify-between transition group shadow-2xs">
+                <span class="flex items-center gap-2">
+                  <i class="fa-solid fa-cloud-arrow-down text-blue-600 text-sm group-hover:scale-110 transition-transform"></i>
+                  <span>Sincronizar Google Sheets</span>
+                </span>
+                <i class="fa-solid fa-arrows-rotate text-[11px] text-blue-600 transition" id="sync-gsheets-icon"></i>
+              </button>
+
               <button type="button" onclick="sincronizarDesdeExcel()" id="btn-sync-excel" title="Sincroniza los cambios guardados en Catalogo_Funcionarios_y_Puestos.xlsx"
                 class="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 flex items-center justify-between transition group shadow-2xs">
                 <span class="flex items-center gap-2">
@@ -1122,6 +1141,9 @@
               <i class="fa-solid fa-trash-can"></i>
               <span id="btn-eliminar-texto">Eliminar Seleccionados</span>
               <span id="badge-eliminar-count" class="hidden bg-rose-600 text-white px-1.5 py-0.2 rounded-full text-[10px] font-bold">0</span>
+            </button>
+            <button type="button" onclick="syncRecordsFromGoogleSheets(true)" class="px-3.5 py-2 text-xs font-semibold rounded-lg bg-blue-50 text-blue-800 border border-blue-300 hover:bg-blue-100 transition flex items-center gap-1.5 shadow-2xs">
+              <i class="fa-solid fa-cloud-arrow-down text-blue-600"></i> Sincronizar Google Sheets
             </button>
             <button onclick="exportToCSV()" class="px-3.5 py-2 text-xs font-semibold rounded-lg bg-segey-50 text-segey-800 border border-segey-300 hover:bg-segey-100 transition flex items-center gap-1.5">
               <i class="fa-solid fa-file-excel text-segey-700"></i> Exportar a Excel (CSV)
@@ -1472,6 +1494,65 @@
           </div>
         </div>
       </div>
+          </div>
+
+          <!-- 6. SECCIÓN: CONFIGURACIÓN DE NOTIFICACIONES POR CORREO -->
+          <div id="sec-registry-notificaciones" class="space-y-6 hidden">
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+              <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-envelope-circle-check"></i>
+                  </div>
+                  <div>
+                    <h3 class="text-base font-bold text-slate-900">Avisos y Notificaciones por Correo Institucional</h3>
+                    <p class="text-xs text-slate-500">Configura quiénes recibirán alertas automáticas por correo cuando se genere o modifique una constancia.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-blue-50/70 border border-blue-200 rounded-xl p-4 text-xs text-blue-900 space-y-1">
+                <p class="font-bold flex items-center gap-1.5">
+                  <i class="fa-solid fa-shield-halved text-blue-700"></i> Control Exclusivo de Destinatarios:
+                </p>
+                <p class="text-blue-800 leading-relaxed">
+                  Solo los correos registrados aquí recibirán la alerta automática con el folio, área notificadora, tipo de trámite y enlace oficial. Puedes agregar tu correo institucional y el de las personas que decidas.
+                </p>
+              </div>
+
+              <!-- Formulario de adición de correo -->
+              <div class="space-y-2">
+                <label class="block text-xs font-bold text-slate-700">Agregar Correo para Alertas:</label>
+                <div class="flex flex-col sm:flex-row gap-2">
+                  <input type="email" id="input-nuevo-correo-notif" placeholder="ejemplo.funcionario@yucatan.gob.mx"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault();agregarCorreoNotificacion();}"
+                    class="flex-1 text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-segey-700">
+                  <button type="button" onclick="agregarCorreoNotificacion()" class="px-4 py-2.5 bg-segey-800 hover:bg-segey-900 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-xs">
+                    <i class="fa-solid fa-plus"></i> Agregar Correo
+                  </button>
+                </div>
+              </div>
+
+              <!-- Lista de correos registrados -->
+              <div class="space-y-2 pt-2 border-t border-slate-100">
+                <div class="flex items-center justify-between">
+                  <p class="text-xs font-bold text-slate-700 uppercase tracking-wider">Correos Registrados:</p>
+                  <span id="badge-total-correos-notif" class="text-[10px] font-mono bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-bold">0 correos</span>
+                </div>
+                <div id="lista-correos-notificaciones" class="space-y-2 max-h-56 overflow-y-auto">
+                  <!-- Se puebla dinámicamente -->
+                </div>
+              </div>
+
+              <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <p class="text-[11px] text-slate-400 flex items-center gap-1">
+                  <i class="fa-solid fa-circle-check text-emerald-600"></i> Las alertas se envían a través de tu Webhook institucional de Google Apps Script.
+                </p>
+                <button type="button" onclick="guardarCorreosNotificacion()" class="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-xs">
+                  <i class="fa-solid fa-floppy-disk"></i> Guardar Lista de Correos
+                </button>
+              </div>
+            </div>
           </div>
 
         </div>
