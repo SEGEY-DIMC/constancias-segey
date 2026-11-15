@@ -8,6 +8,8 @@
 const STORAGE_KEY = 'segey_constancias_records_v1';
 const WEBHOOK_KEY = 'segey_gsheets_webhook_url';
 const DEFAULT_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbwqoesxAkV6PcQF9eh6RGsD-uJx_pxr9QqZx4lFoPo9_HYx6Xuqe9uIn79QY2TgSzg/exec'; // URL institucional predeterminada de Google Sheets
+const NOTIF_EMAILS_KEY = 'segey_notification_emails_v1';
+const REMOTE_CATALOG_KEY = 'segey_gsheets_catalog_v1';
 const LAYOUTS_STORAGE_KEY = 'segey_custom_layouts_v1';
 const ACTIVE_LAYOUT_ID_KEY = 'segey_active_layout_id';
 const ADMIN_AUTH_KEY = 'segey_admin_auth_v1';
@@ -2689,7 +2691,7 @@ let currentRegistrySection = 'constancias';
 
 function switchRegistrySection(sectionId) {
   currentRegistrySection = sectionId;
-  const sections = ['constancias', 'areas', 'responsables', 'justificaciones', 'layouts'];
+  const sections = ['constancias', 'areas', 'responsables', 'justificaciones', 'layouts', 'notificaciones'];
 
   sections.forEach(sec => {
     const el = document.getElementById(`sec-registry-${sec}`);
@@ -2709,6 +2711,10 @@ function switchRegistrySection(sectionId) {
       }
     }
   });
+
+  if (sectionId === 'notificaciones') {
+    renderNotificationEmailsList();
+  }
 
   updateRegistrySidebarBadges();
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -2739,6 +2745,10 @@ function updateRegistrySidebarBadges() {
   if (badgeLayouts && typeof getActiveLayoutTemplate === 'function') {
     const activeLayout = getActiveLayoutTemplate();
     badgeLayouts.textContent = (activeLayout && activeLayout.name === 'Oficial (Por defecto)') ? 'Oficial' : 'Activo';
+  }
+  const badgeNotif = document.getElementById('sidebar-badge-notificaciones');
+  if (badgeNotif && typeof getNotificationEmails === 'function') {
+    badgeNotif.textContent = getNotificationEmails().length;
   }
 }
 
@@ -4385,6 +4395,34 @@ function handleFormSubmit(event) {
       recordData.fechaModificacion = new Date().toISOString();
       recordData.vecesEditado = (existing.vecesEditado || 0) + 1;
 
+      // Comparador de cambios (Detección de qué campos específicos cambiaron)
+      const camposComparar = [
+        { key: 'tipoMovimiento', label: 'Tipo de Movimiento' },
+        { key: 'nuevaDenominacion', label: 'Denominación / Puesto' },
+        { key: 'justificacion', label: 'Justificación' },
+        { key: 'areaNotificadora', label: 'Área Notificadora' },
+        { key: 'responsableCaptura', label: 'Responsable' },
+        { key: 'inmueble', label: 'Inmueble' },
+        { key: 'titularUnidad1', label: 'Titular Unidad (1)' },
+        { key: 'jefeInmediato', label: 'Jefe Inmediato' },
+        { key: 'titularUnidad2', label: 'Titular Unidad (2)' },
+        { key: 'titularArea', label: 'Titular de Área' },
+        { key: 'testigo1', label: 'Testigo (1)' },
+        { key: 'testigo2', label: 'Testigo (2)' }
+      ];
+      const cambiosDetectados = [];
+      camposComparar.forEach(c => {
+        const antes = String(existing[c.key] || '').trim();
+        const despues = String(recordData[c.key] || '').trim();
+        if (antes !== despues) {
+          cambiosDetectados.push({
+            campo: c.label,
+            antes: antes,
+            despues: despues
+          });
+        }
+      });
+
       // Línea de vida / Historial detallado de modificaciones
       const historial = Array.isArray(existing.historialCambios) ? [...existing.historialCambios] : [];
       historial.push({
@@ -4393,7 +4431,8 @@ function handleFormSubmit(event) {
         estatusPrevio: existing.estatus || 'Generada para Firma',
         estatusNuevo: estatus,
         responsable: responsableCaptura || existing.responsableCaptura || 'Capturista',
-        observaciones: observaciones || ''
+        observaciones: observaciones || '',
+        cambios: cambiosDetectados
       });
       recordData.historialCambios = historial;
 
@@ -5454,11 +5493,25 @@ function showDetailsModal(id) {
             </strong>
             <div class="space-y-1.5 max-h-36 overflow-y-auto pl-2 border-l-2 border-amber-400">
               ${r.historialCambios.map(h => `
-                <div class="text-[10.5px] text-slate-700 leading-tight">
-                  <span class="font-bold text-amber-900">#${h.num} — ${new Date(h.fecha).toLocaleString('es-MX')}:</span>
-                  Pasa a <span class="font-semibold text-slate-900">${escapeHtml(h.estatusNuevo)}</span>
-                  por <span class="italic text-slate-600">${escapeHtml(h.responsable)}</span>
-                  ${h.observaciones ? `<div class="text-[10px] text-slate-500 pl-2 italic">Nota: "${escapeHtml(h.observaciones)}"</div>` : ''}
+                <div class="text-[10.5px] text-slate-700 leading-tight bg-white/70 p-2 rounded border border-amber-200/60 shadow-2xs">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-amber-950">#${h.num} — ${new Date(h.fecha).toLocaleString('es-MX')}</span>
+                    <span class="text-[9.5px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">${escapeHtml(h.estatusNuevo)}</span>
+                  </div>
+                  <div class="text-[10px] text-slate-500 mt-0.5">Responsable: <em class="font-medium text-slate-700">${escapeHtml(h.responsable)}</em></div>
+                  ${(h.cambios && h.cambios.length > 0) ? `
+                    <div class="mt-1.5 pt-1.5 border-t border-slate-100 space-y-1">
+                      <strong class="text-[9px] uppercase tracking-wider text-slate-500 block">Campos modificados:</strong>
+                      ${h.cambios.map(c => `
+                        <div class="text-[10px] text-slate-700 pl-1 leading-snug">
+                          <span class="font-semibold text-slate-900">${escapeHtml(c.campo)}:</span>
+                          <span class="line-through text-red-600 bg-red-50 px-1 rounded">${escapeHtml(c.antes || '(vacío)')}</span>
+                          ➔ <span class="font-bold text-emerald-800 bg-emerald-50 px-1 rounded">${escapeHtml(c.despues || '(vacío)')}</span>
+                        </div>
+                      `).join('')}
+                    </div>
+                  ` : ''}
+                  ${h.observaciones ? `<div class="text-[10px] text-slate-600 italic mt-1 bg-slate-50 p-1 rounded border border-slate-200/60">Nota: "${escapeHtml(h.observaciones)}"</div>` : ''}
                 </div>
               `).join('')}
             </div>
@@ -5889,13 +5942,19 @@ function sendToGoogleSheetsWebhook(recordData) {
   const webhook = localStorage.getItem(WEBHOOK_KEY) || DEFAULT_WEBHOOK_URL;
   if (!webhook) return;
 
+  const notifEmails = typeof getNotificationEmails === 'function' ? getNotificationEmails() : [];
+  const payload = {
+    ...recordData,
+    correosNotificacion: notifEmails.join(',')
+  };
+
   fetch(webhook, {
     method: 'POST',
     mode: 'no-cors',
     headers: {
       'Content-Type': 'text/plain;charset=utf-8'
     },
-    body: JSON.stringify(recordData)
+    body: JSON.stringify(payload)
   }).then(() => {
     console.log('Datos sincronizados con Google Sheets.');
     if (typeof showToast === 'function') {
@@ -5995,6 +6054,14 @@ function openBuscarFolioModal() {
     setTimeout(() => {
       if (input) input.focus();
     }, 100);
+    // Sincronizar en segundo plano para asegurar tener los últimos folios de todo el estado
+    if (typeof syncRecordsFromGoogleSheets === 'function') {
+      syncRecordsFromGoogleSheets(false).then(() => {
+        if (!input || !input.value) {
+          mostrarResultadosBusquedaFolio(records.slice(0, 5), true);
+        }
+      });
+    }
   }
 }
 
@@ -6113,4 +6180,201 @@ function verFolioEnVisor(id) {
 function cancelarEdicionFolio() {
   resetForm();
   showToast('Modo edición cancelado. Formulario listo para nueva constancia.');
+}
+
+/**
+ * =========================================================================
+ * GESTIÓN DE CORREOS PARA AVISOS Y NOTIFICACIONES
+ * =========================================================================
+ */
+function getNotificationEmails() {
+  try {
+    const raw = localStorage.getItem(NOTIF_EMAILS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveNotificationEmails(emails) {
+  localStorage.setItem(NOTIF_EMAILS_KEY, JSON.stringify(emails));
+  updateRegistrySidebarBadges();
+}
+
+function renderNotificationEmailsList() {
+  const container = document.getElementById('lista-correos-notificaciones');
+  const badge = document.getElementById('badge-total-correos-notif');
+  if (!container) return;
+
+  const emails = getNotificationEmails();
+  if (badge) badge.textContent = `${emails.length} correo${emails.length === 1 ? '' : 's'}`;
+
+  if (emails.length === 0) {
+    container.innerHTML = `
+      <div class="p-4 bg-slate-50 border border-slate-200 rounded-lg text-center text-xs text-slate-500">
+        <i class="fa-solid fa-inbox text-slate-400 mr-1.5"></i> No hay correos registrados. Agrega los correos que deben recibir avisos de nuevos trámites o modificaciones.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = emails.map((em, idx) => `
+    <div class="flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition text-xs">
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-envelope text-blue-600"></i>
+        <span class="font-medium text-slate-800">${escapeHtml(em)}</span>
+      </div>
+      <button type="button" onclick="eliminarCorreoNotificacion(${idx})" title="Eliminar este correo"
+        class="text-rose-600 hover:text-rose-800 px-2 py-1 rounded hover:bg-rose-50 transition text-xs font-semibold flex items-center gap-1">
+        <i class="fa-solid fa-trash-can"></i> Quitar
+      </button>
+    </div>
+  `).join('');
+}
+
+function agregarCorreoNotificacion() {
+  const input = document.getElementById('input-nuevo-correo-notif');
+  if (!input) return;
+  const email = input.value.trim().toLowerCase();
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !emailRegex.test(email)) {
+    alert('Por favor ingrese una dirección de correo electrónico válida (ej. nombre@yucatan.gob.mx).');
+    input.focus();
+    return;
+  }
+
+  const emails = getNotificationEmails();
+  if (emails.includes(email)) {
+    alert('Este correo electrónico ya se encuentra en la lista.');
+    input.focus();
+    return;
+  }
+
+  emails.push(email);
+  saveNotificationEmails(emails);
+  input.value = '';
+  renderNotificationEmailsList();
+  showToast(`Correo ${email} agregado a la lista de avisos.`);
+}
+
+function eliminarCorreoNotificacion(idx) {
+  const emails = getNotificationEmails();
+  if (idx >= 0 && idx < emails.length) {
+    const removed = emails.splice(idx, 1);
+    saveNotificationEmails(emails);
+    renderNotificationEmailsList();
+    showToast(`Correo ${removed[0]} eliminado de la lista.`);
+  }
+}
+
+function guardarCorreosNotificacion() {
+  renderNotificationEmailsList();
+  showToast('Configuración de correos guardada con éxito.');
+}
+
+/**
+ * =========================================================================
+ * SINCRONIZACIÓN BIDIRECCIONAL CON GOOGLE SHEETS (CENTRALIZACIÓN)
+ * =========================================================================
+ */
+let isSyncingGSheets = false;
+
+async function syncRecordsFromGoogleSheets(forceToast = false) {
+  if (isSyncingGSheets) return;
+  const webhook = localStorage.getItem(WEBHOOK_KEY) || DEFAULT_WEBHOOK_URL;
+  if (!webhook) {
+    if (forceToast) showToast('Configure primero la URL del Webhook de Google Sheets.', 'error');
+    return;
+  }
+
+  isSyncingGSheets = true;
+  const syncIcon = document.getElementById('sync-gsheets-icon');
+  if (syncIcon) syncIcon.classList.add('fa-spin');
+
+  try {
+    const fetchUrl = `${webhook}?action=getRecords&t=${Date.now()}`;
+    const resp = await fetch(fetchUrl);
+    const result = await resp.json();
+
+    if (result && result.status === 'success' && Array.isArray(result.records)) {
+      let agregados = 0;
+      let actualizados = 0;
+
+      result.records.forEach(remote => {
+        if (!remote.folio) return;
+        const localIdx = records.findIndex(r => r.folio === remote.folio);
+        if (localIdx === -1) {
+          records.push({
+            id: 'rec_gsheet_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+            ...remote
+          });
+          agregados++;
+        } else {
+          records[localIdx] = {
+            ...records[localIdx],
+            ...remote
+          };
+          actualizados++;
+        }
+      });
+
+      records.sort((a, b) => new Date(b.fechaRegistro || b.fechaActa || 0) - new Date(a.fechaRegistro || a.fechaActa || 0));
+
+      saveRecordsToStorage();
+      updateStats();
+      renderTable();
+      updateRegistrySidebarBadges();
+
+      if (forceToast) {
+        showToast(`Sincronización completada: ${agregados} nuevos folios, ${actualizados} actualizados.`);
+      }
+      console.log(`Google Sheets Sync: ${agregados} agregados, ${actualizados} actualizados.`);
+    } else if (forceToast) {
+      showToast('Sincronización completada. No hay registros adicionales.');
+    }
+  } catch (err) {
+    console.warn('Sincronización con Google Sheets no disponible:', err);
+    if (forceToast) {
+      showToast('No se pudo conectar con Google Sheets en este momento.', 'error');
+    }
+  } finally {
+    isSyncingGSheets = false;
+    if (syncIcon) syncIcon.classList.remove('fa-spin');
+  }
+}
+
+/**
+ * =========================================================================
+ * SINCRONIZACIÓN DE CATÁLOGO DINÁMICO DESDE GOOGLE SHEETS
+ * =========================================================================
+ */
+async function syncCatalogoFromGoogleSheets(forceToast = false) {
+  const webhook = localStorage.getItem(WEBHOOK_KEY) || DEFAULT_WEBHOOK_URL;
+  if (!webhook) return;
+
+  try {
+    const fetchUrl = `${webhook}?action=getCatalogo&t=${Date.now()}`;
+    const resp = await fetch(fetchUrl);
+    const result = await resp.json();
+
+    if (result && result.status === 'success' && Array.isArray(result.catalogo) && result.catalogo.length > 0) {
+      localStorage.setItem(REMOTE_CATALOG_KEY, JSON.stringify(result.catalogo));
+      poblarSelectAreaNotificadora();
+      poblarSelectTitularesUnidades();
+      if (forceToast) {
+        showToast(`Catálogo de funcionarios actualizado desde Google Sheets (${result.catalogo.length} registros).`);
+      }
+    }
+  } catch (e) {
+    console.log('Catálogo remoto en Google Sheets no configurado; se usa el catálogo oficial base.');
+  }
+}
+
+// Iniciar sincronización de fondo al cargar la página
+if (typeof window !== 'undefined') {
+  setTimeout(() => {
+    syncRecordsFromGoogleSheets(false);
+    syncCatalogoFromGoogleSheets(false);
+  }, 1000);
 }
