@@ -576,13 +576,13 @@
                 </div>
               </div>
 
-              <!-- Testigos 1 y 2 -->
+              <!-- Enlaces 1 y 2 -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <!-- Testigo 1 -->
+                <!-- Enlace 1 -->
                 <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2.5 shadow-xs">
                   <div class="flex items-center justify-between">
                     <label id="lblTestigo1" class="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                      <i class="fa-solid fa-users text-segey-700"></i> Testigo (1) <span class="text-red-500">*</span>
+                      <i class="fa-solid fa-users text-segey-700"></i> Enlace (1) <span class="text-red-500">*</span>
                     </label>
                     <span id="badgeTestigo1" class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
                       <i class="fa-solid fa-filter text-slate-400 mr-1"></i>Según Área que Notifica
@@ -590,7 +590,7 @@
                   </div>
                   <div>
                     <label for="selectTestigo1" class="block text-[11px] text-slate-600 mb-0.5 font-semibold">
-                      Seleccionar Testigo (1) del Área:
+                      Seleccionar Enlace (1) del Área:
                     </label>
                     <select id="selectTestigo1" onchange="handleTestigoSelect(this, 1)"
                       class="w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-white text-slate-800 font-medium">
@@ -600,7 +600,7 @@
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-100">
                     <div>
                       <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">1. Nombre Completo:</label>
-                      <input type="text" id="testigo1Nombre" required placeholder="Nombre completo del Testigo 1"
+                      <input type="text" id="testigo1Nombre" required placeholder="Nombre completo del Enlace 1"
                         class="w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-white">
                     </div>
                     <div>
@@ -611,11 +611,11 @@
                   </div>
                 </div>
 
-                <!-- Testigo 2 -->
+                <!-- Enlace 2 -->
                 <div id="containerTestigo2" class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2.5 shadow-xs">
                   <div class="flex items-center justify-between">
                     <label class="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                      <i class="fa-solid fa-users text-segey-700"></i> Testigo (2) <span class="text-red-500">*</span>
+                      <i class="fa-solid fa-users text-segey-700"></i> Enlace (2) <span class="text-red-500">*</span>
                     </label>
                     <span id="badgeTestigo2" class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
                       <i class="fa-solid fa-filter text-slate-400 mr-1"></i>Según Área / Destino
@@ -623,7 +623,7 @@
                   </div>
                   <div>
                     <label id="lblSelectTestigo2" for="selectTestigo2" class="block text-[11px] text-slate-600 mb-0.5 font-semibold">
-                      Seleccionar Testigo (2):
+                      Seleccionar Enlace (2):
                     </label>
                     <select id="selectTestigo2" onchange="handleTestigoSelect(this, 2)"
                       class="w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-white text-slate-800 font-medium">
@@ -633,7 +633,7 @@
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-100">
                     <div>
                       <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">1. Nombre Completo:</label>
-                      <input type="text" id="testigo2Nombre" required placeholder="Nombre completo del Testigo 2"
+                      <input type="text" id="testigo2Nombre" required placeholder="Nombre completo del Enlace 2"
                         class="w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-white">
                     </div>
                     <div>
@@ -874,10 +874,10 @@
                 </div>
 
                 <div class="grid grid-cols-12 gap-2 items-start">
-                  <div class="col-span-5 font-bold text-slate-800">Testigos:</div>
+                  <div class="col-span-5 font-bold text-slate-800">Enlaces:</div>
                   <div class="col-span-7 space-y-0.5 font-normal text-slate-900">
-                    <div>1) <span id="doc-testigo1" class="font-normal text-slate-900">Nombre del Testigo 1</span></div>
-                    <div>2) <span id="doc-testigo2" class="font-normal text-slate-900">Nombre del Testigo 2</span></div>
+                    <div>1) <span id="doc-testigo1" class="font-normal text-slate-900">Nombre del Enlace 1</span></div>
+                    <div>2) <span id="doc-testigo2" class="font-normal text-slate-900">Nombre del Enlace 2</span></div>
                   </div>
                 </div>
               </div>
@@ -930,20 +930,20 @@
                   </div>
                 </div>
 
-                <!-- Fila 3: Testigos 1 y 2 -->
+                <!-- Fila 3: Enlaces 1 y 2 -->
                 <div class="grid grid-cols-2 gap-8 text-center pt-2">
                   <div>
                     <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
-                      <div class="font-bold uppercase text-[10.5px] tracking-tight">Testigo (1)</div>
-                      <div id="sign-testigo1-nombre" class="text-slate-900 text-[10.5px] mt-0.5 font-bold">Nombre Testigo 1</div>
-                      <div id="sign-testigo1-cargo" class="text-slate-600 text-[9.5px] leading-tight mt-0.5">Cargo Testigo 1</div>
+                      <div class="font-bold uppercase text-[10.5px] tracking-tight">Enlace (1)</div>
+                      <div id="sign-testigo1-nombre" class="text-slate-900 text-[10.5px] mt-0.5 font-bold">Nombre Enlace 1</div>
+                      <div id="sign-testigo1-cargo" class="text-slate-600 text-[9.5px] leading-tight mt-0.5">Cargo Enlace 1</div>
                     </div>
                   </div>
                   <div>
                     <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
-                      <div class="font-bold uppercase text-[10.5px] tracking-tight">Testigo (2)</div>
-                      <div id="sign-testigo2-nombre" class="text-slate-900 text-[10.5px] mt-0.5 font-bold">Nombre Testigo 2</div>
-                      <div id="sign-testigo2-cargo" class="text-slate-600 text-[9.5px] leading-tight mt-0.5">Cargo Testigo 2</div>
+                      <div class="font-bold uppercase text-[10.5px] tracking-tight">Enlace (2)</div>
+                      <div id="sign-testigo2-nombre" class="text-slate-900 text-[10.5px] mt-0.5 font-bold">Nombre Enlace 2</div>
+                      <div id="sign-testigo2-cargo" class="text-slate-600 text-[9.5px] leading-tight mt-0.5">Cargo Enlace 2</div>
                     </div>
                   </div>
                 </div>
@@ -1938,12 +1938,12 @@
             <div><code>{{titularArea2Cargo}}</code> <span class="text-slate-500 font-sans text-xs">- Cargo Titular de Área (2)</span></div>
             <div><code>{{titularArea2Completo}}</code> <span class="text-slate-500 font-sans text-xs">- "Nombre, Cargo" (2)</span></div>
 
-            <div><code>{{testigo1Nombre}}</code> <span class="text-slate-500 font-sans text-xs">- Nombre Testigo 1</span></div>
-            <div><code>{{testigo1Cargo}}</code> <span class="text-slate-500 font-sans text-xs">- Cargo Testigo 1</span></div>
+            <div><code>{{testigo1Nombre}}</code> <span class="text-slate-500 font-sans text-xs">- Nombre Enlace 1</span></div>
+            <div><code>{{testigo1Cargo}}</code> <span class="text-slate-500 font-sans text-xs">- Cargo Enlace 1</span></div>
             <div><code>{{testigo1Completo}}</code> <span class="text-slate-500 font-sans text-xs">- "Nombre, Cargo"</span></div>
 
-            <div><code>{{testigo2Nombre}}</code> <span class="text-slate-500 font-sans text-xs">- Nombre Testigo 2</span></div>
-            <div><code>{{testigo2Cargo}}</code> <span class="text-slate-500 font-sans text-xs">- Cargo Testigo 2</span></div>
+            <div><code>{{testigo2Nombre}}</code> <span class="text-slate-500 font-sans text-xs">- Nombre Enlace 2</span></div>
+            <div><code>{{testigo2Cargo}}</code> <span class="text-slate-500 font-sans text-xs">- Cargo Enlace 2</span></div>
             <div><code>{{testigo2Completo}}</code> <span class="text-slate-500 font-sans text-xs">- "Nombre, Cargo"</span></div>
           </div>
         </div>
@@ -2313,6 +2313,6 @@
   <!-- Scripts -->
   <script src="assets/catalogo_organico.js?v=2.2.1"></script>
   <script src="assets/mapa_jefes_inmediatos.js?v=2.2.1"></script>
-  <script src="app.js?v=2.2.1"></script>
+  <script src="app.js?v=2.2.2"></script>
 </body>
 </html>
