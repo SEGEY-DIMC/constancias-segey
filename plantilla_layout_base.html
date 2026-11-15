@@ -1,0 +1,228 @@
+<!-- 
+  PLANTILLA BASE DE LAYOUT OFICIAL PARA CONSTANCIAS DE CAMBIOS - SEGEY
+  Conserva fielmente el encabezado y pie de página del documento Word oficial,
+  con cuerpo en texto corrido sin recuadros de tabla y captura separada de Nombre y Cargo.
+  
+  Etiquetas dinámicas disponibles:
+  {{folio}}, {{municipio}}, {{fechaConstancia}}, {{fechaActa}}, {{dia}}, {{mes}}, {{anio}}, {{horaActa}}, {{horas}}, {{minutos}}, {{inmueble}},
+  {{titularUnidad1Nombre}}, {{titularUnidad1Cargo}}, {{titularUnidad2Nombre}}, {{titularUnidad2Cargo}},
+  {{titularAreaNombre}}, {{titularAreaCargo}}, {{testigo1Nombre}}, {{testigo1Cargo}}, {{testigo2Nombre}}, {{testigo2Cargo}},
+  {{chkAlta}}, {{chkBaja}}, {{chkNombre}}, {{chkJerarquica}}, {{nuevaDenominacion}}, {{justificacion}},
+  {{logoYucatan}}, {{logoSegey}}
+-->
+<div class="official-sheet">
+
+  <!-- ============================================================== -->
+  <!-- ENCABEZADO OFICIAL SEGEY (IDÉNTICO AL FORMATO WORD)           -->
+  <!-- ============================================================== -->
+  <div class="official-header mb-3">
+    <table style="width: 100%; border-collapse: collapse; border: 1px solid #A6A6A6; font-family: 'Lato', Arial, sans-serif;">
+      <tr>
+        <!-- Columna 1: Escudo de Yucatán -->
+        <td style="width: 25%; text-align: center; vertical-align: middle; padding: 6px 8px; border-right: 1px solid #A6A6A6; border-bottom: 1px solid #A6A6A6;">
+          <img src="{{logoYucatan}}" alt="Gobierno del Estado de Yucatán" style="max-height: 48px; max-width: 135px; margin: 0 auto; display: block;" />
+        </td>
+        <!-- Columna 2: Textos Institucionales -->
+        <td style="width: 53%; text-align: center; vertical-align: middle; padding: 6px 10px; border-right: 1px solid #A6A6A6; border-bottom: 1px solid #A6A6A6;">
+          <div style="font-size: 13px; font-weight: bold; color: #111827; letter-spacing: 0.3px; line-height: 1.25; font-family: 'Lato', Arial, sans-serif; text-transform: uppercase;">
+            SECRETARÍA DE EDUCACIÓN
+          </div>
+          <div style="font-size: 10.5px; color: #374151; margin-top: 2px; font-family: 'Lato', Arial, sans-serif;">
+            Dirección de Administración y Finanzas
+          </div>
+        </td>
+        <!-- Columna 3: Logo SEGEY -->
+        <td style="width: 22%; text-align: center; vertical-align: middle; padding: 6px 8px; border-bottom: 1px solid #A6A6A6;">
+          <img src="{{logoSegey}}" alt="SEGEY" style="max-height: 46px; max-width: 65px; margin: 0 auto; display: block;" />
+        </td>
+      </tr>
+      <tr>
+        <!-- Fila 2: Título Oficial de la Constancia -->
+        <td colspan="3" style="text-align: center; vertical-align: middle; padding: 6px 10px; font-size: 11px; font-weight: bold; color: #111827; background-color: #ffffff; font-family: 'Lato', Arial, sans-serif;">
+          Constancia de cambios de denominación o dependencia jerárquica en las unidades administrativas
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Folio de control discreto -->
+  <div class="text-right text-[11px] text-slate-500 font-mono mb-3">
+    <span>Folio: <strong>{{folio}}</strong></span>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- CUERPO DEL DOCUMENTO (TEXTO FLUIDO SIN CUADROS)                -->
+  <!-- ============================================================== -->
+  <div class="official-body text-slate-900 text-justify text-[11pt] leading-relaxed space-y-3" style="font-family: 'Lato', Arial, sans-serif;">
+
+    <!-- APARTADO I. TIPO DE CAMBIO QUE DETERMINA LA UNIDAD ADMINISTRATIVA -->
+    <div>
+      <div class="font-bold text-[11pt] mb-1 uppercase tracking-wide text-slate-900 text-left">I. TIPO DE CAMBIO QUE DETERMINA LA UNIDAD ADMINISTRATIVA</div>
+      <div class="pl-3 space-y-1 text-[11pt] text-left">
+        <p>Se determinó la modificación conforme a lo siguiente:</p>
+        <div class="flex flex-wrap gap-4 items-center my-1 text-[10.5pt]">
+          <span class="font-bold">• Tipo de movimiento:</span>
+          <span class="inline-flex items-center gap-1.5">
+            <span class="font-mono font-bold">{{chkAlta}}</span> Alta
+          </span>
+          <span class="inline-flex items-center gap-1.5">
+            <span class="font-mono font-bold">{{chkBaja}}</span> Baja
+          </span>
+          <span class="inline-flex items-center gap-1.5">
+            <span class="font-mono font-bold">{{chkNombre}}</span> Cambio de nombre
+          </span>
+          <span class="inline-flex items-center gap-1.5">
+            <span class="font-mono font-bold">{{chkJerarquica}}</span> Cambio de dependencia jerárquica
+          </span>
+        </div>
+        <div>
+          <span class="font-bold">• Nombre del área o adscripción:</span>
+          <span class="inline font-normal ml-1 text-slate-900 uppercase">{{nuevaDenominacion}}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- APARTADO II. GENERALES -->
+    <div>
+      <div class="font-bold text-[11pt] mb-1 uppercase tracking-wide text-slate-900 text-left">II. GENERALES</div>
+      <p class="text-justify mb-2 leading-relaxed">
+        En el municipio de <span class="font-bold">{{municipio}}</span>, del Estado de Yucatán, siendo las <span class="font-bold">{{horas}}</span> horas con <span class="font-bold">{{minutos}}</span> minutos del día <span class="font-bold">{{dia}}</span> del mes de <span class="font-bold">{{mes}}</span> del año <span class="font-bold">20{{anio}}</span>, constituidos en el inmueble que ocupa <span class="font-bold">{{inmueble}}</span> ubicada en domicilio conocido, se encuentran reunidos los siguientes comparecientes en representación de la Secretaría de Educación:
+      </p>
+
+      <!-- Comparecientes con Nombre y Cargo capturados por separado -->
+      <div class="my-2 space-y-1 text-[11pt] pl-3 text-left">
+        <div class="grid grid-cols-12 gap-2 items-start">
+          <div class="col-span-5 font-bold text-slate-800">{{etiquetaTitular1Y2}}:</div>
+          <div class="col-span-7 space-y-0.5 font-normal text-slate-900">
+            <div>1) <span class="font-normal text-slate-900">{{titularUnidad1Nombre}}</span>{{#if titularUnidad1Cargo}} <span class="text-slate-600">({{titularUnidad1Cargo}})</span>{{/if}}</div>
+            {{#if titularUnidad2Nombre}}
+            <div>{{etiquetaCompareciente2}}<span class="font-normal text-slate-900">{{titularUnidad2Nombre}}</span>{{#if titularUnidad2Cargo}} <span class="text-slate-600">({{titularUnidad2Cargo}})</span>{{/if}}</div>
+            {{/if}}
+          </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-2 items-start">
+          <div class="col-span-5 font-bold text-slate-800">Titular de Área:</div>
+          <div class="col-span-7 font-normal text-slate-900">
+            <span class="font-normal text-slate-900">{{titularAreaNombre}}</span>{{#if titularAreaCargo}} <span class="text-slate-600">({{titularAreaCargo}})</span>{{/if}}
+          </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-2 items-start">
+          <div class="col-span-5 font-bold text-slate-800">Testigos:</div>
+          <div class="col-span-7 space-y-0.5 font-normal text-slate-900">
+            <div>1) <span class="font-normal text-slate-900">{{testigo1Nombre}}</span>{{#if testigo1Cargo}} <span class="text-slate-600">({{testigo1Cargo}})</span>{{/if}}</div>
+            <div>2) <span class="font-normal text-slate-900">{{testigo2Nombre}}</span>{{#if testigo2Cargo}} <span class="text-slate-600">({{testigo2Cargo}})</span>{{/if}}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- APARTADO III. JUSTIFICACIÓN Y MOTIVOS DEL CAMBIO -->
+    <div>
+      <div class="font-bold text-[11pt] mb-1 uppercase tracking-wide text-slate-900 text-left">III. JUSTIFICACIÓN Y MOTIVOS DEL CAMBIO</div>
+      <div class="pl-3 space-y-1 text-[11pt]">
+        <p class="italic text-[10.5pt] text-slate-700">Se hace constar los siguientes hechos y circunstancias de carácter administrativo…</p>
+        <div class="text-justify leading-relaxed whitespace-pre-wrap font-normal text-slate-900 uppercase">
+          {{justificacion}}
+        </div>
+      </div>
+    </div>
+
+    <!-- APARTADO IV. CIERRE Y FIRMAS -->
+    <div class="page-break-avoid">
+      <div class="font-bold text-[11pt] mb-1 uppercase tracking-wide text-slate-900 text-left">IV. CIERRE</div>
+      <p class="text-justify mb-4 leading-relaxed text-[11pt]">
+        Una vez expresado lo anterior y al no haber más hechos que hacer constar, se da por concluida la presente, firmando al calce para su debida constancia y manifestando su entera conformidad los involucrados, siendo el mismo día y año.
+      </p>
+
+      <!-- ESPACIO DE FIRMAS CON ESPACIO AMPLIO Y RAZONABLE PARA FIRMAR -->
+      <div class="mt-8 space-y-6 font-sans">
+        <!-- Fila 1: Titulares de Unidad 1 y 2 -->
+        <div class="grid grid-cols-2 gap-8 text-center pt-2">
+          <div>
+            <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
+              <div class="font-bold uppercase text-[10.5px] tracking-tight">Titular de Unidad Administrativa (1)</div>
+              <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{titularUnidad1Nombre}}</div>
+              <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{titularUnidad1Cargo}}</div>
+            </div>
+          </div>
+          <div>
+            <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
+              <div class="font-bold uppercase text-[10.5px] tracking-tight">{{etiquetaTitular2Firma}}</div>
+              <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{titularUnidad2Nombre}}</div>
+              <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{titularUnidad2Cargo}}</div>
+            </div>
+          </div>
+        </div>
+
+        {{#if esCambioDependenciaJerarquica}}
+        <!-- Para Cambio de Dependencia Jerárquica: Se quita la firma de en medio. El testigo (1) se vuelve Titular de Área y el testigo (2) se vuelve Testigo (1) -->
+        <div class="grid grid-cols-2 gap-8 text-center pt-2">
+          <div>
+            <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
+              <div class="font-bold uppercase text-[10.5px] tracking-tight">Titular de Área</div>
+              <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{titularAreaNombre}}</div>
+              <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{titularAreaCargo}}</div>
+            </div>
+          </div>
+          <div>
+            <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
+              <div class="font-bold uppercase text-[10.5px] tracking-tight">Testigo (1)</div>
+              <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{testigo1Nombre}}</div>
+              <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{testigo1Cargo}}</div>
+            </div>
+          </div>
+        </div>
+        {{/if}}
+
+        {{#if noEsCambioDependenciaJerarquica}}
+        <!-- Fila 2: Titular de Área al centro -->
+        <div class="text-center pt-2">
+          <div class="w-72 mx-auto border-t border-slate-900 pt-1.5">
+            <div class="font-bold uppercase text-[10.5px] tracking-tight">Titular de Área</div>
+            <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{titularAreaNombre}}</div>
+            <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{titularAreaCargo}}</div>
+          </div>
+        </div>
+
+        <!-- Fila 3: Testigos 1 y 2 -->
+        <div class="grid grid-cols-2 gap-8 text-center pt-2">
+          <div>
+            <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
+              <div class="font-bold uppercase text-[10.5px] tracking-tight">Testigo (1)</div>
+              <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{testigo1Nombre}}</div>
+              <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{testigo1Cargo}}</div>
+            </div>
+          </div>
+          <div>
+            <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
+              <div class="font-bold uppercase text-[10.5px] tracking-tight">Testigo (2)</div>
+              <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{testigo2Nombre}}</div>
+              <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{testigo2Cargo}}</div>
+            </div>
+          </div>
+        </div>
+        {{/if}}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- PIE DE PÁGINA OFICIAL SEGEY (IDÉNTICO AL FORMATO WORD)        -->
+  <!-- ============================================================== -->
+  <div class="official-footer mt-7 pt-2.5" style="font-family: 'Lato', Arial, sans-serif; font-size: 10px; color: #475569; border-top: none;">
+    <table style="width: 100%; border-collapse: collapse; border: none;">
+      <tr>
+        <td style="text-align: left; vertical-align: middle; padding: 2px 0;">
+          <span style="letter-spacing: 0.5px; font-weight: 600;">F-PR-EAO-03 &nbsp;R01</span>
+        </td>
+        <td style="text-align: right; vertical-align: middle; padding: 2px 0;">
+          <span>Página 1 de 1</span>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+</div>
