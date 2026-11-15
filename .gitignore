@@ -1,0 +1,16 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Archivos temporales de pruebas
+test_out.docx
+parsed_pdf_lines.txt
+run_test_*.py
+test_*.py
+scratch_*.py
+
+# Logs y SO
+*.log
+.DS_Store
+Thumbs.db
