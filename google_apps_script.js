@@ -32,10 +32,11 @@ function doPost(e) {
         "Testigo (1)",
         "Testigo (2)",
         "Estatus",
-        "Observaciones"
+        "Observaciones",
+        "Expediente Firmado"
       ]);
       
-      var headerRange = sheet.getRange(1, 1, 1, 19);
+      var headerRange = sheet.getRange(1, 1, 1, 20);
       headerRange.setBackground("#0e3b43");
       headerRange.setFontColor("#ffffff");
       headerRange.setFontWeight("bold");
@@ -44,6 +45,67 @@ function doPost(e) {
     
     // Leer los datos enviados desde la aplicación web
     var data = JSON.parse(e.postData.contents);
+
+    // =========================================================================
+    // ACCIÓN ESPECIAL: SUBIR EXPEDIENTE ESCANEADO / FOTO A GOOGLE DRIVE
+    // =========================================================================
+    if (data.action === "uploadExpediente") {
+      var folioBuscado = String(data.folio || "").trim();
+      if (!folioBuscado || !data.base64) {
+        return ContentService.createTextOutput(JSON.stringify({
+          status: "error",
+          message: "Faltan datos obligatorios (folio o archivo base64)."
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+
+      // 1. Obtener o crear carpeta en Google Drive "Constancias Firmadas DIMC"
+      var folder;
+      var folders = DriveApp.getFoldersByName("Constancias Firmadas DIMC");
+      if (folders.hasNext()) {
+        folder = folders.next();
+      } else {
+        folder = DriveApp.createFolder("Constancias Firmadas DIMC");
+      }
+
+      // 2. Decodificar archivo y guardarlo en Google Drive
+      var mimeType = data.mimeType || "application/pdf";
+      var ext = mimeType.indexOf("pdf") !== -1 ? ".pdf" : ".jpg";
+      var fileName = data.fileName || ("Constancia_" + folioBuscado + "_firmada" + ext);
+      var decodedBytes = Utilities.base64Decode(data.base64);
+      var blob = Utilities.newBlob(decodedBytes, mimeType, fileName);
+      var driveFile = folder.createFile(blob);
+      try {
+        driveFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      } catch (shareErr) {}
+      var fileUrl = driveFile.getUrl();
+
+      // 3. Vincular URL en la columna 20 (Expediente Firmado) de la hoja
+      var allRows = sheet.getDataRange().getValues();
+      var folioFound = false;
+      if (allRows.length > 0 && allRows[0].length < 20) {
+        sheet.getRange(1, 20).setValue("Expediente Firmado");
+        sheet.getRange(1, 20).setBackground("#0e3b43").setFontColor("#ffffff").setFontWeight("bold");
+      }
+      for (var r = 1; r < allRows.length; r++) {
+        if (String(allRows[r][0]).trim().toUpperCase() === folioBuscado.toUpperCase()) {
+          sheet.getRange(r + 1, 20).setValue(fileUrl);
+          if (data.actualizarEstatus) {
+            sheet.getRange(r + 1, 18).setValue("Firmada y Concluida");
+          }
+          folioFound = true;
+          break;
+        }
+      }
+
+      return ContentService.createTextOutput(JSON.stringify({
+        status: "success",
+        fileUrl: fileUrl,
+        fileId: driveFile.getId(),
+        fileName: fileName,
+        folio: folioBuscado,
+        message: "Expediente digital guardado en Google Drive exitosamente."
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
     
     // Lógica dinámica de firmas según el Apartado I
     var esCambioJerarquico = (data.tipoMovimiento === 'Cambio de dependencia jerárquica');
@@ -72,7 +134,8 @@ function doPost(e) {
       data.testigo1 || "",
       testigo2 || "",
       data.estatus || "Generada para Firma",
-      data.observaciones || ""
+      data.observaciones || "",
+      data.expedienteUrl || ""
     ]);
 
     // =========================================================================
@@ -180,7 +243,8 @@ function doGet(e) {
           testigo1: row[15] ? String(row[15]) : "",
           testigo2: row[16] ? String(row[16]) : "",
           estatus: row[17] ? String(row[17]) : "Generada para Firma",
-          observaciones: row[18] ? String(row[18]) : ""
+          observaciones: row[18] ? String(row[18]) : "",
+          expedienteUrl: row[19] ? String(row[19]) : ""
         });
       }
 
