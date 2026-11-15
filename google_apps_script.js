@@ -9,7 +9,7 @@
 function doPost(e) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getSheetByName("Bitácora Constancias") || ss.getActiveSheet();
+    var sheet = ss.getSheetByName("Bitácora Constancias") || ss.getSheetByName("Registros") || ss.getSheets()[0];
     
     // Si la hoja está vacía, crear los 19 encabezados oficiales
     if (sheet.getLastRow() === 0) {
@@ -211,7 +211,7 @@ function doGet(e) {
 
     // Acción 1: Obtener todos los registros de la bitácora
     if (action === "getRecords") {
-      var sheet = ss.getSheetByName("Bitácora Constancias") || ss.getActiveSheet();
+      var sheet = ss.getSheetByName("Bitácora Constancias") || ss.getSheetByName("Registros") || ss.getSheets()[0];
       var data = sheet.getDataRange().getValues();
       if (data.length <= 1) {
         return ContentService.createTextOutput(JSON.stringify({
