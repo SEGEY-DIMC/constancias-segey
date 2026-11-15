@@ -2252,6 +2252,17 @@ function actualizarTitularesPorArea(areaNombre) {
              CATALOGO_ORGANICO_SEGEY.find(u => areaNombre.toLowerCase().includes(u.unidad.toLowerCase()) || u.unidad.toLowerCase().includes(areaNombre.toLowerCase()));
   }
 
+  if (!unidad && areaNombre) {
+    const cleanWord = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\b(direccion|general|departamento|coordinacion|de|la|el|los|las|y|gestion|regional)\b/g, "").trim();
+    const cleanArea = cleanWord(areaNombre);
+    if (cleanArea.length >= 4) {
+      unidad = CATALOGO_ORGANICO_SEGEY.find(u => {
+        const cleanU = cleanWord(u.unidad);
+        return cleanU && (cleanU.includes(cleanArea) || cleanArea.includes(cleanU));
+      });
+    }
+  }
+
   if (!unidad) {
     setupManualTitulares();
     return;
@@ -3546,6 +3557,16 @@ function poblarSelectTestigos(areaNombre) {
   if (!unidadOrigen && areaNombre) {
     unidadOrigen = CATALOGO_ORGANICO_SEGEY.find(u => u.unidad === areaNombre) ||
                    CATALOGO_ORGANICO_SEGEY.find(u => areaNombre.toLowerCase().includes(u.unidad.toLowerCase()) || u.unidad.toLowerCase().includes(areaNombre.toLowerCase()));
+    if (!unidadOrigen) {
+      const cleanWord = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\b(direccion|general|departamento|coordinacion|de|la|el|los|las|y|gestion|regional)\b/g, "").trim();
+      const cleanArea = cleanWord(areaNombre);
+      if (cleanArea.length >= 4) {
+        unidadOrigen = CATALOGO_ORGANICO_SEGEY.find(u => {
+          const cleanU = cleanWord(u.unidad);
+          return cleanU && (cleanU.includes(cleanArea) || cleanArea.includes(cleanU));
+        });
+      }
+    }
   }
 
   // Poblar Testigo 1 siempre con la Unidad Notificadora
@@ -3574,10 +3595,11 @@ function poblarDropdownTestigo(num, unidad, etiqueta) {
   if (!unidad) {
     const isDestino = (num === 2 && etiqueta.includes('Destino'));
     const msg = isDestino ? 'la Dependencia de Destino en Titular (2) arriba' : 'el Área que Notifica o Elabora arriba';
-    select.innerHTML = `<option value="">-- Primero elija ${msg} --</option>`;
+    select.innerHTML = `<option value="">-- Primero elija ${msg} --</option>
+                        <option value="__MANUAL__" selected>✏️ + Ingresar puesto y nombre manualmente...</option>`;
     if (badge) {
-      badge.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
-      badge.innerHTML = `<i class="fa-solid fa-users text-slate-400 mr-1"></i>${isDestino ? 'Pendiente de Titular (2)' : 'Pendiente de Área (1)'}`;
+      badge.className = 'text-[10px] bg-sky-50 text-sky-700 border border-sky-200 px-2 py-0.5 rounded-full font-semibold';
+      badge.innerHTML = `<i class="fa-solid fa-pen text-sky-600 mr-1"></i>Captura libre habilitada`;
     }
     return;
   }
@@ -5285,6 +5307,22 @@ function editRecord(id) {
   if (record.titularArea2Cargo) {
     const a2Car = document.getElementById('titularArea2Cargo');
     if (a2Car) a2Car.value = record.titularArea2Cargo;
+  }
+  if (record.testigo1Nombre) {
+    const t1Nom = document.getElementById('testigo1Nombre');
+    if (t1Nom) t1Nom.value = record.testigo1Nombre;
+  }
+  if (record.testigo1Cargo) {
+    const t1Car = document.getElementById('testigo1Cargo');
+    if (t1Car) t1Car.value = record.testigo1Cargo;
+  }
+  if (record.testigo2Nombre) {
+    const t2Nom = document.getElementById('testigo2Nombre');
+    if (t2Nom) t2Nom.value = record.testigo2Nombre;
+  }
+  if (record.testigo2Cargo) {
+    const t2Car = document.getElementById('testigo2Cargo');
+    if (t2Car) t2Car.value = record.testigo2Cargo;
   }
 
   if (record.tipoMovimiento === 'Baja' && record.nuevaDenominacion) {
