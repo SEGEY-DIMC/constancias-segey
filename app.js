@@ -4385,6 +4385,18 @@ function handleFormSubmit(event) {
       recordData.fechaModificacion = new Date().toISOString();
       recordData.vecesEditado = (existing.vecesEditado || 0) + 1;
 
+      // Línea de vida / Historial detallado de modificaciones
+      const historial = Array.isArray(existing.historialCambios) ? [...existing.historialCambios] : [];
+      historial.push({
+        num: recordData.vecesEditado,
+        fecha: recordData.fechaModificacion,
+        estatusPrevio: existing.estatus || 'Generada para Firma',
+        estatusNuevo: estatus,
+        responsable: responsableCaptura || existing.responsableCaptura || 'Capturista',
+        observaciones: observaciones || ''
+      });
+      recordData.historialCambios = historial;
+
       // Si estaba inactivo y se actualiza a un estatus activo, registrar reactivación
       if (existing.estatus === 'Inactivo' && estatus !== 'Inactivo') {
         recordData.fechaReactivacion = new Date().toISOString();
@@ -5433,6 +5445,23 @@ function showDetailsModal(id) {
                 <strong>Motivo de baja anterior:</strong> "${escapeHtml(r.motivoInactivacion)}"
               </div>
             ` : ''}
+          </div>
+        ` : ''}
+        ${(r.historialCambios && r.historialCambios.length > 0) ? `
+          <div class="col-span-2 mt-2 pt-2 border-t border-amber-200">
+            <strong class="text-amber-950 block text-[10.5px] uppercase tracking-wider mb-1.5 flex items-center gap-1">
+              <i class="fa-solid fa-list-check text-amber-700"></i> Historial de Cambios Registrados (${r.historialCambios.length}):
+            </strong>
+            <div class="space-y-1.5 max-h-36 overflow-y-auto pl-2 border-l-2 border-amber-400">
+              ${r.historialCambios.map(h => `
+                <div class="text-[10.5px] text-slate-700 leading-tight">
+                  <span class="font-bold text-amber-900">#${h.num} — ${new Date(h.fecha).toLocaleString('es-MX')}:</span>
+                  Pasa a <span class="font-semibold text-slate-900">${escapeHtml(h.estatusNuevo)}</span>
+                  por <span class="italic text-slate-600">${escapeHtml(h.responsable)}</span>
+                  ${h.observaciones ? `<div class="text-[10px] text-slate-500 pl-2 italic">Nota: "${escapeHtml(h.observaciones)}"</div>` : ''}
+                </div>
+              `).join('')}
+            </div>
           </div>
         ` : ''}
       </div>
