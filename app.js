@@ -4848,7 +4848,7 @@ function renderTable() {
   if (filtered.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="9" class="text-center py-10 text-slate-400">
+        <td colspan="10" class="text-center py-10 text-slate-400">
           <i class="fa-solid fa-inbox text-3xl mb-2 block"></i>
           No se encontraron registros que coincidan con la búsqueda.
         </td>
@@ -4945,7 +4945,27 @@ function renderTable() {
         </td>
         <td class="py-3 px-4 ${isInactive ? 'text-slate-400' : 'text-slate-700'} max-w-[200px] truncate" title="${r.nuevaDenominacion}">${r.nuevaDenominacion}</td>
         <td class="py-3 px-4 ${isInactive ? 'text-slate-400' : 'text-slate-700'}">${areaTitularDisplay}</td>
-        <td class="py-3 px-4">${estatusHtml}</td>
+        <td class="py-3 px-4">
+          <div class="space-y-1">
+            ${estatusHtml}
+            <div>
+              <span class="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md font-medium border ${semInfo.badgeClass}" title="${escapeHtml(semInfo.titulo || '')}">
+                ${semInfo.dot} ${semInfo.label}
+              </span>
+            </div>
+          </div>
+        </td>
+        <td class="py-3 px-3 text-center">
+          ${r.expedienteUrl ? `
+            <a href="${escapeHtml(r.expedienteUrl)}" target="_blank" class="px-2 py-1 text-[11px] rounded bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100 font-semibold inline-flex items-center gap-1 shadow-2xs" title="Ver documento firmado en Google Drive">
+              <i class="fa-solid fa-file-circle-check text-emerald-600"></i> Ver
+            </a>
+          ` : `
+            <button type="button" onclick="abrirModalSubirExpediente('${r.id}')" class="px-2 py-1 text-[11px] rounded bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 font-semibold inline-flex items-center gap-1 shadow-2xs" title="Tomar foto con cámara del celular o subir archivo">
+              <i class="fa-solid fa-camera text-blue-600"></i> Adjuntar
+            </button>
+          `}
+        </td>
         <td class="py-3 px-4 text-center">
           <div class="flex items-center justify-center gap-1.5">
             <button onclick="downloadPDFForRecord('${r.id}')" title="Descargar PDF Oficial" class="p-1.5 rounded-md hover:bg-red-50 text-red-600 hover:text-red-800 transition">
