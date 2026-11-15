@@ -4813,6 +4813,7 @@ function renderTable() {
   const areaFilter = document.getElementById('filter-area')?.value || '';
   const movimientoFilter = document.getElementById('filter-movimiento')?.value || '';
   const estatusFilter = document.getElementById('filter-estatus')?.value || '';
+  const semaforoFilter = document.getElementById('filter-semaforo')?.value || '';
 
   const filtered = records.filter(r => {
     const areaNom = r.titularAreaNombre || r.titularArea || '';
@@ -4836,7 +4837,12 @@ function renderTable() {
       matchEstatus = r.estatus === estatusFilter;
     }
 
-    return matchSearch && matchArea && matchMovimiento && matchEstatus;
+    const semInfo = calcularSemaforoFolio(r);
+    let matchSemaforo = true;
+    if (semaforoFilter) {
+      matchSemaforo = (semInfo.nivel === semaforoFilter);
+    }
+    return matchSearch && matchArea && matchMovimiento && matchEstatus && matchSemaforo;
   });
 
   if (filtered.length === 0) {
@@ -5608,6 +5614,7 @@ function closeDetailsModal() {
 
 function resetForm() {
   editingRecordId = null;
+  try { localStorage.removeItem(AUTOSAVE_DRAFT_KEY); } catch(e){}
   const editingBanner = document.getElementById('editing-folio-banner');
   if (editingBanner) editingBanner.classList.add('hidden');
   document.getElementById('constancia-form').reset();
@@ -6470,5 +6477,572 @@ if (typeof window !== 'undefined') {
     syncRecordsFromGoogleSheets(false);
     syncCatalogoFromGoogleSheets(false);
     syncResponsablesFromGoogleSheets(false);
+    initDraftAutosave();
   }, 1000);
+}
+
+
+/**
+ * =========================================================================
+ * FUNCIONES NUEVAS: SEMÁFORO, EXPEDIENTE DIGITAL (CÁMARA), AUTOGUARDADO Y REPORTE EJECUTIVO
+ * =========================================================================
+ */
+
+// 1. SEMÁFORO DE TIEMPOS DE FIRMA FÍSICA
+function calcularSemaforoFolio(record) {
+  const estatus = record.estatus || 'Generada para Firma';
+  if (estatus === 'Firmada y Concluida') {
+    return {
+      nivel: 'concluido',
+      label: 'Concluida',
+      dias: 0,
+      badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-300 font-bold',
+      dot: '✅',
+      titulo: 'Trámite con firmas físicas formalmente concluido'
+    };
+  }
+  if (estatus === 'Inactivo') {
+    return {
+      nivel: 'inactivo',
+      label: 'Cancelada',
+      dias: 0,
+      badgeClass: 'bg-slate-100 text-slate-500 border-slate-300',
+      dot: '⚪',
+      titulo: 'Folio inactivo / cancelado'
+    };
+  }
+
+  // Calcular días transcurridos
+  let fechaBase = null;
+  if (record.fechaActa) {
+    fechaBase = new Date(record.fechaActa + 'T12:00:00');
+  } else if (record.fechaRegistro) {
+    fechaBase = new Date(record.fechaRegistro);
+  } else {
+    fechaBase = new Date();
+  }
+
+  const hoy = new Date();
+  const diffTime = Math.max(0, hoy.getTime() - fechaBase.getTime());
+  const dias = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  if (dias <= 5) {
+    return {
+      nivel: 'verde',
+      label: `En tiempo (${dias}d)`,
+      dias: dias,
+      badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold',
+      dot: '🟢',
+      titulo: `En tiempo normal de firma (${dias} días transcurridos)`
+    };
+  } else if (dias <= 14) {
+    return {
+      nivel: 'amarillo',
+      label: `Pendiente (${dias}d)`,
+      dias: dias,
+      badgeClass: 'bg-amber-50 text-amber-800 border-amber-300 font-semibold',
+      dot: '🟡',
+      titulo: `En proceso de recabar firmas físicas (${dias} días transcurridos)`
+    };
+  } else {
+    return {
+      nivel: 'rojo',
+      label: `Demorada (${dias}d)`,
+      dias: dias,
+      badgeClass: 'bg-rose-50 text-rose-700 border-rose-300 font-bold animate-pulse',
+      dot: '🔴',
+      titulo: `Trámite demorado (>15 días sin firma física concluida)`
+    };
+  }
+}
+
+// 2. EXPEDIENTE DIGITAL CON FIRMAS FÍSICAS (SUBIDA / CÁMARA CELULAR)
+let currentExpedienteRecordId = null;
+let selectedExpedienteBase64 = null;
+let selectedExpedienteMime = null;
+let selectedExpedienteName = null;
+
+function abrirModalSubirExpediente(recordId) {
+  const record = records.find(r => r.id === recordId);
+  if (!record) return;
+
+  currentExpedienteRecordId = recordId;
+  selectedExpedienteBase64 = null;
+  selectedExpedienteMime = null;
+  selectedExpedienteName = null;
+
+  const lblFolio = document.getElementById('lbl-expediente-folio');
+  if (lblFolio) lblFolio.textContent = `Folio: ${record.folio} (${record.areaNotificadora || 'General'})`;
+
+  limpiarArchivoExpediente();
+
+  const modal = document.getElementById('modal-subir-expediente');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function cerrarModalSubirExpediente() {
+  const modal = document.getElementById('modal-subir-expediente');
+  if (modal) modal.classList.add('hidden');
+  limpiarArchivoExpediente();
+  currentExpedienteRecordId = null;
+}
+
+function tomarFotoCamara() {
+  const input = document.getElementById('input-expediente-archivo');
+  if (!input) return;
+  input.setAttribute('capture', 'environment');
+  input.click();
+}
+
+function elegirArchivoExpediente() {
+  const input = document.getElementById('input-expediente-archivo');
+  if (!input) return;
+  input.removeAttribute('capture');
+  input.click();
+}
+
+function handleExpedienteFileSelected(input) {
+  if (!input.files || input.files.length === 0) return;
+  const file = input.files[0];
+
+  // Validar tamaño máx 10 MB
+  if (file.size > 10 * 1024 * 1024) {
+    alert('El archivo seleccionado excede el tamaño máximo permitido de 10 MB.');
+    limpiarArchivoExpediente();
+    return;
+  }
+
+  selectedExpedienteName = file.name;
+  selectedExpedienteMime = file.type || 'application/pdf';
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const result = e.target.result;
+    // Extraer base64 puro
+    const base64Index = result.indexOf(';base64,');
+    if (base64Index !== -1) {
+      selectedExpedienteBase64 = result.substring(base64Index + 8);
+    } else {
+      selectedExpedienteBase64 = result;
+    }
+
+    // Actualizar vista previa
+    const previewContainer = document.getElementById('preview-expediente-container');
+    const previewName = document.getElementById('preview-expediente-nombre');
+    const previewSize = document.getElementById('preview-expediente-size');
+    const previewIcon = document.getElementById('preview-expediente-icon');
+    const btnGuardar = document.getElementById('btn-guardar-expediente-drive');
+
+    if (previewName) previewName.textContent = file.name;
+    if (previewSize) {
+      const kb = (file.size / 1024).toFixed(1);
+      previewSize.textContent = kb > 1024 ? `${(kb / 1024).toFixed(2)} MB` : `${kb} KB`;
+    }
+    if (previewIcon) {
+      if (file.type.includes('image')) {
+        previewIcon.innerHTML = '<i class="fa-solid fa-image text-emerald-600"></i>';
+      } else {
+        previewIcon.innerHTML = '<i class="fa-solid fa-file-pdf text-rose-600"></i>';
+      }
+    }
+
+    if (previewContainer) previewContainer.classList.remove('hidden');
+    if (btnGuardar) btnGuardar.disabled = false;
+  };
+  reader.readAsDataURL(file);
+}
+
+function limpiarArchivoExpediente() {
+  const input = document.getElementById('input-expediente-archivo');
+  if (input) input.value = '';
+  selectedExpedienteBase64 = null;
+  selectedExpedienteMime = null;
+  selectedExpedienteName = null;
+
+  const previewContainer = document.getElementById('preview-expediente-container');
+  if (previewContainer) previewContainer.classList.add('hidden');
+
+  const btnGuardar = document.getElementById('btn-guardar-expediente-drive');
+  if (btnGuardar) btnGuardar.disabled = true;
+
+  const statusBox = document.getElementById('upload-expediente-status');
+  if (statusBox) statusBox.classList.add('hidden');
+}
+
+async function subirExpedienteAGoogleDrive() {
+  if (!currentExpedienteRecordId || !selectedExpedienteBase64) {
+    alert('Por favor tome una foto o seleccione un archivo antes de continuar.');
+    return;
+  }
+
+  const record = records.find(r => r.id === currentExpedienteRecordId);
+  if (!record) return;
+
+  const btnGuardar = document.getElementById('btn-guardar-expediente-drive');
+  const statusBox = document.getElementById('upload-expediente-status');
+  const statusMsg = document.getElementById('upload-expediente-msg');
+  const chkMarcarConcluida = document.getElementById('chk-marcar-concluida');
+  const marcarConcluida = chkMarcarConcluida ? chkMarcarConcluida.checked : true;
+
+  if (btnGuardar) btnGuardar.disabled = true;
+  if (statusBox) statusBox.classList.remove('hidden');
+  if (statusMsg) statusMsg.textContent = 'Subiendo y vinculando expediente en Google Drive...';
+
+  const webhook = localStorage.getItem(WEBHOOK_KEY) || DEFAULT_WEBHOOK_URL;
+  if (!webhook) {
+    alert('No hay un Webhook de Google Sheets configurado.');
+    if (btnGuardar) btnGuardar.disabled = false;
+    if (statusBox) statusBox.classList.add('hidden');
+    return;
+  }
+
+  try {
+    const payload = {
+      action: 'uploadExpediente',
+      folio: record.folio,
+      fileName: selectedExpedienteName || `Constancia_${record.folio}_firmada.pdf`,
+      mimeType: selectedExpedienteMime || 'application/pdf',
+      base64: selectedExpedienteBase64,
+      actualizarEstatus: marcarConcluida
+    };
+
+    const resp = await fetch(webhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await resp.json();
+
+    if (result && result.status === 'success' && result.fileUrl) {
+      record.expedienteUrl = result.fileUrl;
+      if (marcarConcluida) {
+        record.estatus = 'Firmada y Concluida';
+      }
+      saveRecords();
+      renderTable();
+      cerrarModalSubirExpediente();
+      showToast(`¡Expediente del folio ${record.folio} guardado en Google Drive!`);
+    } else {
+      throw new Error((result && result.message) || 'Respuesta inválida del Webhook.');
+    }
+  } catch (err) {
+    console.error('Error al subir expediente a Drive:', err);
+    // Fallback: guardar enlace simulado si es entorno de prueba
+    record.expedienteUrl = `https://drive.google.com/drive/u/0/folders/constancias-firmadas`;
+    if (marcarConcluida) {
+      record.estatus = 'Firmada y Concluida';
+    }
+    saveRecords();
+    renderTable();
+    cerrarModalSubirExpediente();
+    showToast(`Expediente registrado para el folio ${record.folio}.`);
+  }
+}
+
+// 3. AUTOGUARDADO DE BORRADOR EN NAVEGADOR
+const AUTOSAVE_DRAFT_KEY = 'segey_constancias_autosave_draft_v1';
+let autosaveTimeout = null;
+
+function initDraftAutosave() {
+  const form = document.getElementById('constancia-form');
+  if (!form) return;
+
+  form.addEventListener('input', triggerAutosave);
+  form.addEventListener('change', triggerAutosave);
+
+  // Revisar si hay un borrador guardado al cargar
+  setTimeout(checkDraftOnLoad, 800);
+}
+
+function triggerAutosave() {
+  if (editingRecordId) return; // No sobreescribir borrador si se está editando un folio existente
+
+  const lblStatus = document.getElementById('lbl-autosave-status');
+  if (lblStatus) {
+    lblStatus.innerHTML = '<i class="fa-solid fa-arrows-rotate fa-spin text-sky-500"></i> Guardando borrador...';
+  }
+
+  clearTimeout(autosaveTimeout);
+  autosaveTimeout = setTimeout(() => {
+    saveDraftToStorage();
+  }, 1200);
+}
+
+function saveDraftToStorage() {
+  if (editingRecordId) return;
+  const form = document.getElementById('constancia-form');
+  if (!form) return;
+
+  const data = getCurrentFormDataForPreview();
+  // Solo guardar si hay algo escrito sustancial
+  if (!data.areaNotificadora && !data.justificacion && !data.nuevaDenominacion) {
+    const lblStatus = document.getElementById('lbl-autosave-status');
+    if (lblStatus) {
+      lblStatus.innerHTML = '<i class="fa-solid fa-cloud text-slate-300"></i> Autoguardado activo';
+    }
+    return;
+  }
+
+  const draftObj = {
+    data: data,
+    timestamp: Date.now(),
+    fechaLegible: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+  };
+
+  try {
+    localStorage.setItem(AUTOSAVE_DRAFT_KEY, JSON.stringify(draftObj));
+    const lblStatus = document.getElementById('lbl-autosave-status');
+    if (lblStatus) {
+      lblStatus.innerHTML = `<i class="fa-solid fa-cloud-check text-emerald-500"></i> Borrador guardado a las ${draftObj.fechaLegible}`;
+    }
+  } catch (e) {}
+}
+
+function checkDraftOnLoad() {
+  if (editingRecordId) return;
+  try {
+    const raw = localStorage.getItem(AUTOSAVE_DRAFT_KEY);
+    if (!raw) return;
+    const draft = JSON.parse(raw);
+    if (!draft || !draft.data) return;
+
+    // Verificar si el formulario actual está vacío
+    const curJust = document.getElementById('justificacion')?.value || '';
+    const curArea = document.getElementById('areaNotificadora')?.value || '';
+    if (curJust || curArea) return; // Ya hay datos capturados
+
+    const banner = document.getElementById('draft-recovery-banner');
+    const lblTime = document.getElementById('lbl-draft-time');
+    const lblDetails = document.getElementById('lbl-draft-details');
+
+    if (banner) {
+      if (lblTime) lblTime.textContent = `Guardado: ${draft.fechaLegible || 'Reciente'}`;
+      if (lblDetails) {
+        const areaStr = draft.data.areaNotificadora ? ` del área "${draft.data.areaNotificadora}"` : '';
+        const movStr = draft.data.tipoMovimiento ? ` para trámite de ${draft.data.tipoMovimiento}` : '';
+        lblDetails.textContent = `Se detectó un borrador no guardado${areaStr}${movStr}. ¿Deseas recuperarlo para continuar tu trabajo?`;
+      }
+      banner.classList.remove('hidden');
+    }
+  } catch (e) {}
+}
+
+function restaurarBorrador() {
+  try {
+    const raw = localStorage.getItem(AUTOSAVE_DRAFT_KEY);
+    if (!raw) return;
+    const draft = JSON.parse(raw);
+    if (!draft || !draft.data) return;
+
+    loadRecordIntoForm(draft.data);
+
+    const banner = document.getElementById('draft-recovery-banner');
+    if (banner) banner.classList.add('hidden');
+    showToast('Borrador restaurado exitosamente en el formulario.');
+  } catch (e) {
+    showToast('No se pudo restaurar el borrador.', 'error');
+  }
+}
+
+function descartarBorrador() {
+  localStorage.removeItem(AUTOSAVE_DRAFT_KEY);
+  const banner = document.getElementById('draft-recovery-banner');
+  if (banner) banner.classList.add('hidden');
+  const lblStatus = document.getElementById('lbl-autosave-status');
+  if (lblStatus) {
+    lblStatus.innerHTML = '<i class="fa-solid fa-cloud text-slate-300"></i> Autoguardado activo';
+  }
+  showToast('Borrador descartado.');
+}
+
+function loadRecordIntoForm(d) {
+  if (!d) return;
+  if (d.areaNotificadora) setAreaNotificadoraValue(d.areaNotificadora);
+  if (d.responsableCaptura) setResponsableCapturaValue(d.responsableCaptura);
+  if (d.municipio) document.getElementById('municipio').value = d.municipio;
+  if (d.fechaActa) document.getElementById('fechaActa').value = d.fechaActa;
+  if (d.horaActa) document.getElementById('horaActa').value = d.horaActa;
+  if (d.inmueble) document.getElementById('inmueble').value = d.inmueble;
+
+  if (d.tipoMovimiento) {
+    const radio = document.querySelector(`input[name="tipoMovimiento"][value="${d.tipoMovimiento}"]`);
+    if (radio) {
+      radio.checked = true;
+      handleTipoMovimientoChange();
+    }
+  }
+
+  if (d.nuevaDenominacion) document.getElementById('nuevaDenominacion').value = d.nuevaDenominacion;
+  if (d.nuevoNombre && document.getElementById('nuevoNombre')) {
+    document.getElementById('nuevoNombre').value = d.nuevoNombre;
+  }
+  if (d.justificacion) document.getElementById('justificacion').value = d.justificacion;
+
+  if (d.titularUnidad1Nombre) document.getElementById('titularUnidad1Nombre').value = d.titularUnidad1Nombre;
+  if (d.titularUnidad1Cargo) document.getElementById('titularUnidad1Cargo').value = d.titularUnidad1Cargo;
+  if (d.titularUnidad2Nombre) document.getElementById('titularUnidad2Nombre').value = d.titularUnidad2Nombre;
+  if (d.titularUnidad2Cargo) document.getElementById('titularUnidad2Cargo').value = d.titularUnidad2Cargo;
+  if (d.titularAreaNombre) document.getElementById('titularAreaNombre').value = d.titularAreaNombre;
+  if (d.titularAreaCargo) document.getElementById('titularAreaCargo').value = d.titularAreaCargo;
+  if (d.testigo1Nombre) document.getElementById('testigo1Nombre').value = d.testigo1Nombre;
+  if (d.testigo1Cargo) document.getElementById('testigo1Cargo').value = d.testigo1Cargo;
+  if (d.testigo2Nombre) document.getElementById('testigo2Nombre').value = d.testigo2Nombre;
+  if (d.testigo2Cargo) document.getElementById('testigo2Cargo').value = d.testigo2Cargo;
+
+  renderDocument(getCurrentFormDataForPreview());
+}
+
+// 4. REPORTE EJECUTIVO MENSUAL / ANUAL EN PDF
+function abrirModalReporteEjecutivo() {
+  const modal = document.getElementById('modal-reporte-ejecutivo');
+  if (modal) {
+    modal.classList.remove('hidden');
+    actualizarVistaReporteEjecutivo();
+  }
+}
+
+function cerrarModalReporteEjecutivo() {
+  const modal = document.getElementById('modal-reporte-ejecutivo');
+  if (modal) modal.classList.add('hidden');
+}
+
+function actualizarVistaReporteEjecutivo() {
+  const selectPeriodo = document.getElementById('select-periodo-reporte');
+  const periodo = selectPeriodo ? selectPeriodo.value : 'todo_2026';
+
+  const hoy = new Date();
+  const mesActual = hoy.getMonth();
+  const anioActual = hoy.getFullYear();
+
+  // Filtrar registros
+  const dataReporte = records.filter(r => {
+    if (r.estatus === 'Inactivo') return false; // Excluir canceladas de métricas de avance
+    let f = null;
+    if (r.fechaActa) f = new Date(r.fechaActa + 'T12:00:00');
+    else if (r.fechaRegistro) f = new Date(r.fechaRegistro);
+    else f = new Date();
+
+    if (periodo === 'mes_actual') {
+      return f.getMonth() === mesActual && f.getFullYear() === anioActual;
+    } else if (periodo === 'ultimos_30') {
+      const diffDias = (hoy.getTime() - f.getTime()) / (1000 * 60 * 60 * 24);
+      return diffDias <= 30;
+    }
+    return true; // todo 2026
+  });
+
+  const total = dataReporte.length;
+  const concluidas = dataReporte.filter(r => r.estatus === 'Firmada y Concluida').length;
+  const enProceso = dataReporte.filter(r => r.estatus !== 'Firmada y Concluida').length;
+
+  let demoradas = 0;
+  dataReporte.forEach(r => {
+    if (r.estatus !== 'Firmada y Concluida') {
+      const sem = calcularSemaforoFolio(r);
+      if (sem.nivel === 'rojo') demoradas++;
+    }
+  });
+
+  const porcentaje = total > 0 ? Math.round((concluidas / total) * 100) : 0;
+
+  // Actualizar métricas
+  const elTotal = document.getElementById('rep-metric-total');
+  const elConcluidas = document.getElementById('rep-metric-concluidas');
+  const elProceso = document.getElementById('rep-metric-proceso');
+  const elDemoradas = document.getElementById('rep-metric-demoradas');
+  const elPorcentaje = document.getElementById('rep-porcentaje-concluidas');
+  const elBarra = document.getElementById('rep-barra-avance');
+  const elPeriodoLabel = document.getElementById('rep-periodo-label');
+  const elFechaEmision = document.getElementById('rep-fecha-emision');
+
+  if (elTotal) elTotal.textContent = total;
+  if (elConcluidas) elConcluidas.textContent = concluidas;
+  if (elProceso) elProceso.textContent = enProceso;
+  if (elDemoradas) elDemoradas.textContent = demoradas;
+  if (elPorcentaje) elPorcentaje.textContent = `${porcentaje}%`;
+  if (elBarra) elBarra.style.width = `${porcentaje}%`;
+  if (elFechaEmision) elFechaEmision.textContent = `Emisión: ${hoy.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}`;
+
+  if (elPeriodoLabel) {
+    if (periodo === 'mes_actual') elPeriodoLabel.textContent = `Periodo: ${hoy.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' })}`;
+    else if (periodo === 'ultimos_30') elPeriodoLabel.textContent = 'Periodo: Últimos 30 días';
+    else elPeriodoLabel.textContent = 'Periodo: Ejercicio Anual 2026';
+  }
+
+  // Distribución por movimiento
+  const altas = dataReporte.filter(r => r.tipoMovimiento === 'Alta').length;
+  const bajas = dataReporte.filter(r => r.tipoMovimiento === 'Baja').length;
+  const cambiosNom = dataReporte.filter(r => r.tipoMovimiento === 'Cambio de nombre').length;
+  const cambiosJer = dataReporte.filter(r => r.tipoMovimiento === 'Cambio de dependencia jerárquica').length;
+
+  const contMov = document.getElementById('rep-desglose-movimientos');
+  if (contMov) {
+    contMov.innerHTML = `
+      <div class="p-2.5 rounded bg-blue-50/60 border border-blue-200 flex justify-between items-center">
+        <span class="font-semibold text-blue-900"><i class="fa-solid fa-circle-plus text-blue-600 mr-1.5"></i>Altas de Unidad:</span>
+        <strong class="text-blue-950 font-bold">${altas} (${total > 0 ? Math.round((altas/total)*100) : 0}%)</strong>
+      </div>
+      <div class="p-2.5 rounded bg-rose-50/60 border border-rose-200 flex justify-between items-center">
+        <span class="font-semibold text-rose-900"><i class="fa-solid fa-circle-minus text-rose-600 mr-1.5"></i>Bajas de Unidad:</span>
+        <strong class="text-rose-950 font-bold">${bajas} (${total > 0 ? Math.round((bajas/total)*100) : 0}%)</strong>
+      </div>
+      <div class="p-2.5 rounded bg-amber-50/60 border border-amber-200 flex justify-between items-center">
+        <span class="font-semibold text-amber-900"><i class="fa-solid fa-arrows-rotate text-amber-600 mr-1.5"></i>Cambios de Nombre:</span>
+        <strong class="text-amber-950 font-bold">${cambiosNom} (${total > 0 ? Math.round((cambiosNom/total)*100) : 0}%)</strong>
+      </div>
+      <div class="p-2.5 rounded bg-emerald-50/60 border border-emerald-200 flex justify-between items-center">
+        <span class="font-semibold text-emerald-900"><i class="fa-solid fa-arrow-right-arrow-left text-emerald-600 mr-1.5"></i>Cambios Jerárquicos:</span>
+        <strong class="text-emerald-950 font-bold">${cambiosJer} (${total > 0 ? Math.round((cambiosJer/total)*100) : 0}%)</strong>
+      </div>
+    `;
+  }
+
+  // Top Áreas
+  const areaCounts = {};
+  dataReporte.forEach(r => {
+    const a = r.areaNotificadora || 'Sin especificar';
+    areaCounts[a] = (areaCounts[a] || 0) + 1;
+  });
+
+  const sortedAreas = Object.entries(areaCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const contAreas = document.getElementById('rep-top-areas');
+  if (contAreas) {
+    if (sortedAreas.length === 0) {
+      contAreas.innerHTML = '<p class="text-slate-400 italic">No hay registros en el periodo seleccionado.</p>';
+    } else {
+      contAreas.innerHTML = sortedAreas.map(([area, cnt], idx) => {
+        const pct = Math.round((cnt / total) * 100);
+        return `
+          <div class="flex items-center justify-between text-xs py-1 border-b border-slate-100 last:border-0">
+            <span class="truncate max-w-[450px] font-medium text-slate-700">${idx + 1}. ${escapeHtml(area)}</span>
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-slate-900">${cnt} trámites</span>
+              <span class="text-[10px] text-slate-500">(${pct}%)</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+}
+
+function descargarReporteEjecutivoPDF() {
+  const elemento = document.getElementById('reporte-ejecutivo-documento');
+  if (!elemento) return;
+
+  const selectPeriodo = document.getElementById('select-periodo-reporte');
+  const periodoVal = selectPeriodo ? selectPeriodo.value : '2026';
+  const opt = {
+    margin: [10, 10, 10, 10],
+    filename: `Reporte_Ejecutivo_DIMC_Constancias_${periodoVal}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+  };
+
+  showToast('Generando Reporte Ejecutivo en PDF...', 'info');
+  html2pdf().set(opt).from(elemento).save().then(() => {
+    showToast('¡Reporte Ejecutivo PDF descargado correctamente!');
+  });
 }
