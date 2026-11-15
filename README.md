@@ -18,7 +18,7 @@ Herramienta oficial diseñada para el llenado en línea, control centralizado en
      - Paginación oficial: `Página 1 de 1` (alineado a la derecha).
 
 2. **Cuerpo Limpio en Texto Corrido (Sin Cuadros ni Cuadrículas Pesadas):**
-   - Se eliminaron los bordes de recuadros en todos los apartados (Comparecientes, Determinación de Unidad y Justificación).
+   - Se eliminaron los bordes de recuadros en todos los apartados (Representantes de la Secretaría de Educación involucrados, Determinación de Unidad y Justificación).
    - Se mantiene la redacción institucional legal y las líneas horizontales para las 5 rúbricas físicas:
      - Titular de Unidad Administrativa 1 y 2 (arriba)
      - Titular de Área (al centro)
