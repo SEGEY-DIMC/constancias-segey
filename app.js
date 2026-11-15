@@ -7,7 +7,7 @@
 
 const STORAGE_KEY = 'segey_constancias_records_v1';
 const WEBHOOK_KEY = 'segey_gsheets_webhook_url';
-const DEFAULT_WEBHOOK_URL = ''; // URL institucional predeterminada de Google Sheets
+const DEFAULT_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbwqoesxAkV6PcQF9eh6RGsD-uJx_pxr9QqZx4lFoPo9_HYx6Xuqe9uIn79QY2TgSzg/exec'; // URL institucional predeterminada de Google Sheets
 const LAYOUTS_STORAGE_KEY = 'segey_custom_layouts_v1';
 const ACTIVE_LAYOUT_ID_KEY = 'segey_active_layout_id';
 const ADMIN_AUTH_KEY = 'segey_admin_auth_v1';
@@ -5845,6 +5845,9 @@ function sendToGoogleSheetsWebhook(recordData) {
     body: JSON.stringify(recordData)
   }).then(() => {
     console.log('Datos sincronizados con Google Sheets.');
+    if (typeof showToast === 'function') {
+      showToast('Constancia sincronizada con Google Sheets');
+    }
   }).catch(err => {
     console.error('Error al sincronizar con Google Sheets:', err);
   });
