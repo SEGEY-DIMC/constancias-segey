@@ -6360,8 +6360,21 @@ async function syncCatalogoFromGoogleSheets(forceToast = false) {
 
     if (result && result.status === 'success' && Array.isArray(result.catalogo) && result.catalogo.length > 0) {
       localStorage.setItem(REMOTE_CATALOG_KEY, JSON.stringify(result.catalogo));
-      poblarSelectAreaNotificadora();
-      poblarSelectTitularesUnidades();
+      let updatedAreas = false;
+      result.catalogo.forEach(item => {
+        if (item.area && !predefinedAreas.includes(item.area)) {
+          predefinedAreas.push(item.area);
+          updatedAreas = true;
+        }
+      });
+      if (updatedAreas) {
+        predefinedAreas.sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+        localStorage.setItem(AREAS_STORAGE_KEY, JSON.stringify(predefinedAreas));
+      }
+      populateAreaSelect();
+      if (typeof initSelectTitularUnidad2 === 'function') {
+        initSelectTitularUnidad2();
+      }
       if (forceToast) {
         showToast(`Catálogo de funcionarios actualizado desde Google Sheets (${result.catalogo.length} registros).`);
       }
@@ -6371,10 +6384,53 @@ async function syncCatalogoFromGoogleSheets(forceToast = false) {
   }
 }
 
+async function syncResponsablesFromGoogleSheets(forceToast = false) {
+  const webhook = localStorage.getItem(WEBHOOK_KEY) || DEFAULT_WEBHOOK_URL;
+  if (!webhook) return;
+
+  try {
+    const fetchUrl = `${webhook}?action=getResponsables&t=${Date.now()}`;
+    const resp = await fetch(fetchUrl);
+    const result = await resp.json();
+
+    if (result && result.status === 'success' && result.responsables && typeof result.responsables === 'object') {
+      const keys = Object.keys(result.responsables);
+      if (keys.length > 0) {
+        const currentCat = getResponsablesCatalog();
+        let changed = false;
+        keys.forEach(area => {
+          if (result.responsables[area]) {
+            currentCat[area] = result.responsables[area];
+            if (!predefinedAreas.includes(area)) {
+              predefinedAreas.push(area);
+            }
+            changed = true;
+          }
+        });
+        if (changed) {
+          saveResponsablesCatalog(currentCat);
+          predefinedAreas.sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+          saveAreasToStorage();
+          populateAreaSelect();
+          if (typeof renderAdminResponsablesList === 'function') {
+            renderAdminResponsablesList();
+          }
+        }
+        if (forceToast) {
+          showToast(`Responsables de captura sincronizados (${keys.length} áreas).`);
+        }
+      }
+    }
+  } catch (e) {
+    // Silencioso si no está configurada la pestaña
+  }
+}
+
 // Iniciar sincronización de fondo al cargar la página
 if (typeof window !== 'undefined') {
   setTimeout(() => {
     syncRecordsFromGoogleSheets(false);
     syncCatalogoFromGoogleSheets(false);
+    syncResponsablesFromGoogleSheets(false);
   }, 1000);
 }
