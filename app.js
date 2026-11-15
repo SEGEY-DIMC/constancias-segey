@@ -1159,8 +1159,24 @@ function escapeHtml(str) {
  * CONTROL DE ACCESO ADMINISTRATIVO (LOGIN / LOGOUT / SESIÓN)
  * =========================================================================
  */
+const USER_SESSION_KEY = 'segey_user_session_v1';
+
+function getLoggedUser() {
+  try {
+    const raw = sessionStorage.getItem(USER_SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 function isAdminLoggedIn() {
-  return sessionStorage.getItem(ADMIN_AUTH_KEY) === 'true';
+  const isAuth = sessionStorage.getItem(ADMIN_AUTH_KEY) === 'true';
+  const user = getLoggedUser();
+  if (isAuth && user) {
+    return user.rol === 'Administrador' || user.rol === 'Consulta';
+  }
+  return isAuth;
 }
 
 function openAdminLoginModal() {
@@ -1186,46 +1202,134 @@ function closeAdminLoginModal() {
   if (modal) modal.classList.add('hidden');
 }
 
-function handleAdminLoginSubmit(event) {
+/**
+ * Calcula el Hash SHA-256 en minúsculas en el navegador (Web Crypto API)
+ */
+async function sha256Hex(text) {
+  if (!text) return '';
+  try {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(text);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  } catch (e) {
+    return '';
+  }
+}
+
+async function handleAdminLoginSubmit(event) {
   if (event) event.preventDefault();
 
   const userInput = document.getElementById('admin-username-input');
   const passInput = document.getElementById('admin-password-input');
   const errorEl = document.getElementById('admin-login-error');
+  const errorTextEl = document.getElementById('admin-login-error-text');
+  const submitBtn = document.querySelector('#form-admin-login button[type="submit"]');
 
   const u = userInput ? userInput.value.trim().toLowerCase() : '';
-  const p = passInput ? passInput.value : '';
+  const p = passInput ? passInput.value.trim() : '';
 
-  // Credenciales válidas: admin / admin o admin / segey2026
-  if ((u === 'admin' || u === 'administrador') && (p === 'admin' || p === 'segey2026' || p === 'admin123')) {
-    sessionStorage.setItem(ADMIN_AUTH_KEY, 'true');
-    closeAdminLoginModal();
-    updateAdminUI();
-    switchTab('tab-registry');
-    showToast('¡Bienvenido! Sesión iniciada como Administrador.');
-  } else {
+  if (!u || !p) {
     if (errorEl) errorEl.classList.remove('hidden');
-    if (passInput) {
-      passInput.value = '';
-      passInput.focus();
+    if (errorTextEl) errorTextEl.textContent = 'Ingrese usuario y contraseña.';
+    return;
+  }
+
+  // Estado visual de carga
+  const originalBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Verificando...';
+  }
+  if (errorEl) errorEl.classList.add('hidden');
+
+  try {
+    const webhook = getGoogleScriptWebhookUrl();
+    if (!webhook) {
+      throw new Error('No se ha configurado la URL del Webhook de Google Apps Script.');
+    }
+
+    // Hash SHA-256 en navegador
+    const clientHash = await sha256Hex(p);
+
+    // Consulta por POST a Google Apps Script (que consulta la hoja privada de usuarios)
+    const payload = {
+      action: 'login',
+      username: u,
+      password: p,
+      passwordHash: clientHash
+    };
+
+    const resp = await fetch(webhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await resp.json();
+
+    if (result && result.status === 'success' && result.user) {
+      sessionStorage.setItem(ADMIN_AUTH_KEY, 'true');
+      sessionStorage.setItem(USER_SESSION_KEY, JSON.stringify(result.user));
+      closeAdminLoginModal();
+      updateAdminUI();
+
+      if (result.user.rol === 'Administrador' || result.user.rol === 'Consulta') {
+        switchTab('tab-registry');
+      }
+      showToast(`¡Bienvenido, ${result.user.nombre}! (${result.user.rol})`, 'success');
+    } else {
+      const msg = (result && result.message) ? result.message : 'Usuario o contraseña incorrectos.';
+      if (errorEl) errorEl.classList.remove('hidden');
+      if (errorTextEl) errorTextEl.textContent = msg;
+      if (passInput) {
+        passInput.value = '';
+        passInput.focus();
+      }
+    }
+  } catch (err) {
+    console.error('Error al autenticar con el servidor de Google:', err);
+    if (errorEl) errorEl.classList.remove('hidden');
+    if (errorTextEl) {
+      errorTextEl.textContent = 'Error al conectar con la base de usuarios: ' + (err.message || 'Verifique conexión y despliegue del script.');
+    }
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalBtnHtml;
     }
   }
 }
 
 function adminLogout() {
   sessionStorage.removeItem(ADMIN_AUTH_KEY);
+  sessionStorage.removeItem(USER_SESSION_KEY);
   updateAdminUI();
   switchTab('tab-form');
-  showToast('Sesión de administrador finalizada.');
+  showToast('Sesión de usuario finalizada.');
 }
 
 function updateAdminUI() {
   const logged = isAdminLoggedIn();
+  const user = getLoggedUser();
 
   // Botones navegación desktop
   const tabRegistryBtn = document.getElementById('btn-tab-registry');
   const loginBtn = document.getElementById('btn-admin-login');
   const loggedBadge = document.getElementById('admin-logged-in-badge');
+  const userNameEl = document.getElementById('user-badge-name');
+  const userRoleEl = document.getElementById('user-badge-role');
+
+  if (user) {
+    if (userNameEl) {
+      const primerNombre = user.nombre ? user.nombre.split(' ')[0] : (user.username || 'Admin');
+      userNameEl.textContent = primerNombre;
+    }
+    if (userRoleEl) {
+      userRoleEl.textContent = user.rol || 'Admin';
+    }
+  }
 
   if (tabRegistryBtn) {
     if (logged) {
