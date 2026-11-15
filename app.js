@@ -7,6 +7,7 @@
 
 const STORAGE_KEY = 'segey_constancias_records_v1';
 const WEBHOOK_KEY = 'segey_gsheets_webhook_url';
+const DEFAULT_WEBHOOK_URL = ''; // URL institucional predeterminada de Google Sheets
 const LAYOUTS_STORAGE_KEY = 'segey_custom_layouts_v1';
 const ACTIVE_LAYOUT_ID_KEY = 'segey_active_layout_id';
 const ADMIN_AUTH_KEY = 'segey_admin_auth_v1';
@@ -5811,7 +5812,7 @@ function openGoogleSheetsModal() {
   const modal = document.getElementById('modal-gsheets');
   const input = document.getElementById('gsheets-webhook-url');
   if (modal) {
-    if (input) input.value = localStorage.getItem(WEBHOOK_KEY) || '';
+    if (input) input.value = localStorage.getItem(WEBHOOK_KEY) || DEFAULT_WEBHOOK_URL || '';
     modal.classList.remove('hidden');
   }
 }
@@ -5832,14 +5833,14 @@ function saveGoogleSheetsWebhook() {
 }
 
 function sendToGoogleSheetsWebhook(recordData) {
-  const webhook = localStorage.getItem(WEBHOOK_KEY);
+  const webhook = localStorage.getItem(WEBHOOK_KEY) || DEFAULT_WEBHOOK_URL;
   if (!webhook) return;
 
   fetch(webhook, {
     method: 'POST',
     mode: 'no-cors',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'text/plain;charset=utf-8'
     },
     body: JSON.stringify(recordData)
   }).then(() => {
