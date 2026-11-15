@@ -4865,6 +4865,7 @@ function renderTable() {
     const estatusColor = getEstatusBadgeColor(r.estatus);
     const fechaFormatted = r.fechaActa ? r.fechaActa : (r.fechaRegistro ? r.fechaRegistro.split('T')[0] : '—');
     const areaTitularDisplay = r.titularAreaNombre || r.titularArea || '—';
+    const semInfo = calcularSemaforoFolio(r);
 
     // Indicador visual detallado del último estatus / historial
     let estatusHtml = '';
