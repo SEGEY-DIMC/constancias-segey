@@ -181,7 +181,7 @@ const DEFAULT_LAYOUT_HTML = `
   <div>
     <div class="font-bold text-[11pt] mb-1 uppercase tracking-wide text-slate-900 text-left">II. GENERALES</div>
     <p class="text-justify mb-2 leading-relaxed">
-      En el municipio de <span class="font-bold">{{municipio}}</span>, del Estado de Yucatán, siendo las <span class="font-bold">{{horas}}</span> horas con <span class="font-bold">{{minutos}}</span> minutos del día <span class="font-bold">{{dia}}</span> del mes de <span class="font-bold">{{mes}}</span> del año <span class="font-bold">20{{anio}}</span>, constituidos en el inmueble que ocupa <span class="font-bold">{{inmueble}}</span> ubicada en domicilio conocido, se encuentran reunidos los siguientes comparecientes en representación de la Secretaría de Educación:
+      En el municipio de <span class="font-bold">{{municipio}}</span>, del Estado de Yucatán, siendo las <span class="font-bold">{{horas}}</span> horas con <span class="font-bold">{{minutos}}</span> minutos del día <span class="font-bold">{{dia}}</span> del mes de <span class="font-bold">{{mes}}</span> del año <span class="font-bold">20{{anio}}</span>, constituidos en el inmueble que ocupa <span class="font-bold">{{inmueble}}</span> ubicada en domicilio conocido, se encuentran reunidos los siguientes representantes de la Secretaría de Educación involucrados:
     </p>
 
     <!-- Comparecientes -->
@@ -5709,7 +5709,7 @@ function showDetailsModal(id) {
     </div>
 
     <div class="space-y-1">
-      <div class="font-bold text-slate-800">Comparecientes (Nombre y Cargo):</div>
+      <div class="font-bold text-slate-800">Representantes de la Secretaría de Educación involucrados (Nombre y Cargo):</div>
       <ul class="list-disc pl-5 space-y-1 text-slate-600">
         <li><strong>Titular de Unidad 1:</strong> ${u1Nom} ${u1Car ? `<span class="text-slate-500">(${u1Car})</span>` : ''}</li>
         ${u2Nom ? `<li><strong>Titular de Unidad 2:</strong> ${u2Nom} ${u2Car ? `<span class="text-slate-500">(${u2Car})</span>` : ''}</li>` : ''}
