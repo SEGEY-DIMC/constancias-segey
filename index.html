@@ -88,10 +88,12 @@
               <i class="fa-solid fa-lock"></i> Acceso Admin
             </button>
             <div id="admin-logged-in-badge" class="hidden flex items-center gap-2">
-              <span class="text-xs bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 px-2 py-1 rounded-md flex items-center gap-1 font-semibold">
-                <i class="fa-solid fa-shield-halved text-emerald-300"></i> Admin
+              <span class="text-xs bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 px-2.5 py-1 rounded-md flex items-center gap-1.5 font-semibold" title="Sesión activa">
+                <i class="fa-solid fa-user-shield text-emerald-300"></i>
+                <span id="user-badge-name">Admin</span>
+                <span id="user-badge-role" class="text-[10px] bg-emerald-700/60 text-white px-1.5 py-0.5 rounded font-normal">Admin</span>
               </span>
-              <button onclick="adminLogout()" title="Cerrar sesión de administrador" class="px-2.5 py-1 text-xs rounded-lg bg-rose-600/80 hover:bg-rose-700 text-white transition flex items-center gap-1 shadow-xs">
+              <button onclick="adminLogout()" title="Cerrar sesión" class="px-2.5 py-1 text-xs rounded-lg bg-rose-600/80 hover:bg-rose-700 text-white transition flex items-center gap-1 shadow-xs">
                 <i class="fa-solid fa-right-from-bracket"></i> Salir
               </button>
             </div>
@@ -2309,8 +2311,8 @@
   </div>
 
   <!-- Scripts -->
-  <script src="assets/catalogo_organico.js?v=2.1.0"></script>
-  <script src="assets/mapa_jefes_inmediatos.js?v=2.1.0"></script>
-  <script src="app.js?v=2.1.0"></script>
+  <script src="assets/catalogo_organico.js?v=2.2.0"></script>
+  <script src="assets/mapa_jefes_inmediatos.js?v=2.2.0"></script>
+  <script src="app.js?v=2.2.0"></script>
 </body>
 </html>
