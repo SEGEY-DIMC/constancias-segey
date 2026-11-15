@@ -222,6 +222,30 @@ function doGet(e) {
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
+    // Acción 3: Obtener Áreas y Responsables de Captura desde Google Sheets
+    if (action === "getResponsables") {
+      var sheetResp = ss.getSheetByName("Áreas y Responsables");
+      if (!sheetResp) {
+        return ContentService.createTextOutput(JSON.stringify({
+          status: "not_found",
+          message: "Hoja 'Áreas y Responsables' no encontrada.",
+          responsables: {}
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+      var rData = sheetResp.getDataRange().getValues();
+      var responsables = {};
+      for (var k = 1; k < rData.length; k++) {
+        var aRow = rData[k];
+        if (aRow[0]) {
+          responsables[String(aRow[0]).trim()] = aRow[1] ? String(aRow[1]).trim() : "";
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({
+        status: "success",
+        responsables: responsables
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
     return ContentService.createTextOutput(JSON.stringify({
       status: "success",
       message: "Servicio Webhook de Constancias SEGEY activo y en línea."
