@@ -1175,14 +1175,75 @@ function getLoggedUser() {
   }
 }
 
-function isAdminLoggedIn() {
-  const isAuth = sessionStorage.getItem(ADMIN_AUTH_KEY) === 'true';
-  const user = getLoggedUser();
-  if (isAuth && user) {
-    return user.rol === 'Administrador' || user.rol === 'Consulta';
-  }
-  return isAuth;
+function isUserLoggedIn() {
+  return sessionStorage.getItem(ADMIN_AUTH_KEY) === 'true' && Boolean(getLoggedUser());
 }
+
+/**
+ * Super Administrador: Acceso total a todo el sistema (admin y danny.uh)
+ */
+function isSuperAdmin() {
+  const user = getLoggedUser();
+  if (!user) return false;
+  const username = String(user.username || '').toLowerCase().trim();
+  const rol = String(user.rol || '').toLowerCase().trim();
+  return (username === 'admin' || username === 'danny.uh') || rol === 'administrador';
+}
+
+/**
+ * Capturista: Acceso exclusivo a registro de folios y visor (captura.dimc)
+ */
+function isCapturistaUser() {
+  const user = getLoggedUser();
+  if (!user) return false;
+  const username = String(user.username || '').toLowerCase().trim();
+  const rol = String(user.rol || '').toLowerCase().trim();
+  return username === 'captura.dimc' || rol === 'capturista';
+}
+
+/**
+ * Auditoría / Consulta: Acceso exclusivo a consulta de bitácora y descarga de reportes (auditoria.segey)
+ */
+function isAuditoriaUser() {
+  const user = getLoggedUser();
+  if (!user) return false;
+  const username = String(user.username || '').toLowerCase().trim();
+  const rol = String(user.rol || '').toLowerCase().trim();
+  return username === 'auditoria.segey' || rol === 'consulta' || rol === 'auditoría' || rol === 'auditoria';
+}
+
+/**
+ * Acceso a Bitácora y Control: Solo Super Administradores y Auditoría
+ */
+function canAccessBitacora() {
+  return isSuperAdmin() || isAuditoriaUser();
+}
+
+/**
+ * Acceso a Captura de Nuevas Constancias: Super Admin y Capturista
+ */
+function canCaptureFolios() {
+  if (isAuditoriaUser()) return false;
+  return true;
+}
+
+function isAdminLoggedIn() {
+  return canAccessBitacora();
+}
+
+function handleBackFromPreview() {
+  if (isAuditoriaUser()) {
+    switchTab('tab-registry');
+  } else {
+    switchTab('tab-form');
+  }
+}
+window.handleBackFromPreview = handleBackFromPreview;
+window.isSuperAdmin = isSuperAdmin;
+window.isCapturistaUser = isCapturistaUser;
+window.isAuditoriaUser = isAuditoriaUser;
+window.canAccessBitacora = canAccessBitacora;
+window.canCaptureFolios = canCaptureFolios;
 
 function openAdminLoginModal() {
   const modal = document.getElementById('modal-admin-login');
@@ -1280,10 +1341,17 @@ async function handleAdminLoginSubmit(event) {
       closeAdminLoginModal();
       updateAdminUI();
 
-      if (result.user.rol === 'Administrador' || result.user.rol === 'Consulta') {
+      if (isAuditoriaUser()) {
         switchTab('tab-registry');
+        showToast(`¡Bienvenido, ${result.user.nombre}! (Perfil de Consulta y Descarga de Reportes)`, 'info');
+      } else if (isCapturistaUser()) {
+        switchTab('tab-form');
+        showToast(`¡Bienvenido, ${result.user.nombre}! (Perfil de Registro y Captura de Folios)`, 'success');
+      } else {
+        // Super Administrador (admin o danny.uh)
+        switchTab('tab-registry');
+        showToast(`¡Bienvenido, ${result.user.nombre}! (Acceso Total de Administrador)`, 'success');
       }
-      showToast(`¡Bienvenido, ${result.user.nombre}! (${result.user.rol})`, 'success');
     } else {
       const msg = (result && result.message) ? result.message : 'Usuario o contraseña incorrectos.';
       if (errorEl) errorEl.classList.remove('hidden');
@@ -1316,44 +1384,49 @@ function adminLogout() {
 }
 
 function updateAdminUI() {
-  const logged = isAdminLoggedIn();
+  const isLogged = isUserLoggedIn();
   const user = getLoggedUser();
+  const superAdmin = isSuperAdmin();
+  const capturista = isCapturistaUser();
+  const auditoria = isAuditoriaUser();
 
   // Botones navegación desktop
+  const tabFormBtn = document.getElementById('btn-tab-form');
   const tabRegistryBtn = document.getElementById('btn-tab-registry');
   const loginBtn = document.getElementById('btn-admin-login');
   const loggedBadge = document.getElementById('admin-logged-in-badge');
   const userNameEl = document.getElementById('user-badge-name');
   const userRoleEl = document.getElementById('user-badge-role');
 
-  if (user) {
+  if (isLogged && user) {
     if (userNameEl) {
-      const primerNombre = user.nombre ? user.nombre.split(' ')[0] : (user.username || 'Admin');
+      const primerNombre = user.nombre ? user.nombre.split(' ')[0] : (user.username || 'Usuario');
       userNameEl.textContent = primerNombre;
     }
     if (userRoleEl) {
-      userRoleEl.textContent = user.rol || 'Admin';
+      if (superAdmin) {
+        userRoleEl.textContent = 'Admin Total';
+        userRoleEl.className = 'text-[10px] bg-emerald-700 text-white px-1.5 py-0.5 rounded font-bold';
+      } else if (capturista) {
+        userRoleEl.textContent = 'Capturista';
+        userRoleEl.className = 'text-[10px] bg-blue-700 text-white px-1.5 py-0.5 rounded font-bold';
+      } else if (auditoria) {
+        userRoleEl.textContent = 'Auditoría';
+        userRoleEl.className = 'text-[10px] bg-purple-700 text-white px-1.5 py-0.5 rounded font-bold';
+      } else {
+        userRoleEl.textContent = user.rol || 'Usuario';
+        userRoleEl.className = 'text-[10px] bg-slate-700 text-white px-1.5 py-0.5 rounded font-bold';
+      }
     }
   }
 
-  if (tabRegistryBtn) {
-    if (logged) {
-      tabRegistryBtn.classList.remove('hidden');
-    } else {
-      tabRegistryBtn.classList.add('hidden');
-    }
-  }
-
+  // 1. Visibilidad botón Login / Logout y Badge
   if (loginBtn) {
-    if (logged) {
-      loginBtn.classList.add('hidden');
-    } else {
-      loginBtn.classList.remove('hidden');
-    }
+    if (isLogged) loginBtn.classList.add('hidden');
+    else loginBtn.classList.remove('hidden');
   }
-
   if (loggedBadge) {
-    if (logged) {
+    if (isLogged) {
       loggedBadge.classList.remove('hidden');
       loggedBadge.classList.add('flex');
     } else {
@@ -1362,43 +1435,99 @@ function updateAdminUI() {
     }
   }
 
-  // Botones navegación móvil
+  // 2. Control de Pestaña "Llenar Formato" (Oculta para Auditoría)
+  const canCapture = canCaptureFolios();
+  if (tabFormBtn) {
+    if (canCapture) tabFormBtn.classList.remove('hidden');
+    else tabFormBtn.classList.add('hidden');
+  }
+
+  // 3. Control de Pestaña "Bitácora" (Solo Super Admin y Auditoría)
+  const hasBitacora = canAccessBitacora();
+  if (tabRegistryBtn) {
+    if (hasBitacora) tabRegistryBtn.classList.remove('hidden');
+    else tabRegistryBtn.classList.add('hidden');
+  }
+
+  // 4. Botones navegación móvil
+  const mobileTabFormBtn = document.getElementById('btn-tab-form-mobile');
   const mobileTabRegistryBtn = document.getElementById('btn-tab-registry-mobile');
   const mobileLoginBtn = document.getElementById('btn-admin-login-mobile');
   const mobileLogoutBtn = document.getElementById('btn-admin-logout-mobile');
 
+  if (mobileTabFormBtn) {
+    if (canCapture) mobileTabFormBtn.classList.remove('hidden');
+    else mobileTabFormBtn.classList.add('hidden');
+  }
   if (mobileTabRegistryBtn) {
-    if (logged) {
-      mobileTabRegistryBtn.classList.remove('hidden');
-    } else {
-      mobileTabRegistryBtn.classList.add('hidden');
-    }
+    if (hasBitacora) mobileTabRegistryBtn.classList.remove('hidden');
+    else mobileTabRegistryBtn.classList.add('hidden');
   }
-
   if (mobileLoginBtn) {
-    if (logged) {
-      mobileLoginBtn.classList.add('hidden');
-    } else {
-      mobileLoginBtn.classList.remove('hidden');
-    }
+    if (isLogged) mobileLoginBtn.classList.add('hidden');
+    else mobileLoginBtn.classList.remove('hidden');
   }
-
   if (mobileLogoutBtn) {
-    if (logged) {
-      mobileLogoutBtn.classList.remove('hidden');
-    } else {
-      mobileLogoutBtn.classList.add('hidden');
-    }
+    if (isLogged) mobileLogoutBtn.classList.remove('hidden');
+    else mobileLogoutBtn.classList.add('hidden');
   }
 
-  // Si la pestaña actual era tab-registry pero no está autenticado, volver a formulario
-  const currentRegistryTab = document.getElementById('tab-registry');
-  if (!logged && currentRegistryTab && !currentRegistryTab.classList.contains('hidden')) {
+  // 5. Control de Sidebar en Bitácora (Opciones para Modificar solo para Super Admin)
+  const sidebarModifyGroup = document.getElementById('registry-sidebar-modify-group');
+  const sidebarAuditoriaBanner = document.getElementById('registry-sidebar-auditoria-banner');
+  const btnSidebarNuevoTramite = document.getElementById('btn-sidebar-nuevo-tramite');
+
+  if (sidebarModifyGroup) {
+    if (superAdmin) sidebarModifyGroup.classList.remove('hidden');
+    else sidebarModifyGroup.classList.add('hidden');
+  }
+  if (sidebarAuditoriaBanner) {
+    if (auditoria) sidebarAuditoriaBanner.classList.remove('hidden');
+    else sidebarAuditoriaBanner.classList.add('hidden');
+  }
+  if (btnSidebarNuevoTramite) {
+    if (canCapture) btnSidebarNuevoTramite.classList.remove('hidden');
+    else btnSidebarNuevoTramite.classList.add('hidden');
+  }
+
+  // 6. Herramientas de respaldo / eliminación en Bitácora
+  const btnEliminarSel = document.getElementById('btn-eliminar-seleccionados');
+  const adminBackupTools = document.getElementById('admin-backup-tools');
+  if (btnEliminarSel && auditoria) {
+    btnEliminarSel.classList.add('hidden');
+  }
+  if (adminBackupTools) {
+    if (superAdmin) adminBackupTools.classList.remove('hidden');
+    else adminBackupTools.classList.add('hidden');
+  }
+
+  // 7. Checkbox maestro superior
+  const thCheckbox = document.getElementById('th-checkbox-all');
+  if (thCheckbox) {
+    if (auditoria) thCheckbox.classList.add('hidden');
+    else thCheckbox.classList.remove('hidden');
+  }
+
+  // 8. Botón volver en Vista del Documento
+  const lblBackFromPreview = document.getElementById('lbl-btn-back-from-preview');
+  if (lblBackFromPreview) {
+    lblBackFromPreview.textContent = auditoria ? 'Volver a Bitácora' : 'Volver a Formulario';
+  }
+
+  // 9. Redirección de seguridad si la pestaña activa no está permitida
+  const currentTab = document.querySelector('.tab-content:not(.hidden)');
+  if (auditoria && currentTab && currentTab.id === 'tab-form') {
+    switchTab('tab-registry');
+  }
+  if (capturista && currentTab && currentTab.id === 'tab-registry') {
+    switchTab('tab-form');
+  }
+  if (!isLogged && currentTab && currentTab.id === 'tab-registry') {
     switchTab('tab-form');
   }
 
-  // 3. Reglas de control centralizado y permisos de estatus por rol
-  updateEstatusPermissions(logged);
+  // 10. Reglas de control centralizado y permisos de estatus por rol
+  updateEstatusPermissions(superAdmin);
 }
 
 function updateEstatusPermissions(isAdmin) {
@@ -2810,6 +2939,10 @@ window.handleTitularArea2Select = handleTitularArea2Select;
 let currentRegistrySection = 'constancias';
 
 function switchRegistrySection(sectionId) {
+  if (isAuditoriaUser() && sectionId !== 'constancias') {
+    showToast('El perfil de Auditoría solo tiene acceso a la consulta de Registros y Reportes.', 'info');
+    sectionId = 'constancias';
+  }
   currentRegistrySection = sectionId;
   const sections = ['constancias', 'areas', 'responsables', 'justificaciones', 'layouts', 'notificaciones'];
 
@@ -4272,11 +4405,27 @@ function generateNextFolio() {
 }
 
 function switchTab(tabId, preserveRecord = false) {
-  // Protección de acceso a la Bitácora y Control (Solo Administrador)
-  if (tabId === 'tab-registry' && !isAdminLoggedIn()) {
-    openAdminLoginModal();
-    showToast('Inicie sesión como Administrador para acceder a la Bitácora.', 'info');
-    return;
+  // 1. Protección de acceso a la Bitácora y Control
+  if (tabId === 'tab-registry') {
+    if (!isUserLoggedIn()) {
+      openAdminLoginModal();
+      showToast('Inicie sesión para acceder a la Bitácora.', 'info');
+      return;
+    }
+    if (isCapturistaUser()) {
+      showToast('El perfil de Capturista solo tiene acceso a la captura y registro de folios.', 'warning');
+      switchTab('tab-form');
+      return;
+    }
+  }
+
+  // 2. Protección de acceso al Formulario de Captura
+  if (tabId === 'tab-form') {
+    if (isAuditoriaUser()) {
+      showToast('El perfil de Auditoría tiene acceso exclusivo a consulta y descarga de reportes.', 'info');
+      switchTab('tab-registry');
+      return;
+    }
   }
 
   // Si se regresa al formulario para capturar un nuevo documento, asegurar folio libre no duplicado
@@ -4327,6 +4476,11 @@ function switchTab(tabId, preserveRecord = false) {
 
 function handleFormSubmit(event) {
   event.preventDefault();
+
+  if (isAuditoriaUser()) {
+    showToast('El perfil de Auditoría tiene acceso exclusivo a consulta y descarga de reportes.', 'error');
+    return;
+  }
 
   if (isSubmittingForm) return;
   isSubmittingForm = true;
@@ -4954,10 +5108,14 @@ function renderTable() {
     return matchSearch && matchArea && matchMovimiento && matchEstatus && matchSemaforo;
   });
 
+  const canEdit = isSuperAdmin();
+  const canDelete = isSuperAdmin();
+  const isAudit = isAuditoriaUser();
+
   if (filtered.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="10" class="text-center py-10 text-slate-400">
+        <td colspan="${isAudit ? 9 : 10}" class="text-center py-10 text-slate-400">
           <i class="fa-solid fa-inbox text-3xl mb-2 block"></i>
           No se encontraron registros que coincidan con la búsqueda.
         </td>
@@ -5038,13 +5196,17 @@ function renderTable() {
       ? 'bg-rose-50/70 border-rose-200'
       : (isInactive ? 'bg-slate-50/70 text-slate-400 hover:bg-slate-100' : 'hover:bg-slate-50');
 
+    const checkboxTd = isAudit ? '' : `
+      <td class="py-3 px-3 text-center">
+        <input type="checkbox" class="record-checkbox w-4 h-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500 cursor-pointer"
+          value="${r.id}" onchange="handleRecordCheckboxChange(this)" ${isSelected ? 'checked' : ''}
+          title="Seleccionar constancia ${escapeHtml(r.folio || '')}">
+      </td>
+    `;
+
     return `
       <tr class="transition border-b border-slate-100 ${rowBgClass}" data-record-id="${r.id}">
-        <td class="py-3 px-3 text-center">
-          <input type="checkbox" class="record-checkbox w-4 h-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500 cursor-pointer"
-            value="${r.id}" onchange="handleRecordCheckboxChange(this)" ${isSelected ? 'checked' : ''}
-            title="Seleccionar constancia ${escapeHtml(r.folio || '')}">
-        </td>
+        ${checkboxTd}
         <td class="py-3 px-4">${folioHtml}</td>
         <td class="py-3 px-4 ${isInactive ? 'text-slate-400' : 'text-slate-600'}">${fechaFormatted}</td>
         <td class="py-3 px-4 font-semibold ${isInactive ? 'text-slate-500' : 'text-slate-800'}">${r.areaNotificadora}</td>
@@ -5070,11 +5232,11 @@ function renderTable() {
             <a href="${escapeHtml(r.expedienteUrl)}" target="_blank" class="px-2 py-1 text-[11px] rounded bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100 font-semibold inline-flex items-center gap-1 shadow-2xs" title="Ver documento firmado en Google Drive">
               <i class="fa-solid fa-file-circle-check text-emerald-600"></i> Ver
             </a>
-          ` : `
+          ` : (canEdit ? `
             <button type="button" onclick="abrirModalSubirExpediente('${r.id}')" class="px-2 py-1 text-[11px] rounded bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 font-semibold inline-flex items-center gap-1 shadow-2xs" title="Tomar foto con cámara del celular o subir archivo">
               <i class="fa-solid fa-camera text-blue-600"></i> Adjuntar
             </button>
-          `}
+          ` : `<span class="text-slate-400 text-[10.5px] italic">Sin archivo</span>`)}
         </td>
         <td class="py-3 px-4 text-center">
           <div class="flex items-center justify-center gap-1.5">
@@ -5087,13 +5249,15 @@ function renderTable() {
             <button onclick="viewRecord('${r.id}')" title="Ver con Layout Activo" class="p-1.5 rounded-md hover:bg-rose-50 text-segey-700 hover:text-segey-900 transition">
               <i class="fa-solid fa-eye"></i>
             </button>
-            <button onclick="showDetailsModal('${r.id}')" title="Detalles del Registro" class="p-1.5 rounded-md hover:bg-blue-50 text-blue-600 hover:text-blue-800 transition">
+            <button onclick="showDetailsModal('${r.id}')" title="Detalles del Registro y Trazabilidad" class="p-1.5 rounded-md hover:bg-blue-50 text-blue-600 hover:text-blue-800 transition">
               <i class="fa-solid fa-circle-info"></i>
             </button>
-            <button onclick="editRecord('${r.id}')" title="Editar Registro" class="p-1.5 rounded-md hover:bg-amber-50 text-amber-600 hover:text-amber-800 transition">
-              <i class="fa-solid fa-pen"></i>
-            </button>
-            ${actionDeleteOrReactivate}
+            ${canEdit ? `
+              <button onclick="editRecord('${r.id}')" title="Editar Registro" class="p-1.5 rounded-md hover:bg-amber-50 text-amber-600 hover:text-amber-800 transition">
+                <i class="fa-solid fa-pen"></i>
+              </button>
+            ` : ''}
+            ${canDelete ? actionDeleteOrReactivate : ''}
           </div>
         </td>
       </tr>
@@ -5201,6 +5365,10 @@ function updateSelectedRecordsUI() {
 }
 
 function abrirModalEliminarSeleccionados() {
+  if (!isSuperAdmin()) {
+    showToast('Solo los administradores tienen permiso para eliminar registros.', 'error');
+    return;
+  }
   if (selectedRecordIds.size === 0) {
     showToast('Seleccione al menos una constancia con la casilla de la izquierda para eliminar.', 'warning');
     return;
@@ -5350,6 +5518,10 @@ function viewRecord(id) {
 }
 
 function editRecord(id) {
+  if (!isSuperAdmin()) {
+    showToast('Solo los administradores tienen permiso para editar constancias emitidas.', 'error');
+    return;
+  }
   const record = records.find(r => r.id === id);
   if (!record) return;
 
@@ -5492,6 +5664,10 @@ function editRecord(id) {
 let currentInactivarRecordId = null;
 
 function deleteRecord(id) {
+  if (!isSuperAdmin()) {
+    showToast('Solo los administradores tienen permiso para inactivar constancias.', 'error');
+    return;
+  }
   openInactivarModal(id);
 }
 
@@ -5571,6 +5747,10 @@ function confirmarInactivacionConMotivo() {
 }
 
 function reactivateRecord(id) {
+  if (!isSuperAdmin()) {
+    showToast('Solo los administradores tienen permiso para reactivar constancias.', 'error');
+    return;
+  }
   const record = records.find(r => r.id === id);
   if (!record) return;
 
