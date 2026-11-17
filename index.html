@@ -501,7 +501,15 @@
                     <div>
                       <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">2. Cargo o Puesto:</label>
                       <input type="text" id="titularUnidad1Cargo" required placeholder="Cargo o puesto del Titular 1"
-                        class="w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-slate-50 text-slate-700">
+                        class="w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-white text-slate-800">
+                    </div>
+                  </div>
+                  <!-- Alerta de Vacante Titular 1 -->
+                  <div id="alertaVacanteTitular1" class="hidden bg-amber-50 border border-amber-300 text-amber-900 p-2.5 rounded-lg text-xs flex items-start gap-2 shadow-2xs transition-all">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5 text-sm shrink-0"></i>
+                    <div>
+                      <span class="font-bold">Puesto vacante detectado:</span>
+                      Se detectó vacante el puesto oficial en el catálogo. Especifique el nombre completo y confirme el puesto de la persona en funciones para la firma.
                     </div>
                   </div>
                 </div>
@@ -534,7 +542,15 @@
                     <div>
                       <label id="lblTitularUnidad2Cargo" class="block text-[11px] text-slate-500 mb-0.5 font-medium">2. Cargo o Puesto:</label>
                       <input type="text" id="titularUnidad2Cargo" placeholder="Cargo o puesto del Jefe Inmediato"
-                        class="w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-slate-50 text-slate-700">
+                        class="w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-white text-slate-800">
+                    </div>
+                  </div>
+                  <!-- Alerta de Vacante Titular 2 / Jefe Inmediato -->
+                  <div id="alertaVacanteTitular2" class="hidden bg-amber-50 border border-amber-300 text-amber-900 p-2.5 rounded-lg text-xs flex items-start gap-2 shadow-2xs transition-all">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5 text-sm shrink-0"></i>
+                    <div>
+                      <span class="font-bold">Puesto vacante detectado:</span>
+                      Se detectó vacante el puesto oficial en el catálogo. Especifique el nombre completo y confirme el puesto de la persona en funciones para la firma.
                     </div>
                   </div>
                 </div>
@@ -573,7 +589,15 @@
                     <div>
                       <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">2. Cargo o Puesto:</label>
                       <input type="text" id="titularAreaCargo" required placeholder="Cargo o puesto del Titular del Área"
-                        class="w-full text-xs rounded-lg border-slate-300 border p-2.5 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-slate-50 text-slate-700">
+                        class="w-full text-xs rounded-lg border-slate-300 border p-2.5 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-white text-slate-800">
+                    </div>
+                  </div>
+                  <!-- Alerta de Vacante Titular de Área -->
+                  <div id="alertaVacanteArea" class="hidden bg-amber-50 border border-amber-300 text-amber-900 p-2.5 rounded-lg text-xs flex items-start gap-2 shadow-2xs transition-all">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5 text-sm shrink-0"></i>
+                    <div>
+                      <span class="font-bold">Puesto vacante detectado:</span>
+                      Se detectó vacante el puesto oficial en el catálogo. Especifique el nombre completo y confirme el puesto de la persona en funciones para la firma.
                     </div>
                   </div>
                 </div>
@@ -608,7 +632,15 @@
                     <div>
                       <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">2. Cargo o Puesto:</label>
                       <input type="text" id="titularArea2Cargo" placeholder="Cargo o puesto del Titular del Área de Destino"
-                        class="w-full text-xs rounded-lg border-slate-300 border p-2.5 focus:ring-2 focus:ring-emerald-600 focus:outline-none bg-slate-50 text-slate-700">
+                        class="w-full text-xs rounded-lg border-slate-300 border p-2.5 focus:ring-2 focus:ring-emerald-600 focus:outline-none bg-white text-slate-800">
+                    </div>
+                  </div>
+                  <!-- Alerta de Vacante Titular de Área (2) -->
+                  <div id="alertaVacanteArea2" class="hidden bg-amber-50 border border-amber-300 text-amber-900 p-2.5 rounded-lg text-xs flex items-start gap-2 shadow-2xs transition-all">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5 text-sm shrink-0"></i>
+                    <div>
+                      <span class="font-bold">Puesto vacante detectado:</span>
+                      Se detectó vacante el puesto oficial en el catálogo. Especifique el nombre completo y confirme el puesto de la persona en funciones para la firma.
                     </div>
                   </div>
                 </div>
@@ -2365,8 +2397,8 @@
   </div>
 
   <!-- Scripts -->
-  <script src="assets/catalogo_organico.js?v=2.4.3"></script>
-  <script src="assets/mapa_jefes_inmediatos.js?v=2.4.3"></script>
-  <script src="app.js?v=2.4.3"></script>
+  <script src="assets/catalogo_organico.js?v=2.4.4"></script>
+  <script src="assets/mapa_jefes_inmediatos.js?v=2.4.4"></script>
+  <script src="app.js?v=2.4.4"></script>
 </body>
 </html>
