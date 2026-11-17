@@ -5826,6 +5826,14 @@ const CATALOGO_ORGANICO_SEGEY = [
     },
     "subordinados": [
       {
+        "id": 649,
+        "nombre": "Vacante",
+        "puesto": "Jefe de Departamento de Planeación, Evaluación y Seguimiento",
+        "mando": true,
+        "inm": 3,
+        "es_vacante": true
+      },
+      {
         "id": 647,
         "nombre": "Lic. Wilbert Ernesto Kantún Ordoñez",
         "puesto": "Jefe de Departamento de Estadística",
