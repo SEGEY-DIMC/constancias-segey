@@ -3,7 +3,21 @@ __pycache__/
 *.pyc
 *.pyo
 
-# Archivos temporales de pruebas
+# Archivos confidenciales e institucionales protegidos
+*.xlsx
+*.xls
+Catalogo_Funcionarios_y_Puestos.xlsx
+bitacora_constancias.json
+batch_sheets.json
+fill_docx.py
+google_apps_script.js
+server.py
+generate_*.py
+sync_*.py
+upload_*.py
+
+# Archivos temporales de pruebas y scratch
+scratch/
 test_out.docx
 parsed_pdf_lines.txt
 run_test_*.py
