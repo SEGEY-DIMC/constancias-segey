@@ -960,8 +960,8 @@
                   </div>
                 </div>
 
-                <!-- Fila 2: Titular de Área al centro -->
-                <div class="text-center pt-2">
+                <!-- Fila 2: Titular de Área al centro (visible solo en Cambio de Dependencia Jerárquica) -->
+                <div id="sign-row-titular-area-center" class="text-center pt-2 hidden">
                   <div class="w-72 mx-auto border-t border-slate-900 pt-1.5">
                     <div class="font-bold uppercase text-[10.5px] tracking-tight">Titular de Área</div>
                     <div id="sign-titular-area-nombre" class="text-slate-900 text-[10.5px] mt-0.5 font-bold">Nombre Titular Área</div>
@@ -969,20 +969,22 @@
                   </div>
                 </div>
 
-                <!-- Fila 3: Testigos 1 y 2 -->
+                <!-- Fila inferior: 2 columnas -->
+                <!-- En Alta/Baja/Cambio de nombre: Izq: Titular de Área | Der: Testigo (1) -->
+                <!-- En Cambio de dependencia jerárquica: Izq: Testigo (1) | Der: Testigo (2) -->
                 <div class="grid grid-cols-2 gap-8 text-center pt-2">
                   <div>
                     <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
-                      <div class="font-bold uppercase text-[10.5px] tracking-tight">Testigo (1)</div>
-                      <div id="sign-testigo1-nombre" class="text-slate-900 text-[10.5px] mt-0.5 font-bold">Nombre Testigo 1</div>
-                      <div id="sign-testigo1-cargo" class="text-slate-600 text-[9.5px] leading-tight mt-0.5">Cargo Testigo 1</div>
+                      <div id="sign-bottom-left-header" class="font-bold uppercase text-[10.5px] tracking-tight">Titular de Área</div>
+                      <div id="sign-titular-area-bottom-nombre" class="text-slate-900 text-[10.5px] mt-0.5 font-bold">Nombre Titular Área</div>
+                      <div id="sign-titular-area-bottom-cargo" class="text-slate-600 text-[9.5px] leading-tight mt-0.5">Cargo Titular Área</div>
                     </div>
                   </div>
                   <div>
                     <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
-                      <div class="font-bold uppercase text-[10.5px] tracking-tight">Testigo (2)</div>
-                      <div id="sign-testigo2-nombre" class="text-slate-900 text-[10.5px] mt-0.5 font-bold">Nombre Testigo 2</div>
-                      <div id="sign-testigo2-cargo" class="text-slate-600 text-[9.5px] leading-tight mt-0.5">Cargo Testigo 2</div>
+                      <div id="sign-bottom-right-header" class="font-bold uppercase text-[10.5px] tracking-tight">Testigo (1)</div>
+                      <div id="sign-testigo1-nombre" class="text-slate-900 text-[10.5px] mt-0.5 font-bold">Nombre Testigo 1</div>
+                      <div id="sign-testigo1-cargo" class="text-slate-600 text-[9.5px] leading-tight mt-0.5">Cargo Testigo 1</div>
                     </div>
                   </div>
                 </div>
@@ -2363,8 +2365,8 @@
   </div>
 
   <!-- Scripts -->
-  <script src="assets/catalogo_organico.js?v=2.3.0"></script>
-  <script src="assets/mapa_jefes_inmediatos.js?v=2.3.0"></script>
-  <script src="app.js?v=2.3.1"></script>
+  <script src="assets/catalogo_organico.js?v=2.4.0"></script>
+  <script src="assets/mapa_jefes_inmediatos.js?v=2.4.0"></script>
+  <script src="app.js?v=2.4.0"></script>
 </body>
 </html>
