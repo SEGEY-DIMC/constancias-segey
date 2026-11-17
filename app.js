@@ -1096,8 +1096,8 @@ function compileLayout(templateStr, data) {
   const etiquetaCompareciente2 = isJefeInmediato ? 'Jefe Inmediato: ' : '2) ';
 
   const vars = {
-    etiquetaTestigos: esCambioDependenciaJerarquica ? 'Testigo' : 'Testigos',
-    etiquetaEnlaces: esCambioDependenciaJerarquica ? 'Testigo' : 'Testigos',
+    etiquetaTestigos: esCambioDependenciaJerarquica ? 'Testigos' : 'Testigo',
+    etiquetaEnlaces: esCambioDependenciaJerarquica ? 'Testigos' : 'Testigo',
     etiquetaTitular2: etiquetaTitular2,
     etiquetaTitular2Firma: etiquetaTitular2Firma,
     etiquetaTitular1Y2: etiquetaTitular1Y2,
