@@ -362,12 +362,50 @@
                 </p>
               </div>
 
+              <!-- Menú desplegable dependiente con las áreas vinculadas cuando se elige 'Cambio de dependencia jerárquica' -->
+              <div id="containerSelectAreaCambioDep" class="hidden mb-2.5 p-3 rounded-xl bg-purple-50/50 border border-purple-200 space-y-1.5 transition-all">
+                <div class="flex items-center justify-between">
+                  <label for="selectAreaCambioDep" class="block text-[11px] font-bold text-purple-900 flex items-center gap-1.5">
+                    <i class="fa-solid fa-arrows-split-up-and-left text-purple-700"></i> Seleccionar Área Oficial a Transferir / Reubicar:
+                  </label>
+                  <span id="badgeAreasCambioDep" class="text-[10px] bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full font-semibold border border-purple-300">
+                    Áreas vinculadas
+                  </span>
+                </div>
+                <select id="selectAreaCambioDep" onchange="handleSelectAreaCambioDep(this)"
+                  class="w-full text-xs rounded-lg border-purple-300 border p-2 focus:ring-2 focus:ring-purple-500 focus:outline-none bg-white text-slate-800 font-semibold">
+                  <option value="">-- Primero seleccione el Área que Notifica o Elabora arriba --</option>
+                </select>
+                <p class="text-[10.5px] text-purple-800 flex items-center gap-1">
+                  <i class="fa-solid fa-circle-info"></i> Al elegir el área, se asigna como el área a transferir y se vincula su Titular en el Apartado II (editable libremente).
+                </p>
+              </div>
+
               <!-- Primer cuadro de texto: Nombre del Área o Nombre Actual si es Cambio de Nombre -->
               <textarea id="nuevaDenominacion" rows="2" required
                 placeholder="ESPECIFIQUE CON PRECISIÓN EL NOMBRE DEL ÁREA, CLAVE O ADSCRIPCIÓN DETERMINADA..."
                 style="text-transform: uppercase;"
                 oninput="this.value = this.value.toUpperCase();"
                 class="w-full text-sm rounded-lg border-slate-300 border p-3 focus:ring-2 focus:ring-segey-700 focus:outline-none uppercase"></textarea>
+
+              <!-- Menú desplegable de Unidad Administrativa de Destino (exclusivo para 'Cambio de dependencia jerárquica') -->
+              <div id="containerSelectUnidadDestinoCambioDep" class="hidden mt-3 p-3.5 rounded-xl bg-purple-50/60 border border-purple-200 space-y-1.5 transition-all">
+                <div class="flex items-center justify-between">
+                  <label for="selectUnidadDestinoCambioDep" class="block text-xs font-bold text-purple-950 flex items-center gap-1.5">
+                    <i class="fa-solid fa-sitemap text-purple-700"></i> Seleccionar Dependencia Jerárquica de Destino (Unidad Administrativa a donde se transfiere): <span class="text-red-500">*</span>
+                  </label>
+                  <span id="badgeUnidadDestinoCambioDep" class="text-[10px] bg-purple-100 text-purple-800 font-semibold px-2 py-0.5 rounded-full border border-purple-300">
+                    32 Unidades oficiales
+                  </span>
+                </div>
+                <select id="selectUnidadDestinoCambioDep" onchange="handleSelectUnidadDestinoCambioDep(this)"
+                  class="w-full text-xs rounded-lg border-purple-300 border p-2.5 focus:ring-2 focus:ring-purple-600 focus:outline-none bg-white text-slate-800 font-semibold">
+                  <option value="" disabled selected>-- Seleccione la Unidad Administrativa a la que se transfiere el Área --</option>
+                </select>
+                <p class="text-[10.5px] text-purple-800 flex items-center gap-1">
+                  <i class="fa-solid fa-circle-info"></i> Al elegir la Dependencia de Destino, se vincula automáticamente su Titular en el Apartado II como Titular de Unidad (2) y se actualiza el documento.
+                </p>
+              </div>
 
               <!-- Segundo cuadro de texto: Nuevo Nombre (se habilita exclusivamente para 'Cambio de nombre') -->
               <div id="containerNuevoNombre" class="hidden mt-3 space-y-1.5 transition-all">
