@@ -4112,7 +4112,7 @@ function handleSelectJustificacionPredefinida(selectEl) {
     justTextarea.focus();
     justTextarea.dispatchEvent(new Event('input', { bubbles: true }));
     renderDocument(getCurrentFormDataForPreview());
-    showToast('Motivo predefinido cargado en el cuadro de justificación.');
+    showToast('Motivo predefinido cargado en el cuadro inferior. Se deberá justificar la selección.');
   }
 }
 
