@@ -2274,6 +2274,7 @@ function handleSelectAreaBaja(selectElem) {
   } else if (val) {
     ndTextarea.value = val.toUpperCase();
     vincularJefeInmediatoConArea(val);
+    vincularTitularAreaConBaja(val);
   }
 
   renderDocument(getCurrentFormDataForPreview());
@@ -2469,6 +2470,161 @@ function vincularJefeInmediatoConArea(areaNombre) {
 window.poblarSelectAreaCambioNombre = poblarSelectAreaCambioNombre;
 window.handleSelectAreaCambioNombre = handleSelectAreaCambioNombre;
 window.vincularJefeInmediatoConArea = vincularJefeInmediatoConArea;
+
+/**
+ * Busca de forma inteligente el Titular oficial (nombre y cargo) de un Área o Departamento específico.
+ * Consulta primero el Mapa Oficial de Jerarquía SEGEY y después el Catálogo Orgánico SEGEY.
+ */
+function buscarTitularPorNombreArea(areaNombre, areaNotificadora = '') {
+  if (!areaNombre || areaNombre === '__OTRA__') return null;
+
+  function norm(t) {
+    if (!t) return '';
+    return t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').trim();
+  }
+
+  const nTarget = norm(areaNombre);
+  if (!nTarget) return null;
+
+  // 1. Consultar el Mapa Oficial de Jerarquía de Jefes (MAPA_JERARQUIA_JEFES)
+  if (typeof buscarJefeInmediatoPorArea === 'function') {
+    const nodo = buscarJefeInmediatoPorArea(areaNombre, areaNotificadora);
+    if (nodo && nodo.titular_nombre && nodo.titular_nombre !== 'None' && nodo.titular_nombre.toLowerCase() !== 'vacante') {
+      return {
+        nombre: nodo.titular_nombre,
+        cargo: nodo.titular_cargo || areaNombre
+      };
+    }
+  }
+
+  // 2. Consultar en CATALOGO_ORGANICO_SEGEY
+  if (typeof CATALOGO_ORGANICO_SEGEY !== 'undefined' && Array.isArray(CATALOGO_ORGANICO_SEGEY)) {
+    const stopWords = ['departamento', 'direccion', 'coordinacion', 'area', 'general', 'para', 'gestion', 'regional', 'de', 'la', 'el', 'los', 'las', 'y', 'del'];
+    const targetWords = nTarget.split(/\s+/).filter(w => w.length > 3 && !stopWords.includes(w));
+
+    let bestScore = 0;
+    let bestResult = null;
+
+    for (let i = 0; i < CATALOGO_ORGANICO_SEGEY.length; i++) {
+      const u = CATALOGO_ORGANICO_SEGEY[i];
+      const un = norm(u.unidad);
+
+      // Evaluar titular de la unidad
+      if (u.titular && u.titular.nombre && u.titular.nombre.toLowerCase() !== 'vacante') {
+        let score = 0;
+        if (un === nTarget) score += 30;
+        else if (un.includes(nTarget) || nTarget.includes(un)) score += 20;
+        else {
+          const matchCount = targetWords.filter(w => un.includes(w)).length;
+          if (matchCount >= 2) score += matchCount * 5;
+        }
+        if (score > bestScore) {
+          bestScore = score;
+          bestResult = { nombre: u.titular.nombre, cargo: u.titular.cargo || u.unidad };
+        }
+      }
+
+      // Evaluar subordinados
+      if (Array.isArray(u.subordinados)) {
+        for (let j = 0; j < u.subordinados.length; j++) {
+          const s = u.subordinados[j];
+          if (!s.nombre || s.nombre.toLowerCase() === 'vacante') continue;
+          const sp = norm(s.puesto);
+          let score = 0;
+          if (sp === nTarget) score += 35;
+          else if (sp.includes(nTarget) || nTarget.includes(sp)) score += 25;
+          else {
+            const matchCount = targetWords.filter(w => sp.includes(w)).length;
+            if (matchCount >= 2) score += matchCount * 6;
+          }
+          if (score > bestScore) {
+            bestScore = score;
+            bestResult = { nombre: s.nombre, cargo: s.puesto };
+          }
+        }
+      }
+    }
+
+    if (bestResult && bestScore >= 10) {
+      return bestResult;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Vincula y precarga automáticamente el Titular de Área en el Apartado II (Datos Generales)
+ * cuando se elige el Área Oficial a dar de Baja en el Apartado I.
+ */
+function vincularTitularAreaConBaja(areaNombre) {
+  if (!areaNombre || areaNombre === '__OTRA__') return;
+
+  const aNom = document.getElementById('titularAreaNombre');
+  const aCar = document.getElementById('titularAreaCargo');
+  const selectArea = document.getElementById('selectTitularArea');
+
+  // Obtener Área Notificadora actual para desambiguar
+  const selNotif = document.getElementById('areaNotificadoraSelect');
+  const custNotif = document.getElementById('areaNotificadora');
+  const areaNotificadora = (selNotif && selNotif.value && selNotif.value !== '__OTRA__') 
+    ? selNotif.value 
+    : (custNotif ? custNotif.value : '');
+
+  const titular = buscarTitularPorNombreArea(areaNombre, areaNotificadora);
+
+  if (titular && titular.nombre) {
+    if (aNom) aNom.value = titular.nombre;
+    if (aCar) aCar.value = titular.cargo;
+
+    // Sincronizar selectTitularArea si existe la opción coincidente
+    if (selectArea) {
+      let matchedIdx = -1;
+      function cleanText(t) {
+        if (!t) return '';
+        return t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+      }
+      const tNomNorm = cleanText(titular.nombre);
+      const tCarNorm = cleanText(titular.cargo);
+
+      for (let i = 0; i < selectArea.options.length; i++) {
+        const opt = selectArea.options[i];
+        if (opt.value === '__MANUAL__') continue;
+        const optNom = cleanText(opt.dataset && opt.dataset.nombre ? opt.dataset.nombre : '');
+        const optPue = cleanText(opt.dataset && opt.dataset.puesto ? opt.dataset.puesto : '');
+        const optText = cleanText(opt.textContent || '');
+
+        if ((optNom && optNom === tNomNorm) || (optPue && optPue === tCarNorm) || optText.includes(tNomNorm)) {
+          matchedIdx = i;
+          break;
+        }
+      }
+
+      if (matchedIdx !== -1) {
+        selectArea.selectedIndex = matchedIdx;
+      } else {
+        // Si no está en la lista de puestos de la unidad, insertar la opción para que coincida visualmente
+        const newOpt = document.createElement('option');
+        newOpt.value = `titular_baja_${Date.now()}`;
+        newOpt.textContent = `${titular.cargo} — ${titular.nombre}`;
+        newOpt.setAttribute('data-nombre', titular.nombre);
+        newOpt.setAttribute('data-puesto', titular.cargo);
+        if (selectArea.options.length > 1) {
+          selectArea.insertBefore(newOpt, selectArea.options[1]);
+          selectArea.selectedIndex = 1;
+        } else {
+          selectArea.appendChild(newOpt);
+          selectArea.selectedIndex = selectArea.options.length - 1;
+        }
+      }
+    }
+
+    showToast(`Titular de Área precargado para Baja: ${titular.nombre}`);
+  }
+}
+
+window.buscarTitularPorNombreArea = buscarTitularPorNombreArea;
+window.vincularTitularAreaConBaja = vincularTitularAreaConBaja;
 
 /**
  * Actualiza automáticamente Titular de Unidad Administrativa (1) y filtra
@@ -4289,6 +4445,7 @@ function handleTipoMovimientoChange() {
       const selBaja = document.getElementById('selectAreaBaja');
       if (selBaja && selBaja.value && selBaja.value !== '__OTRA__') {
         vincularJefeInmediatoConArea(selBaja.value);
+        vincularTitularAreaConBaja(selBaja.value);
       }
     }
   } else {
