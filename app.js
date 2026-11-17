@@ -208,7 +208,7 @@ const DEFAULT_LAYOUT_HTML = `
       </div>
 
       <div class="grid grid-cols-12 gap-2 items-start">
-        <div class="col-span-5 font-bold text-slate-800">{{etiquetaEnlaces}}:</div>
+        <div class="col-span-5 font-bold text-slate-800">{{etiquetaTestigos}}:</div>
         <div class="col-span-7 space-y-0.5 font-normal text-slate-900">
           <div>1) <span class="font-normal text-slate-900">{{testigo1Linea}}</span></div>
           {{#if tieneTestigo2}}
@@ -257,7 +257,7 @@ const DEFAULT_LAYOUT_HTML = `
       </div>
 
       {{#if esCambioDependenciaJerarquica}}
-      <!-- Para Cambio de Dependencia Jerárquica: Se quita la firma de en medio. El Enlace (1) se vuelve Titular de Área y el testigo (2) se vuelve Enlace (1) -->
+      <!-- Para Cambio de Dependencia Jerárquica: Se quita la firma de en medio. El Testigo (1) se vuelve Titular de Área y el testigo (2) se vuelve Testigo (1) -->
       <div class="grid grid-cols-2 gap-8 text-center pt-2">
         <div>
           <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
@@ -268,7 +268,7 @@ const DEFAULT_LAYOUT_HTML = `
         </div>
         <div>
           <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
-            <div class="font-bold uppercase text-[10.5px] tracking-tight">Enlace (1)</div>
+            <div class="font-bold uppercase text-[10.5px] tracking-tight">Testigo (1)</div>
             <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{testigo1Nombre}}</div>
             <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{testigo1Cargo}}</div>
           </div>
@@ -286,18 +286,18 @@ const DEFAULT_LAYOUT_HTML = `
         </div>
       </div>
 
-      <!-- Fila 3: Enlaces 1 y 2 -->
+      <!-- Fila 3: Testigos 1 y 2 -->
       <div class="grid grid-cols-2 gap-8 text-center pt-2">
         <div>
           <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
-            <div class="font-bold uppercase text-[10.5px] tracking-tight">Enlace (1)</div>
+            <div class="font-bold uppercase text-[10.5px] tracking-tight">Testigo (1)</div>
             <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{testigo1Nombre}}</div>
             <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{testigo1Cargo}}</div>
           </div>
         </div>
         <div>
           <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
-            <div class="font-bold uppercase text-[10.5px] tracking-tight">Enlace (2)</div>
+            <div class="font-bold uppercase text-[10.5px] tracking-tight">Testigo (2)</div>
             <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{testigo2Nombre}}</div>
             <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{testigo2Cargo}}</div>
           </div>
@@ -668,8 +668,8 @@ function initAllSearchableComboboxes() {
   initSearchableCombobox('selectTitularUnidad2', 'Buscar puesto o persona de la unidad...');
   initSearchableCombobox('selectAreaBaja', 'Buscar área o departamento a dar de baja...');
   initSearchableCombobox('selectAreaCambioNombre', 'Buscar área o departamento que cambia de nombre...');
-  initSearchableCombobox('selectTestigo1', 'Buscar puesto o persona del Enlace 1...');
-  initSearchableCombobox('selectTestigo2', 'Buscar puesto o persona del Enlace 2...');
+  initSearchableCombobox('selectTestigo1', 'Buscar puesto o persona del Testigo 1...');
+  initSearchableCombobox('selectTestigo2', 'Buscar puesto o persona del Testigo 2...');
 }
 
 /**
@@ -1026,7 +1026,8 @@ function compileLayout(templateStr, data) {
   const etiquetaCompareciente2 = isJefeInmediato ? 'Jefe Inmediato: ' : '2) ';
 
   const vars = {
-    etiquetaEnlaces: esCambioDependenciaJerarquica ? 'Enlace' : 'Enlaces',
+    etiquetaTestigos: esCambioDependenciaJerarquica ? 'Testigo' : 'Testigos',
+    etiquetaEnlaces: esCambioDependenciaJerarquica ? 'Testigo' : 'Testigos',
     etiquetaTitular2: etiquetaTitular2,
     etiquetaTitular2Firma: etiquetaTitular2Firma,
     etiquetaTitular1Y2: etiquetaTitular1Y2,
@@ -2792,10 +2793,16 @@ function actualizarTitularesPorArea(areaNombre) {
     poblarSelectAreaCambioNombre(areaNombre);
   }
 
-  // 6. Actualizar listas desplegables de Enlaces (1 y 2) con el personal del Área
+  // 6. Actualizar listas desplegables de Testigos (1 y 2) con el personal del Área
   poblarSelectTestigos(areaNombre);
 
-  showToast(`Área: ${areaNombre}. Responsable, titulares y enlaces actualizados.`);
+  // 7. Sincronizar automáticamente Testigo (1) con el Responsable de Captura
+  const respActual = respInput ? respInput.value : '';
+  if (respActual) {
+    sincronizarTestigo1ConResponsable(respActual);
+  }
+
+  showToast(`Área: ${areaNombre}. Responsable, titulares y testigos actualizados.`);
 }
 
 function setupManualTitulares() {
@@ -2847,7 +2854,7 @@ function setupManualTitulares() {
 
   const selT1 = document.getElementById('selectTestigo1');
   if (selT1) {
-    selT1.innerHTML = '<option value="__MANUAL__" selected>✏️ Captura manual de Enlace (1)...</option>';
+    selT1.innerHTML = '<option value="__MANUAL__" selected>✏️ Captura manual de Testigo (1)...</option>';
   }
   const badgeTestigo1 = document.getElementById('badgeTestigo1');
   if (badgeTestigo1) {
@@ -2857,7 +2864,7 @@ function setupManualTitulares() {
 
   const selT2 = document.getElementById('selectTestigo2');
   if (selT2) {
-    selT2.innerHTML = '<option value="__MANUAL__" selected>✏️ Captura manual de Enlace (2)...</option>';
+    selT2.innerHTML = '<option value="__MANUAL__" selected>✏️ Captura manual de Testigo (2)...</option>';
   }
   const badgeTestigo2 = document.getElementById('badgeTestigo2');
   if (badgeTestigo2) {
@@ -2865,6 +2872,80 @@ function setupManualTitulares() {
     badgeTestigo2.innerHTML = '<i class="fa-solid fa-pen mr-1"></i>Captura Libre';
   }
 }
+
+/**
+ * Busca el puesto o cargo oficial de una persona en el catálogo orgánico de la SEGEY.
+ */
+function buscarCargoDePersona(nombre) {
+  if (!nombre || typeof CATALOGO_ORGANICO_SEGEY === 'undefined' || !Array.isArray(CATALOGO_ORGANICO_SEGEY)) return '';
+  const norm = normalizeText(nombre);
+  for (const u of CATALOGO_ORGANICO_SEGEY) {
+    if (u.titular && u.titular.nombre && normalizeText(u.titular.nombre) === norm) {
+      return u.titular.cargo || '';
+    }
+    if (u.subordinados && Array.isArray(u.subordinados)) {
+      for (const s of u.subordinados) {
+        if (s.nombre && normalizeText(s.nombre) === norm) {
+          return s.puesto || '';
+        }
+      }
+    }
+  }
+  return '';
+}
+
+/**
+ * Sincroniza automáticamente el nombre y cargo del Testigo (1) con el Responsable de Captura.
+ */
+function sincronizarTestigo1ConResponsable(nombreResponsable) {
+  const respInput = document.getElementById('responsableCaptura');
+  const t1Nom = document.getElementById('testigo1Nombre');
+  const t1Car = document.getElementById('testigo1Cargo');
+  const selT1 = document.getElementById('selectTestigo1');
+
+  const nombreFinal = (typeof nombreResponsable === 'string')
+    ? nombreResponsable.trim()
+    : (respInput ? respInput.value.trim() : '');
+
+  if (t1Nom) {
+    t1Nom.value = nombreFinal;
+  }
+
+  if (nombreFinal) {
+    const cargoEncontrado = buscarCargoDePersona(nombreFinal);
+    if (cargoEncontrado && t1Car) {
+      t1Car.value = cargoEncontrado;
+    }
+  } else {
+    if (t1Car && (!t1Nom || !t1Nom.value)) {
+      t1Car.value = '';
+    }
+  }
+
+  if (selT1) {
+    let matchedOption = false;
+    for (let i = 0; i < selT1.options.length; i++) {
+      const opt = selT1.options[i];
+      if (opt.dataset && opt.dataset.nombre && normalizeText(opt.dataset.nombre) === normalizeText(nombreFinal)) {
+        selT1.selectedIndex = i;
+        if (opt.dataset.cargo && t1Car && !t1Car.value) {
+          t1Car.value = opt.dataset.cargo;
+        }
+        matchedOption = true;
+        break;
+      }
+    }
+    if (!matchedOption && nombreFinal) {
+      selT1.value = '__MANUAL__';
+    } else if (!nombreFinal) {
+      selT1.selectedIndex = 0;
+    }
+  }
+
+  renderDocument(getCurrentFormDataForPreview());
+}
+window.buscarCargoDePersona = buscarCargoDePersona;
+window.sincronizarTestigo1ConResponsable = sincronizarTestigo1ConResponsable;
 
 function handleResponsableCapturaSelect(selectElem) {
   if (!selectElem) return;
@@ -2877,6 +2958,7 @@ function handleResponsableCapturaSelect(selectElem) {
     if (customWrapper) customWrapper.classList.add('hidden');
     if (customInput) customInput.value = '';
     if (respInput) respInput.value = '';
+    sincronizarTestigo1ConResponsable('');
   } else if (val === '__MANUAL__') {
     // Si selecciona ingresar otro manualmente, se habilita y muestra el segundo cuadro (el de abajo)
     if (customWrapper) customWrapper.classList.remove('hidden');
@@ -2887,6 +2969,7 @@ function handleResponsableCapturaSelect(selectElem) {
     if (respInput) {
       respInput.value = '';
     }
+    sincronizarTestigo1ConResponsable('');
     showToast('Escriba el nombre del responsable de captura en el cuadro inferior.');
   } else if (val) {
     // Si selecciona uno de la lista oficial, se oculta el segundo cuadro y no se repite
@@ -2895,6 +2978,7 @@ function handleResponsableCapturaSelect(selectElem) {
     if (respInput) {
       respInput.value = val;
     }
+    sincronizarTestigo1ConResponsable(val);
   }
 
   renderDocument(getCurrentFormDataForPreview());
@@ -2903,9 +2987,12 @@ function handleResponsableCapturaSelect(selectElem) {
 function handleResponsableCustomInput(inputElem) {
   const respInput = document.getElementById('responsableCaptura');
   if (respInput && inputElem) {
-    respInput.value = inputElem.value.trim();
+    const val = inputElem.value.trim();
+    respInput.value = val;
+    sincronizarTestigo1ConResponsable(val);
+  } else {
+    renderDocument(getCurrentFormDataForPreview());
   }
-  renderDocument(getCurrentFormDataForPreview());
 }
 
 function setResponsableCapturaValue(val) {
@@ -2921,6 +3008,7 @@ function setResponsableCapturaValue(val) {
     select.value = '';
     if (customWrapper) customWrapper.classList.add('hidden');
     if (customInput) customInput.value = '';
+    sincronizarTestigo1ConResponsable('');
     return;
   }
 
@@ -2942,6 +3030,7 @@ function setResponsableCapturaValue(val) {
     if (customWrapper) customWrapper.classList.remove('hidden');
     if (customInput) customInput.value = val;
   }
+  sincronizarTestigo1ConResponsable(val);
 }
 
 function handleTitularUnidad1Select(selectElem) {
@@ -4016,7 +4105,7 @@ function poblarDropdownTestigo(num, unidad, etiqueta) {
   });
 
   const unidadTag = (num === 2 && etiqueta.includes('Destino')) ? 'Unidad (2) Destino' : 'Unidad (1)';
-  let html = `<option value="" selected>-- Seleccione Enlace (${num}) de ${unidadTag} --</option>`;
+  let html = `<option value="" selected>-- Seleccione Testigo (${num}) de ${unidadTag} --</option>`;
 
   // Opción del Titular de la Unidad solo si aplica, es elegible y NO es uno de los titulares seleccionados
   if (unidad.titular && unidad.titular.nombre && esPuestoElegibleTestigo(unidad.titular.cargo)) {
@@ -4033,7 +4122,7 @@ function poblarDropdownTestigo(num, unidad, etiqueta) {
   html += `<option value="__MANUAL__">✏️ + Ingresar otro puesto y nombre manualmente...</option>`;
   select.innerHTML = html;
 
-  // Si el Enlace actualmente seleccionado coincide con alguno de los titulares seleccionados, deseleccionarlo
+  // Si el Testigo actualmente seleccionado coincide con alguno de los titulares seleccionados, deseleccionarlo
   const tInput = document.getElementById(`testigo${num}Nombre`);
   const tCarInput = document.getElementById(`testigo${num}Cargo`);
   if (tInput && tInput.value.trim() && esTitularSeleccionado(tInput.value.trim(), listaTitularesOmitir)) {
@@ -4045,7 +4134,7 @@ function poblarDropdownTestigo(num, unidad, etiqueta) {
     if (comboboxInput) comboboxInput.value = '';
     const comboboxClear = document.querySelector(`.segey-combobox[data-for="selectTestigo${num}"] .combobox-clear`);
     if (comboboxClear) comboboxClear.classList.add('hidden');
-    showToast(`El Enlace (${num}) se deseleccionó automáticamente porque fue asignado como Titular de Unidad Administrativa.`, 'warning');
+    showToast(`El Testigo (${num}) se deseleccionó automáticamente porque fue asignado como Titular de Unidad Administrativa.`, 'warning');
   }
 
   if (badge) {
@@ -4069,7 +4158,7 @@ function handleTestigoSelect(selectElem, num) {
     if (carInput) {
       carInput.value = '';
     }
-    showToast(`Ingrese el nombre y cargo del Enlace (${num}) manualmente.`);
+    showToast(`Ingrese el nombre y cargo del Testigo (${num}) manualmente.`);
   } else if (opt && opt.dataset && opt.dataset.nombre) {
     if (nomInput) nomInput.value = opt.dataset.nombre;
     if (carInput) carInput.value = opt.dataset.cargo || '';
@@ -4316,12 +4405,12 @@ function handleTipoMovimientoChange() {
     if (a2Nom) { a2Nom.required = false; a2Nom.value = ''; }
     if (a2Car) a2Car.value = '';
 
-    // En Cambio de Dependencia Jerárquica: Solo hay 1 Enlace (Enlace 1)
+    // En Cambio de Dependencia Jerárquica: Solo hay 1 Testigo (Testigo 1)
     if (contTestigo2) contTestigo2.classList.add('hidden');
     if (test2Nom) { test2Nom.required = false; test2Nom.value = ''; }
     if (test2Car) { test2Car.required = false; test2Car.value = ''; }
-    if (lblTestigo1) lblTestigo1.innerHTML = '<i class="fa-solid fa-users text-segey-700"></i> Enlace (1) <span class="text-red-500">*</span>';
-    if (badgeTestigo1) badgeTestigo1.innerHTML = '<i class="fa-solid fa-check mr-1 text-emerald-600"></i>Enlace del Trámite';
+    if (lblTestigo1) lblTestigo1.innerHTML = '<i class="fa-solid fa-users text-segey-700"></i> Testigo (1) <span class="text-red-500">*</span>';
+    if (badgeTestigo1) badgeTestigo1.innerHTML = '<i class="fa-solid fa-check mr-1 text-emerald-600"></i>Testigo del Trámite';
   } else {
     if (lblArea1) lblArea1.innerHTML = '<i class="fa-solid fa-user-tie text-segey-700"></i> Titular de Área <span class="text-red-500">*</span>';
     if (wrapTitularesArea) wrapTitularesArea.className = 'space-y-4';
@@ -4332,11 +4421,11 @@ function handleTipoMovimientoChange() {
     }
     if (a2Car) a2Car.value = '';
 
-    // Restaurar Enlace 2 para Alta, Baja y Cambio de nombre
+    // Restaurar Testigo 2 para Alta, Baja y Cambio de nombre
     if (contTestigo2) contTestigo2.classList.remove('hidden');
     if (test2Nom) test2Nom.required = true;
     if (test2Car) test2Car.required = true;
-    if (lblTestigo1) lblTestigo1.innerHTML = '<i class="fa-solid fa-users text-segey-700"></i> Enlace (1) <span class="text-red-500">*</span>';
+    if (lblTestigo1) lblTestigo1.innerHTML = '<i class="fa-solid fa-users text-segey-700"></i> Testigo (1) <span class="text-red-500">*</span>';
     if (badgeTestigo1) badgeTestigo1.innerHTML = '<i class="fa-solid fa-filter text-slate-400 mr-1"></i>Según Área que Notifica';
 
     if (val === 'Alta') {
@@ -4849,8 +4938,8 @@ function handleFormSubmit(event) {
         { key: 'jefeInmediato', label: 'Jefe Inmediato' },
         { key: 'titularUnidad2', label: 'Titular Unidad (2)' },
         { key: 'titularArea', label: 'Titular de Área' },
-        { key: 'testigo1', label: 'Enlace (1)' },
-        { key: 'testigo2', label: 'Enlace (2)' }
+        { key: 'testigo1', label: 'Testigo (1)' },
+        { key: 'testigo2', label: 'Testigo (2)' }
       ];
       const cambiosDetectados = [];
       camposComparar.forEach(c => {
@@ -6056,8 +6145,8 @@ function showDetailsModal(id) {
         <li><strong>Titular de Unidad 1:</strong> ${u1Nom} ${u1Car ? `<span class="text-slate-500">(${u1Car})</span>` : ''}</li>
         ${u2Nom ? `<li><strong>Titular de Unidad 2:</strong> ${u2Nom} ${u2Car ? `<span class="text-slate-500">(${u2Car})</span>` : ''}</li>` : ''}
         <li><strong>Titular de Área:</strong> ${areaNom} ${areaCar ? `<span class="text-slate-500">(${areaCar})</span>` : ''}</li>
-        <li><strong>Enlace 1:</strong> ${t1Nom} ${t1Car ? `<span class="text-slate-500">(${t1Car})</span>` : ''}</li>
-        <li><strong>Enlace 2:</strong> ${t2Nom} ${t2Car ? `<span class="text-slate-500">(${t2Car})</span>` : ''}</li>
+        <li><strong>Testigo 1:</strong> ${t1Nom} ${t1Car ? `<span class="text-slate-500">(${t1Car})</span>` : ''}</li>
+        <li><strong>Testigo 2:</strong> ${t2Nom} ${t2Car ? `<span class="text-slate-500">(${t2Car})</span>` : ''}</li>
       </ul>
     </div>
   `;
@@ -6268,10 +6357,10 @@ function exportToCSV() {
     'Titular Unidad (2) - Cargo',
     'Titular de Área - Nombre',
     'Titular de Área - Cargo',
-    'Enlace (1) - Nombre',
-    'Enlace (1) - Cargo',
-    'Enlace (2) - Nombre',
-    'Enlace (2) - Cargo',
+    'Testigo (1) - Nombre',
+    'Testigo (1) - Cargo',
+    'Testigo (2) - Nombre',
+    'Testigo (2) - Cargo',
     'Estatus',
     'Motivo de Inactivación',
     'Fecha de Inactivación',
