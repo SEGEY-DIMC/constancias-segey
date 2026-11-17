@@ -113,52 +113,6 @@
           <div class="col-span-7 space-y-0.5 font-normal text-slate-900">
             <div>1) <span class="font-normal text-slate-900">{{testigo1Nombre}}</span>{{#if testigo1Cargo}} <span class="text-slate-600">({{testigo1Cargo}})</span>{{/if}}</div>
             {{#if esCambioDependenciaJerarquica}}
-            <div>2) <span class="font-normal text-slate-900">{{testigo2Nombre}}</span>{{#if testigo2Cargo}} <span class="text-slate-600">({{testigo2Cargo}})</span>{{/if}}</div>
-            {{/if}}
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- APARTADO III. JUSTIFICACIÓN Y MOTIVOS DEL CAMBIO -->
-    <div>
-      <div class="font-bold text-[11pt] mb-1 uppercase tracking-wide text-slate-900 text-left">III. JUSTIFICACIÓN Y MOTIVOS DEL CAMBIO</div>
-      <div class="pl-3 space-y-1 text-[11pt]">
-        <p class="italic text-[10.5pt] text-slate-700">Se hace constar los siguientes hechos y circunstancias de carácter administrativo…</p>
-        <div class="text-justify leading-relaxed whitespace-pre-wrap font-normal text-slate-900 uppercase">
-          {{justificacion}}
-        </div>
-      </div>
-    </div>
-
-    <!-- APARTADO IV. CIERRE Y FIRMAS -->
-    <div class="page-break-avoid">
-      <div class="font-bold text-[11pt] mb-1 uppercase tracking-wide text-slate-900 text-left">IV. CIERRE</div>
-      <p class="text-justify mb-4 leading-relaxed text-[11pt]">
-        Una vez expresado lo anterior y al no haber más hechos que hacer constar, se da por concluida la presente, firmando al calce para su debida constancia y manifestando su entera conformidad los involucrados, siendo el mismo día y año.
-      </p>
-
-      <!-- ESPACIO DE FIRMAS CON ESPACIO AMPLIO Y RAZONABLE PARA FIRMAR -->
-      <div class="mt-8 space-y-6 font-sans">
-        <!-- Fila 1: Titulares de Unidad 1 y 2 -->
-        <div class="grid grid-cols-2 gap-8 text-center pt-2">
-          <div>
-            <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
-              <div class="font-bold uppercase text-[10.5px] tracking-tight">Titular de Unidad Administrativa (1)</div>
-              <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{titularUnidad1Nombre}}</div>
-              <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{titularUnidad1Cargo}}</div>
-            </div>
-          </div>
-          <div>
-            <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
-              <div class="font-bold uppercase text-[10.5px] tracking-tight">{{etiquetaTitular2Firma}}</div>
-              <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{titularUnidad2Nombre}}</div>
-              <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{titularUnidad2Cargo}}</div>
-            </div>
-          </div>
-        </div>
-
-        {{#if esCambioDependenciaJerarquica}}
         <!-- Para Cambio de Dependencia Jerárquica: 5 FIRMAS -->
         <!-- Fila 2: Titular de Área al centro -->
         <div class="text-center pt-2">
