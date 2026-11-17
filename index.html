@@ -1245,8 +1245,11 @@
               <span id="btn-eliminar-texto">Eliminar Seleccionados</span>
               <span id="badge-eliminar-count" class="hidden bg-rose-600 text-white px-1.5 py-0.2 rounded-full text-[10px] font-bold">0</span>
             </button>
-            <button type="button" id="btn-sync-gsheets" onclick="syncRecordsFromGoogleSheets(true)" class="px-3.5 py-2 text-xs font-semibold rounded-lg bg-blue-50 text-blue-800 border border-blue-300 hover:bg-blue-100 transition flex items-center gap-1.5 shadow-2xs">
-              <i class="fa-solid fa-cloud-arrow-down text-blue-600"></i> Sincronizar Google Sheets
+            <button type="button" id="btn-sync-gsheets" onclick="syncRecordsFromGoogleSheets(true)" class="px-3.5 py-2 text-xs font-semibold rounded-lg bg-blue-50 text-blue-800 border border-blue-300 hover:bg-blue-100 transition flex items-center gap-1.5 shadow-2xs" title="Sincronizar constancias y folios emitidos desde Google Sheets">
+              <i class="fa-solid fa-cloud-arrow-down text-blue-600"></i> Sincronizar Folios
+            </button>
+            <button type="button" id="btn-sync-catalogo-gsheets" onclick="sincronizarCatalogoDesdeGoogleSheets()" class="px-3.5 py-2 text-xs font-semibold rounded-lg bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 transition flex items-center gap-1.5 shadow-2xs" title="Actualizar catálogo de titulares y enlaces desde Google Sheets">
+              <i class="fa-solid fa-arrows-rotate text-amber-600"></i> Sincronizar Catálogo
             </button>
             
             <button type="button" id="btn-reporte-ejecutivo" onclick="abrirModalReporteEjecutivo()" class="px-3.5 py-2 text-xs font-semibold rounded-lg bg-emerald-700 text-white hover:bg-emerald-800 transition flex items-center gap-1.5 shadow-2xs" title="Generar informe ejecutivo en PDF de movimientos y estatus">
@@ -1380,9 +1383,20 @@
               </p>
             </div>
           </div>
-          <button onclick="restoreDefaultAreas()" title="Restablecer catálogo oficial predeterminado de la SEGEY" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white border border-white/15 transition flex items-center gap-1.5 self-start sm:self-auto">
-            <i class="fa-solid fa-arrow-rotate-left"></i> Restablecer Oficiales
-          </button>
+          <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+            <a href="https://docs.google.com/spreadsheets/d/1mhJMtK_3-S1YzBzqkEq5C-nzumCba5_KHWRPmH_uZRA/edit" target="_blank"
+              title="Abrir hoja de cálculo oficial en Google Drive"
+              class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-500/30 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-file-excel text-emerald-400"></i> Abrir en Google Sheets
+            </a>
+            <button onclick="sincronizarCatalogoDesdeGoogleSheets()" title="Sincronizar cambios recientes desde Google Sheets"
+              class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 border border-blue-500/30 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-arrows-rotate text-blue-400"></i> Sincronizar
+            </button>
+            <button onclick="restoreDefaultAreas()" title="Restablecer catálogo oficial predeterminado de la SEGEY" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white border border-white/15 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-arrow-rotate-left"></i> Restablecer Oficiales
+            </button>
+          </div>
         </div>
 
         <!-- Formulario para agregar nueva área -->
@@ -1441,9 +1455,20 @@
               </p>
             </div>
           </div>
-          <button onclick="restoreDefaultResponsables()" title="Restablecer los 58 Enlaces de Captura oficiales de la SEGEY" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white border border-white/15 transition flex items-center gap-1.5 self-start sm:self-auto">
-            <i class="fa-solid fa-arrow-rotate-left"></i> Restablecer Oficiales
-          </button>
+          <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+            <a href="https://docs.google.com/spreadsheets/d/1mhJMtK_3-S1YzBzqkEq5C-nzumCba5_KHWRPmH_uZRA/edit" target="_blank"
+              title="Abrir hoja de cálculo oficial en Google Drive"
+              class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-500/30 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-file-excel text-emerald-400"></i> Abrir en Google Sheets
+            </a>
+            <button onclick="sincronizarCatalogoDesdeGoogleSheets()" title="Sincronizar cambios de enlaces desde Google Sheets"
+              class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 border border-blue-500/30 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-arrows-rotate text-blue-400"></i> Sincronizar
+            </button>
+            <button onclick="restoreDefaultResponsables()" title="Restablecer los 58 Enlaces de Captura oficiales de la SEGEY" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white border border-white/15 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-arrow-rotate-left"></i> Restablecer Oficiales
+            </button>
+          </div>
         </div>
 
         <!-- Buscador de áreas y responsables -->
@@ -1938,6 +1963,24 @@
           <label class="block text-xs font-bold text-slate-800 mb-1">URL de Implementación de Google Apps Script:</label>
           <input type="url" id="gsheets-webhook-url" placeholder="https://script.google.com/macros/s/.../exec"
             class="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-segey-700">
+        </div>
+
+        <div class="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+          <div class="font-bold text-slate-800 text-[11px] uppercase tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-folder-tree text-segey-700"></i> Hojas de Google Sheets Vinculadas
+          </div>
+          <div class="flex flex-col gap-1.5 text-[11px]">
+            <a href="https://docs.google.com/spreadsheets/d/1biuFH4b4x12bslKafsEE0OeOypk6ub1ukkxLlo3eVSA/edit" target="_blank"
+              class="text-blue-700 hover:text-blue-900 hover:underline flex items-center justify-between p-1.5 rounded bg-white border border-slate-200">
+              <span class="flex items-center gap-1.5"><i class="fa-solid fa-table text-emerald-600"></i> 1. Bitácora de Registros y Constancias</span>
+              <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-400"></i>
+            </a>
+            <a href="https://docs.google.com/spreadsheets/d/1mhJMtK_3-S1YzBzqkEq5C-nzumCba5_KHWRPmH_uZRA/edit" target="_blank"
+              class="text-blue-700 hover:text-blue-900 hover:underline flex items-center justify-between p-1.5 rounded bg-white border border-slate-200">
+              <span class="flex items-center gap-1.5"><i class="fa-solid fa-sitemap text-amber-600"></i> 2. Catálogo Oficial de Funcionarios y Puestos</span>
+              <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-400"></i>
+            </a>
+          </div>
         </div>
       </div>
 
