@@ -7744,6 +7744,35 @@ async function syncResponsablesFromGoogleSheets(forceToast = false) {
   }
 }
 
+async function sincronizarCatalogoDesdeGoogleSheets() {
+  showToast('Sincronizando catálogo con Google Sheets...', 'info');
+  try {
+    try {
+      const sRes = await fetch('/api/sync-excel', { method: 'POST', cache: 'no-store' });
+      if (sRes.ok) {
+        const sData = await sRes.json();
+        console.log('[SYNC] Sincronización local y exportación desde Google Sheets exitosa:', sData);
+      }
+    } catch (errLocal) {
+      // En GitHub Pages o entorno estático, continúa con Webhook de Apps Script
+    }
+
+    await syncCatalogoFromGoogleSheets(true);
+    await syncResponsablesFromGoogleSheets(true);
+
+    if (typeof renderAdminAreasList === 'function') renderAdminAreasList();
+    if (typeof renderAdminResponsablesList === 'function') renderAdminResponsablesList();
+    populateAreaSelect();
+    if (typeof populateAreaFilter === 'function') populateAreaFilter();
+
+    showToast('Catálogo sincronizado exitosamente con Google Sheets.', 'success');
+  } catch (err) {
+    console.error('Error sincronizando catálogo:', err);
+    showToast('Error al sincronizar catálogo con Google Sheets.', 'error');
+  }
+}
+window.sincronizarCatalogoDesdeGoogleSheets = sincronizarCatalogoDesdeGoogleSheets;
+
 // Iniciar sincronización de fondo al cargar la página
 if (typeof window !== 'undefined') {
   setTimeout(() => {
