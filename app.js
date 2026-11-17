@@ -1081,7 +1081,7 @@ function compileLayout(templateStr, data) {
   const tipo = data.tipoMovimiento || 'Alta';
   const esCambioDependenciaJerarquica = (tipo === 'Cambio de dependencia jerárquica' || tipo === 'cambio_dependencia_jerarquica');
   const noEsCambioDependenciaJerarquica = !esCambioDependenciaJerarquica;
-  const tieneTestigo2 = noEsCambioDependenciaJerarquica && Boolean(test2Nom.trim());
+  const tieneTestigo2 = esCambioDependenciaJerarquica && Boolean(test2Nom.trim());
   const noTieneTestigo2 = !tieneTestigo2;
   const tieneTitularArea2 = Boolean(esCambioDependenciaJerarquica && (area2Nom.trim() || area2Car.trim()));
   const noTieneTitularArea2 = !tieneTitularArea2;
