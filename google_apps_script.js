@@ -13,6 +13,9 @@
 // =============================================================================
 var USERS_SPREADSHEET_ID = "1XrHE-MoNfZqbbAODjXyEWSNStIHWd_C6tH7L81bLfDc";
 
+// Token secreto para proteger la consulta de la bitácora de folios (getRecords)
+var BITACORA_API_TOKEN = "DIMC_SEGEY_2026_x89aF49bQ2wL";
+
 /**
  * Calcula el Hash criptográfico SHA-256 en minúsculas estándar.
  */
@@ -161,6 +164,8 @@ function doPost(e) {
             return ContentService.createTextOutput(JSON.stringify({
               status: "success",
               message: "Acceso autorizado.",
+              token: sessionToken,
+              apiToken: BITACORA_API_TOKEN,
               user: {
                 username: rowUser,
                 nombre: String(usersData[u][1] || rowUser),
@@ -407,8 +412,42 @@ function doGet(e) {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var action = (e && e.parameter && e.parameter.action) ? e.parameter.action : "getRecords";
 
-    // Acción 1: Obtener todos los registros de la bitácora
+    // Acción 1: Obtener todos los registros de la bitácora (PROTEGIDO CON TOKEN DE SEGURIDAD)
     if (action === "getRecords") {
+      var clientToken = String(e && e.parameter && e.parameter.token ? e.parameter.token : "").trim();
+      var isAuthorized = false;
+
+      // 1. Validar contra el Token Maestro de API
+      if (clientToken === BITACORA_API_TOKEN) {
+        isAuthorized = true;
+      }
+      // 2. O validar contra token de sesión generado en login
+      else if (clientToken) {
+        try {
+          var decoded = Utilities.newBlob(Utilities.base64Decode(clientToken)).getDataAsString();
+          var parts = decoded.split(":");
+          if (parts.length >= 3) {
+            var tokenUser = parts[0].toLowerCase();
+            var tokenRole = parts[1].toLowerCase();
+            // Solo perfiles autorizados pueden consultar bitácora
+            if (tokenUser === "admin" || tokenUser === "danny.uh" || tokenUser === "auditoria.segey" ||
+                tokenRole.indexOf("admin") !== -1 || tokenRole.indexOf("auditor") !== -1 || tokenRole.indexOf("consulta") !== -1) {
+              isAuthorized = true;
+            }
+          }
+        } catch (errToken) {
+          isAuthorized = false;
+        }
+      }
+
+      if (!isAuthorized) {
+        return ContentService.createTextOutput(JSON.stringify({
+          status: "error",
+          code: 403,
+          message: "Acceso denegado: Se requiere un token de autorización válido para consultar la bitácora de folios."
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+
       var sheet = ss.getSheetByName("Bitácora Constancias") || ss.getSheetByName("Registros") || ss.getSheets()[0];
       var data = sheet.getDataRange().getValues();
       if (data.length <= 1) {
