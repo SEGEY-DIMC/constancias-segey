@@ -2510,11 +2510,22 @@ function buscarTitularPorNombreArea(areaNombre, areaNotificadora = '') {
   // 1. Consultar el Mapa Oficial de Jerarquía de Jefes (MAPA_JERARQUIA_JEFES)
   if (typeof buscarJefeInmediatoPorArea === 'function') {
     const nodo = buscarJefeInmediatoPorArea(areaNombre, areaNotificadora);
-    if (nodo && nodo.titular_nombre && nodo.titular_nombre !== 'None' && nodo.titular_nombre.toLowerCase() !== 'vacante') {
-      return {
-        nombre: nodo.titular_nombre,
-        cargo: nodo.titular_cargo || areaNombre
-      };
+    if (nodo) {
+      const esVacante = !nodo.titular_nombre || nodo.titular_nombre === 'None' || nodo.titular_nombre.toLowerCase() === 'vacante';
+      if (!esVacante) {
+        return {
+          nombre: nodo.titular_nombre,
+          cargo: nodo.titular_cargo || areaNombre,
+          esVacante: false
+        };
+      } else if (nodo.titular_cargo) {
+        // El puesto existe formalmente como jefatura/dirección pero la plaza está vacante en el catálogo oficial
+        return {
+          nombre: '',
+          cargo: nodo.titular_cargo,
+          esVacante: true
+        };
+      }
     }
   }
 
@@ -2594,53 +2605,90 @@ function vincularTitularAreaConBaja(areaNombre) {
 
   const titular = buscarTitularPorNombreArea(areaNombre, areaNotificadora);
 
-  if (titular && titular.nombre) {
-    if (aNom) aNom.value = titular.nombre;
-    if (aCar) aCar.value = titular.cargo;
-
-    // Sincronizar selectTitularArea si existe la opción coincidente
-    if (selectArea) {
-      let matchedIdx = -1;
-      function cleanText(t) {
-        if (!t) return '';
-        return t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+  if (titular) {
+    if (titular.esVacante) {
+      if (aCar) aCar.value = titular.cargo;
+      if (aNom) {
+        aNom.value = '';
+        aNom.placeholder = 'Puesto vacante en catálogo: capture el nombre del titular o encargado(a)...';
+        aNom.focus();
       }
-      const tNomNorm = cleanText(titular.nombre);
-      const tCarNorm = cleanText(titular.cargo);
 
-      for (let i = 0; i < selectArea.options.length; i++) {
-        const opt = selectArea.options[i];
-        if (opt.value === '__MANUAL__') continue;
-        const optNom = cleanText(opt.dataset && opt.dataset.nombre ? opt.dataset.nombre : '');
-        const optPue = cleanText(opt.dataset && opt.dataset.puesto ? opt.dataset.puesto : '');
-        const optText = cleanText(opt.textContent || '');
-
-        if ((optNom && optNom === tNomNorm) || (optPue && optPue === tCarNorm) || optText.includes(tNomNorm)) {
-          matchedIdx = i;
-          break;
+      if (selectArea) {
+        let matchedIdx = -1;
+        for (let i = 0; i < selectArea.options.length; i++) {
+          if (selectArea.options[i].textContent.includes(titular.cargo)) {
+            matchedIdx = i;
+            break;
+          }
         }
-      }
-
-      if (matchedIdx !== -1) {
-        selectArea.selectedIndex = matchedIdx;
-      } else {
-        // Si no está en la lista de puestos de la unidad, insertar la opción para que coincida visualmente
-        const newOpt = document.createElement('option');
-        newOpt.value = `titular_baja_${Date.now()}`;
-        newOpt.textContent = `${titular.cargo} — ${titular.nombre}`;
-        newOpt.setAttribute('data-nombre', titular.nombre);
-        newOpt.setAttribute('data-puesto', titular.cargo);
-        if (selectArea.options.length > 1) {
-          selectArea.insertBefore(newOpt, selectArea.options[1]);
-          selectArea.selectedIndex = 1;
+        if (matchedIdx !== -1) {
+          selectArea.selectedIndex = matchedIdx;
         } else {
-          selectArea.appendChild(newOpt);
-          selectArea.selectedIndex = selectArea.options.length - 1;
+          const newOpt = document.createElement('option');
+          newOpt.value = `titular_baja_vacante_${Date.now()}`;
+          newOpt.textContent = `${titular.cargo} — [Vacante en catálogo / En funciones]`;
+          newOpt.setAttribute('data-nombre', '');
+          newOpt.setAttribute('data-puesto', titular.cargo);
+          if (selectArea.options.length > 1) {
+            selectArea.insertBefore(newOpt, selectArea.options[1]);
+            selectArea.selectedIndex = 1;
+          } else {
+            selectArea.appendChild(newOpt);
+            selectArea.selectedIndex = selectArea.options.length - 1;
+          }
         }
       }
-    }
 
-    showToast(`Titular de Área precargado para Baja: ${titular.nombre}`);
+      showToast(`Puesto oficial vinculado: ${titular.cargo}. Registrado como vacante en catálogo; capture el titular en funciones.`, 'info');
+    } else if (titular.nombre) {
+      if (aNom) aNom.value = titular.nombre;
+      if (aCar) aCar.value = titular.cargo;
+
+      // Sincronizar selectTitularArea si existe la opción coincidente
+      if (selectArea) {
+        let matchedIdx = -1;
+        function cleanText(t) {
+          if (!t) return '';
+          return t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+        }
+        const tNomNorm = cleanText(titular.nombre);
+        const tCarNorm = cleanText(titular.cargo);
+
+        for (let i = 0; i < selectArea.options.length; i++) {
+          const opt = selectArea.options[i];
+          if (opt.value === '__MANUAL__') continue;
+          const optNom = cleanText(opt.dataset && opt.dataset.nombre ? opt.dataset.nombre : '');
+          const optPue = cleanText(opt.dataset && opt.dataset.puesto ? opt.dataset.puesto : '');
+          const optText = cleanText(opt.textContent || '');
+
+          if ((optNom && optNom === tNomNorm) || (optPue && optPue === tCarNorm) || optText.includes(tNomNorm)) {
+            matchedIdx = i;
+            break;
+          }
+        }
+
+        if (matchedIdx !== -1) {
+          selectArea.selectedIndex = matchedIdx;
+        } else {
+          // Si no está en la lista de puestos de la unidad, insertar la opción para que coincida visualmente
+          const newOpt = document.createElement('option');
+          newOpt.value = `titular_baja_${Date.now()}`;
+          newOpt.textContent = `${titular.cargo} — ${titular.nombre}`;
+          newOpt.setAttribute('data-nombre', titular.nombre);
+          newOpt.setAttribute('data-puesto', titular.cargo);
+          if (selectArea.options.length > 1) {
+            selectArea.insertBefore(newOpt, selectArea.options[1]);
+            selectArea.selectedIndex = 1;
+          } else {
+            selectArea.appendChild(newOpt);
+            selectArea.selectedIndex = selectArea.options.length - 1;
+          }
+        }
+      }
+
+      showToast(`Titular de Área precargado para Baja: ${titular.nombre}`);
+    }
   }
 }
 
@@ -3164,9 +3212,21 @@ function handleTitularAreaSelect(selectElem) {
     if (aNom) { aNom.value = ''; aNom.focus(); }
     if (aCar) aCar.value = '';
     showToast('Ingrese el nombre y cargo del Titular de Área manualmente.');
-  } else if (selectedOption && selectedOption.dataset && selectedOption.dataset.nombre) {
-    if (aNom) aNom.value = selectedOption.dataset.nombre;
-    if (aCar) aCar.value = selectedOption.dataset.puesto;
+  } else if (selectedOption && selectedOption.dataset) {
+    const nom = selectedOption.dataset.nombre || '';
+    const pue = selectedOption.dataset.puesto || '';
+    if (nom.toLowerCase() === 'vacante' || nom === '') {
+      if (aNom) {
+        aNom.value = '';
+        aNom.placeholder = 'Puesto vacante en catálogo: escriba el nombre del titular o encargado(a)...';
+        aNom.focus();
+      }
+      if (aCar) aCar.value = pue;
+      showToast(`Puesto seleccionado: ${pue}. Capture el nombre del titular en funciones.`, 'info');
+    } else {
+      if (aNom) aNom.value = nom;
+      if (aCar) aCar.value = pue;
+    }
   }
 
   renderDocument(getCurrentFormDataForPreview());
@@ -3700,18 +3760,52 @@ function poblarSelectJustificaciones(tipoMovimiento) {
     select.appendChild(optEl);
   });
 
+  // Opción "Otros" para describir manualmente si no encuentra la que aplique
+  const optOtro = document.createElement('option');
+  optOtro.value = '__OTRO__';
+  optOtro.textContent = '✏️ Otros (describir manualmente en el cuadro inferior)...';
+  select.appendChild(optOtro);
+
   if (badge) {
-    badge.textContent = `${opciones.length} opción${opciones.length === 1 ? '' : 'es'} (${tipoMovimiento})`;
+    badge.textContent = `${opciones.length} predefinidas (+ Otros)`;
+  }
+
+  // Si el campo de justificación ya tiene texto capturado, sincronizar el select
+  const justTextarea = document.getElementById('justificacion');
+  if (justTextarea && justTextarea.value.trim()) {
+    const curVal = justTextarea.value.trim().toUpperCase();
+    let matched = false;
+    for (let i = 1; i < select.options.length; i++) {
+      if (select.options[i].value !== '__OTRO__' && select.options[i].value.toUpperCase() === curVal) {
+        select.selectedIndex = i;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) {
+      select.value = '__OTRO__';
+    }
   }
 }
 
 function handleSelectJustificacionPredefinida(selectEl) {
   if (!selectEl) return;
   const val = selectEl.value;
-  if (!val) return;
-
   const justTextarea = document.getElementById('justificacion');
-  if (justTextarea) {
+  if (!justTextarea) return;
+
+  if (val === '__OTRO__') {
+    // Si el usuario selecciona "Otros", limpiamos el texto si coincidía con una opción predefinida para que redacte
+    const catalog = getJustificacionesCatalog();
+    const allPredefinidas = Object.values(catalog).flat().map(s => s.trim().toUpperCase());
+    if (allPredefinidas.includes(justTextarea.value.trim().toUpperCase())) {
+      justTextarea.value = '';
+    }
+    justTextarea.placeholder = 'DESCRIBA AQUÍ LOS HECHOS Y CIRCUNSTANCIAS DE CARÁCTER ADMINISTRATIVO QUE MOTIVAN EL CAMBIO...';
+    justTextarea.focus();
+    renderDocument(getCurrentFormDataForPreview());
+    showToast('Opción "Otros" seleccionada. Describa la justificación en el cuadro inferior.');
+  } else if (val) {
     justTextarea.value = val.toUpperCase();
     justTextarea.focus();
     justTextarea.dispatchEvent(new Event('input', { bubbles: true }));
@@ -4377,6 +4471,23 @@ function initFormDefaults() {
   if (justInput) {
     justInput.addEventListener('input', () => {
       justInput.value = justInput.value.toUpperCase();
+      const selJust = document.getElementById('selectJustificacionPredefinida');
+      if (selJust) {
+        const curVal = justInput.value.trim();
+        let matched = false;
+        for (let i = 1; i < selJust.options.length; i++) {
+          if (selJust.options[i].value !== '__OTRO__' && selJust.options[i].value.toUpperCase() === curVal) {
+            selJust.selectedIndex = i;
+            matched = true;
+            break;
+          }
+        }
+        if (!matched && curVal.length > 0) {
+          selJust.value = '__OTRO__';
+        } else if (curVal.length === 0) {
+          selJust.value = '';
+        }
+      }
       renderDocument(getCurrentFormDataForPreview());
     });
   }
