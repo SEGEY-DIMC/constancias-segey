@@ -1166,6 +1166,8 @@ function escapeHtml(str) {
  * =========================================================================
  */
 const USER_SESSION_KEY = 'segey_user_session_v1';
+const AUTH_TOKEN_KEY = 'segey_auth_token_v1';
+const BITACORA_API_TOKEN = 'DIMC_SEGEY_2026_x89aF49bQ2wL';
 
 function getLoggedUser() {
   try {
@@ -1339,12 +1341,20 @@ async function handleAdminLoginSubmit(event) {
     if (result && result.status === 'success' && result.user) {
       sessionStorage.setItem(ADMIN_AUTH_KEY, 'true');
       sessionStorage.setItem(USER_SESSION_KEY, JSON.stringify(result.user));
+      if (result.token) {
+        sessionStorage.setItem(AUTH_TOKEN_KEY, result.token);
+      } else if (result.apiToken) {
+        sessionStorage.setItem(AUTH_TOKEN_KEY, result.apiToken);
+      } else {
+        sessionStorage.setItem(AUTH_TOKEN_KEY, BITACORA_API_TOKEN);
+      }
       closeAdminLoginModal();
       updateAdminUI();
 
       if (isAuditoriaUser()) {
         switchTab('tab-registry');
         showToast(`¡Bienvenido, ${result.user.nombre}! (Perfil de Consulta y Descarga de Reportes)`, 'info');
+        syncRecordsFromGoogleSheets(false);
       } else if (isCapturistaUser()) {
         switchTab('tab-form');
         showToast(`¡Bienvenido, ${result.user.nombre}! (Perfil de Registro y Captura de Folios)`, 'success');
@@ -1352,6 +1362,7 @@ async function handleAdminLoginSubmit(event) {
         // Super Administrador (admin o danny.uh)
         switchTab('tab-registry');
         showToast(`¡Bienvenido, ${result.user.nombre}! (Acceso Total de Administrador)`, 'success');
+        syncRecordsFromGoogleSheets(false);
       }
     } else {
       const msg = (result && result.message) ? result.message : 'Usuario o contraseña incorrectos.';
@@ -1379,6 +1390,7 @@ async function handleAdminLoginSubmit(event) {
 function adminLogout() {
   sessionStorage.removeItem(ADMIN_AUTH_KEY);
   sessionStorage.removeItem(USER_SESSION_KEY);
+  sessionStorage.removeItem(AUTH_TOKEN_KEY);
   updateAdminUI();
   switchTab('tab-form');
   showToast('Sesión de usuario finalizada.');
@@ -6655,8 +6667,8 @@ function openBuscarFolioModal() {
     setTimeout(() => {
       if (input) input.focus();
     }, 100);
-    // Sincronizar en segundo plano para asegurar tener los últimos folios de todo el estado
-    if (typeof syncRecordsFromGoogleSheets === 'function') {
+    // Sincronizar en segundo plano si el usuario tiene permisos de consulta
+    if (typeof syncRecordsFromGoogleSheets === 'function' && canAccessBitacora()) {
       syncRecordsFromGoogleSheets(false).then(() => {
         if (!input || !input.value) {
           mostrarResultadosBusquedaFolio(records.slice(0, 5), true);
@@ -6883,6 +6895,18 @@ let isSyncingGSheets = false;
 
 async function syncRecordsFromGoogleSheets(forceToast = false) {
   if (isSyncingGSheets) return;
+
+  // Solo perfiles autorizados (Super Administradores y Auditoría) pueden descargar la bitácora
+  const hasAccess = canAccessBitacora();
+  const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || (hasAccess ? BITACORA_API_TOKEN : '');
+
+  if (!hasAccess && !token) {
+    if (forceToast) {
+      showToast('Debe iniciar sesión como Administrador o Auditoría para consultar la bitácora remota.', 'warning');
+    }
+    return;
+  }
+
   const webhook = localStorage.getItem(WEBHOOK_KEY) || DEFAULT_WEBHOOK_URL;
   if (!webhook) {
     if (forceToast) showToast('Configure primero la URL del Webhook de Google Sheets.', 'error');
@@ -6894,7 +6918,7 @@ async function syncRecordsFromGoogleSheets(forceToast = false) {
   if (syncIcon) syncIcon.classList.add('fa-spin');
 
   try {
-    const fetchUrl = `${webhook}?action=getRecords&t=${Date.now()}`;
+    const fetchUrl = `${webhook}?action=getRecords&token=${encodeURIComponent(token || BITACORA_API_TOKEN)}&t=${Date.now()}`;
     const resp = await fetch(fetchUrl);
     const result = await resp.json();
 
@@ -6931,6 +6955,11 @@ async function syncRecordsFromGoogleSheets(forceToast = false) {
         showToast(`Sincronización completada: ${agregados} nuevos folios, ${actualizados} actualizados.`);
       }
       console.log(`Google Sheets Sync: ${agregados} agregados, ${actualizados} actualizados.`);
+    } else if (result && result.status === 'error') {
+      console.warn('Bitácora remota protegida:', result.message);
+      if (forceToast) {
+        showToast(result.message || 'Acceso restringido a la bitácora.', 'warning');
+      }
     } else if (forceToast) {
       showToast('Sincronización completada. No hay registros adicionales.');
     }
@@ -7030,7 +7059,9 @@ async function syncResponsablesFromGoogleSheets(forceToast = false) {
 // Iniciar sincronización de fondo al cargar la página
 if (typeof window !== 'undefined') {
   setTimeout(() => {
-    syncRecordsFromGoogleSheets(false);
+    if (canAccessBitacora()) {
+      syncRecordsFromGoogleSheets(false);
+    }
     syncCatalogoFromGoogleSheets(false);
     syncResponsablesFromGoogleSheets(false);
     initDraftAutosave();
