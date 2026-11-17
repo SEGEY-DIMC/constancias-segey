@@ -257,53 +257,55 @@ const DEFAULT_LAYOUT_HTML = `
       </div>
 
       {{#if esCambioDependenciaJerarquica}}
-      <!-- Para Cambio de Dependencia Jerárquica: Se quita la firma de en medio. El Testigo (1) se vuelve Titular de Área y el testigo (2) se vuelve Testigo (1) -->
-      <div class="grid grid-cols-2 gap-8 text-center pt-2">
-        <div>
-          <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
+        <!-- Para Cambio de Dependencia Jerárquica: 5 FIRMAS -->
+        <!-- Fila 2: Titular de Área al centro -->
+        <div class="text-center pt-2">
+          <div class="w-72 mx-auto border-t border-slate-900 pt-1.5">
             <div class="font-bold uppercase text-[10.5px] tracking-tight">Titular de Área</div>
             <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{titularAreaNombre}}</div>
             <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{titularAreaCargo}}</div>
           </div>
         </div>
-        <div>
-          <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
-            <div class="font-bold uppercase text-[10.5px] tracking-tight">Testigo (1)</div>
-            <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{testigo1Nombre}}</div>
-            <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{testigo1Cargo}}</div>
-          </div>
-        </div>
-      </div>
-      {{/if}}
 
-      {{#if noEsCambioDependenciaJerarquica}}
-      <!-- Fila 2: Titular de Área al centro -->
-      <div class="text-center pt-2">
-        <div class="w-72 mx-auto border-t border-slate-900 pt-1.5">
-          <div class="font-bold uppercase text-[10.5px] tracking-tight">Titular de Área</div>
-          <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{titularAreaNombre}}</div>
-          <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{titularAreaCargo}}</div>
+        <!-- Fila 3: Testigo (1) y Testigo (2) -->
+        <div class="grid grid-cols-2 gap-8 text-center pt-2">
+          <div>
+            <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
+              <div class="font-bold uppercase text-[10.5px] tracking-tight">Testigo (1)</div>
+              <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{testigo1Nombre}}</div>
+              <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{testigo1Cargo}}</div>
+            </div>
+          </div>
+          <div>
+            <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
+              <div class="font-bold uppercase text-[10.5px] tracking-tight">Testigo (2)</div>
+              <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{testigo2Nombre}}</div>
+              <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{testigo2Cargo}}</div>
+            </div>
+          </div>
         </div>
-      </div>
+        {{/if}}
 
-      <!-- Fila 3: Testigos 1 y 2 -->
-      <div class="grid grid-cols-2 gap-8 text-center pt-2">
-        <div>
-          <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
-            <div class="font-bold uppercase text-[10.5px] tracking-tight">Testigo (1)</div>
-            <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{testigo1Nombre}}</div>
-            <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{testigo1Cargo}}</div>
+        {{#if noEsCambioDependenciaJerarquica}}
+        <!-- Para Alta, Baja y Cambio de Nombre: 4 FIRMAS (2 filas de 2) -->
+        <!-- Fila 2: Izquierda Titular de Área, Derecha Testigo (1) -->
+        <div class="grid grid-cols-2 gap-8 text-center pt-2">
+          <div>
+            <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
+              <div class="font-bold uppercase text-[10.5px] tracking-tight">Titular de Área</div>
+              <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{titularAreaNombre}}</div>
+              <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{titularAreaCargo}}</div>
+            </div>
+          </div>
+          <div>
+            <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
+              <div class="font-bold uppercase text-[10.5px] tracking-tight">Testigo (1)</div>
+              <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{testigo1Nombre}}</div>
+              <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{testigo1Cargo}}</div>
+            </div>
           </div>
         </div>
-        <div>
-          <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
-            <div class="font-bold uppercase text-[10.5px] tracking-tight">Testigo (2)</div>
-            <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{testigo2Nombre}}</div>
-            <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{testigo2Cargo}}</div>
-          </div>
-        </div>
-      </div>
-      {{/if}}
+        {{/if}}
     </div>
   </div>
 
@@ -4895,57 +4897,65 @@ function handleTipoMovimientoChange() {
   const badgeTestigo1 = document.getElementById('badgeTestigo1');
 
   if (val === 'Cambio de dependencia jerárquica') {
-    if (lblArea1) lblArea1.innerHTML = '<i class="fa-solid fa-user-tie text-segey-700"></i> Titular de Área <span class="text-red-500">*</span>';
-    if (wrapTitularesArea) wrapTitularesArea.className = 'space-y-4';
-    if (contArea2) contArea2.classList.add('hidden');
-    if (contSelectArea) contSelectArea.classList.remove('hidden');
-    if (aNom) aNom.placeholder = 'Nombre completo del Titular del Área';
-    if (aCar) aCar.placeholder = 'Cargo o puesto del Titular del Área';
-    if (a2Nom) { a2Nom.required = false; a2Nom.value = ''; }
-    if (a2Car) a2Car.value = '';
+      if (lblArea1) lblArea1.innerHTML = '<i class="fa-solid fa-user-tie text-segey-700"></i> Titular de Área <span class="text-red-500">*</span>';
+      if (wrapTitularesArea) wrapTitularesArea.className = 'space-y-4';
+      if (contArea2) contArea2.classList.add('hidden');
+      if (contSelectArea) contSelectArea.classList.remove('hidden');
+      if (aNom) aNom.placeholder = 'Nombre completo del Titular del Área';
+      if (aCar) aCar.placeholder = 'Cargo o puesto del Titular del Área';
+      if (a2Nom) { a2Nom.required = false; a2Nom.value = ''; }
+      if (a2Car) a2Car.value = '';
 
-    // En Cambio de Dependencia Jerárquica: Solo hay 1 Testigo (Testigo 1)
-    if (contTestigo2) contTestigo2.classList.add('hidden');
-    if (test2Nom) { test2Nom.required = false; test2Nom.value = ''; }
-    if (test2Car) { test2Car.required = false; test2Car.value = ''; }
-    if (lblTestigo1) lblTestigo1.innerHTML = '<i class="fa-solid fa-users text-segey-700"></i> Testigo (1) <span class="text-red-500">*</span>';
-    if (badgeTestigo1) {
-      const isLocked = test1Nom && test1Nom.hasAttribute('readonly');
-      if (isLocked) {
-        badgeTestigo1.className = 'text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-semibold border border-emerald-200';
-        badgeTestigo1.innerHTML = '<i class="fa-solid fa-lock text-emerald-600 mr-1"></i>Vinculado a Responsable (Bloqueado)';
-      } else {
-        badgeTestigo1.className = 'text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-semibold border border-emerald-200';
-        badgeTestigo1.innerHTML = '<i class="fa-solid fa-check mr-1 text-emerald-600"></i>Testigo del Trámite';
+      // En Cambio de Dependencia Jerárquica: Se muestran Testigo (1) y Testigo (2) (5 firmas en total)
+      if (contTestigo2) contTestigo2.classList.remove('hidden');
+      if (test2Nom) test2Nom.required = true;
+      if (test2Car) test2Car.required = true;
+      if (lblTestigo1) lblTestigo1.innerHTML = '<i class="fa-solid fa-users text-segey-700"></i> Testigo (1) <span class="text-red-500">*</span>';
+      if (badgeTestigo1) {
+        const respInput = document.getElementById('responsableCaptura');
+        const respVal = respInput ? respInput.value.trim() : '';
+        if (respVal) {
+          badgeTestigo1.className = 'text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-semibold border border-emerald-200';
+          badgeTestigo1.innerHTML = '<i class="fa-solid fa-lock text-emerald-600 mr-1"></i>Vinculado a Responsable (Bloqueado)';
+        } else {
+          badgeTestigo1.className = 'text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-semibold border border-emerald-200';
+          badgeTestigo1.innerHTML = '<i class="fa-solid fa-check mr-1 text-emerald-600"></i>Testigo del Trámite';
+        }
       }
-    }
-  } else {
-    if (lblArea1) lblArea1.innerHTML = '<i class="fa-solid fa-user-tie text-segey-700"></i> Titular de Área <span class="text-red-500">*</span>';
-    if (wrapTitularesArea) wrapTitularesArea.className = 'space-y-4';
-    if (contArea2) contArea2.classList.add('hidden');
-    if (a2Nom) {
-      a2Nom.required = false;
-      a2Nom.value = '';
-    }
-    if (a2Car) a2Car.value = '';
-
-    // Restaurar Testigo 2 para Alta, Baja y Cambio de nombre
-    if (contTestigo2) contTestigo2.classList.remove('hidden');
-    if (test2Nom) test2Nom.required = true;
-    if (test2Car) test2Car.required = true;
-    if (lblTestigo1) lblTestigo1.innerHTML = '<i class="fa-solid fa-users text-segey-700"></i> Testigo (1) <span class="text-red-500">*</span>';
-    if (badgeTestigo1) {
-      const isLocked = test1Nom && test1Nom.hasAttribute('readonly');
-      if (isLocked) {
-        badgeTestigo1.className = 'text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-semibold border border-emerald-200';
-        badgeTestigo1.innerHTML = '<i class="fa-solid fa-lock text-emerald-600 mr-1"></i>Vinculado a Responsable (Bloqueado)';
-      } else {
-        badgeTestigo1.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
-        badgeTestigo1.innerHTML = '<i class="fa-solid fa-filter text-slate-400 mr-1"></i>Según Área que Notifica';
+    } else {
+      if (lblArea1) lblArea1.innerHTML = '<i class="fa-solid fa-user-tie text-segey-700"></i> Titular de Área <span class="text-red-500">*</span>';
+      if (wrapTitularesArea) wrapTitularesArea.className = 'space-y-4';
+      if (contArea2) contArea2.classList.add('hidden');
+      if (a2Nom) {
+        a2Nom.required = false;
+        a2Nom.value = '';
       }
-    }
+      if (a2Car) a2Car.value = '';
 
-    if (val === 'Alta') {
+      // Para Alta, Baja y Cambio de nombre: Se OCULTA Testigo (2) (solo firma Testigo 1, 4 firmas en total)
+      if (contTestigo2) contTestigo2.classList.add('hidden');
+      if (test2Nom) {
+        test2Nom.required = false;
+        test2Nom.value = '';
+      }
+      if (test2Car) {
+        test2Car.required = false;
+        test2Car.value = '';
+      }
+      if (lblTestigo1) lblTestigo1.innerHTML = '<i class="fa-solid fa-users text-segey-700"></i> Testigo (1) <span class="text-red-500">*</span>';
+      if (badgeTestigo1) {
+        const respInput = document.getElementById('responsableCaptura');
+        const respVal = respInput ? respInput.value.trim() : '';
+        if (respVal) {
+          badgeTestigo1.className = 'text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-semibold border border-emerald-200';
+          badgeTestigo1.innerHTML = '<i class="fa-solid fa-lock text-emerald-600 mr-1"></i>Vinculado a Responsable (Bloqueado)';
+        } else {
+          badgeTestigo1.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
+          badgeTestigo1.innerHTML = '<i class="fa-solid fa-filter text-slate-400 mr-1"></i>Según Área que Notifica';
+        }
+      }
+
+      if (val === 'Alta') {
       if (contSelectArea) contSelectArea.classList.add('hidden');
       if (aNom) {
         aNom.removeAttribute('readonly');
