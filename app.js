@@ -663,11 +663,71 @@ function initSearchableCombobox(selectId, placeholderText = 'Escriba o seleccion
   });
   observer.observe(select, { childList: true, attributeFilter: ['disabled'] });
 
+  select._comboboxSync = syncInputFromSelect;
   syncInputFromSelect();
   return wrapper;
 }
 
+function setComboboxDisabled(selectId, disabled, customText) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  select.disabled = disabled;
+  if (disabled) {
+    select.setAttribute('disabled', 'true');
+  } else {
+    select.removeAttribute('disabled');
+  }
+
+  const wrapper = select.parentElement ? select.parentElement.querySelector(`.segey-combobox[data-for="${selectId}"]`) : null;
+  if (wrapper) {
+    const input = wrapper.querySelector('.combobox-input');
+    const toggleBtn = wrapper.querySelector('.combobox-toggle');
+    const clearBtn = wrapper.querySelector('.combobox-clear');
+    const menu = wrapper.querySelector('.combobox-menu');
+    if (menu) menu.classList.add('hidden');
+    if (clearBtn) clearBtn.classList.add('hidden');
+
+    if (disabled) {
+      if (input) {
+        input.disabled = true;
+        input.setAttribute('disabled', 'true');
+        input.setAttribute('readonly', 'true');
+        input.classList.add('bg-slate-100', 'text-slate-600', 'cursor-not-allowed');
+        input.classList.remove('bg-white', 'text-slate-800');
+        if (customText !== undefined) {
+          input.value = customText;
+        }
+      }
+      if (toggleBtn) {
+        toggleBtn.disabled = true;
+        toggleBtn.setAttribute('disabled', 'true');
+        toggleBtn.classList.add('cursor-not-allowed', 'opacity-50');
+      }
+    } else {
+      if (input) {
+        input.disabled = false;
+        input.removeAttribute('disabled');
+        input.removeAttribute('readonly');
+        input.classList.remove('bg-slate-100', 'text-slate-600', 'cursor-not-allowed');
+        input.classList.add('bg-white', 'text-slate-800');
+        if (customText !== undefined) {
+          input.value = customText;
+        } else if (select.selectedIndex >= 0 && select.options[select.selectedIndex]) {
+          input.value = select.options[select.selectedIndex].textContent.trim();
+        }
+      }
+      if (toggleBtn) {
+        toggleBtn.disabled = false;
+        toggleBtn.removeAttribute('disabled');
+        toggleBtn.classList.remove('cursor-not-allowed', 'opacity-50');
+      }
+    }
+  }
+}
+window.setComboboxDisabled = setComboboxDisabled;
+
 function initAllSearchableComboboxes() {
+
   initSearchableCombobox('areaNotificadoraSelect', 'Buscar área oficial o escribir...');
   initSearchableCombobox('selectResponsableCaptura', 'Buscar enlace oficial...');
   initSearchableCombobox('selectTitularUnidad1', 'Seleccionar titular de la unidad...');
@@ -3087,17 +3147,109 @@ function setupManualTitulares() {
 /**
  * Busca el puesto o cargo oficial de una persona en el catálogo orgánico de la SEGEY.
  */
+const CARGOS_RESPONSABLES_OFICIALES = {
+  "Lic. Manuel Jesús Tejada Loría": "Enlace de Gestión",
+  "C. Mary Alba Quintal Chí": "Coordinador de Área de Control Escolar y Procedimientos",
+  "Mtra. Nancy Guadalupe Novelo Pech": "Jefe de Departamento de Diseño y Difusión de la Información",
+  "L.A. Guillermo Galván Martínez": "Encargado de Área Administrativa y Financiera",
+  "Lic. Luis Alberto Sarmiento Herrera": "Coordinador de Personal",
+  "L.C.S. María Soledad Cruz Aguilar": "Administrativo Especializado",
+  "Mtro. Ángel Alberto Castillo Navarrete": "Coordinador de Mediación y Seguimiento Institucional",
+  "Ing. Vidal Aarón Ché Zapata": "Enlace",
+  "Lic. Sara Orquídea Morales Puc": "Responsable de Gestión y Trámite",
+  "Ing. Georgina Elizabeth Kim Flores": "Administrativo Especializado",
+  "Lic. Rafael Rolando Euán Canché": "Enlace",
+  "Mtra. Merly Aurora Marrufo León": "Coordinador de Archivos",
+  "C.P. Rolando Antonio Naal Osorio": "Administrativo Especializado",
+  "Lic. William Jesús Rosado Magaña": "Encargado de Área de Apoyo en la Entrega Recepción de Unidades Administrativas",
+  "Lic. Raúl Oswaldo Hernández Fernández": "Supervisor Administrativo",
+  "Lic. Blanca Esther Perera Romero": "Auxiliar Administrativo",
+  "Mtra. Lucely Guadalupe Azcorra Dzib": "Subjefe de Control Patrimonial Escolar",
+  "Br. Felipe Humberto Ceballos Pech": "Asesor Especializado",
+  "Mtra. Diany Reyna Góngora Franco": "Subjefe de Análisis de Datos",
+  "Lic. Gessely Guadalupe Pat Pacheco": "Auxiliar Administrativo",
+  "M.E. Adriana del Socorro Durán Lizama": "Subjefe de Gestión de Información",
+  "Lic. Yazmin Eugenia Cob Caballero": "Supervisor Administrativo",
+  "Mtra. María Luisa Guillermo García": "Director de Planeación",
+  "Mtra. Didia Marisol Mendoza Arzápalo": "Jefe de Departamento de Preparatoria Abierta",
+  "Mtra. Ana Elisa Hernández Navarro": "Jefe de Departamento de Preparatorias Estatales y Particulares Incorporadas",
+  "C.P. Jorge Antonio Uc Camas": "Encargado de Área de Control Presupuestal Interno y Organismos Públicos Descentralizados (OPD)",
+  "C.P. Ángel Ermilo Sarabia Gamboa": "Subjefe de Gestión de Gastos",
+  "L.C.C. Mirna Arleny Canché Moo": "Analista Administrativo de Gestión de Información",
+  "M.A. Maribel de Jesús Novelo Pérez": "Encargado de Área de Procesos Transversales",
+  "Tec. Mattia de Jesús Tun Peña": "Subjefe de Registro y Certificación con el Nivel Preescolar",
+  "C.P. Manuel Jesús Heredia Ceballos": "Subjefe de Gestión y Enteros No Institucionales de Nómina",
+  "Mtro. Alberto Solís Cámara": "Jefe de Departamento de Telebachillerato Comunitario del Estado de Yucatán",
+  "Lic. Alonso Hernández Núñez": "Encargado de Área de Asuntos Interinstitucionales",
+  "Mtra. Ligia del Socorro Sánchez Castañeda": "Responsable de Área de Gestión Administrativa",
+  "Mtra. Ligia Margarita Cícero Galán": "Jefe de Departamento de Gestión Educativa y Fortalecimiento Académico",
+  "Tec. Maria de Lourdes Méndez Villafaña": "Enlace",
+  "Lic. José Ernesto Barragán Polanco": "Enlace",
+  "Lic. José Guillermo Rosado Alcocer": "Enlace (B)",
+  "Lic. Reyna Bertha de Jesús Teh López": "Responsable de Ko'one'ex Kanik Maaya",
+  "LAE. Ricardo Francisco de María Carrillo": "Jefe de Departamento de Gestión y Trámite",
+  "M.F. Adelina Monserrat Hernández Santos": "Enlace Administrativo",
+  "Lic. Julia Beatriz Villanueva Ruiz": "Enlace",
+  "Lic. Rubén Alejandro Gutiérrez Adrián": "Enlace",
+  "Lic. Leobardo Medina Xix": "Enlace Administrativo y Financiero",
+  "Mtro. Julio Jesús Varela Manzanero": "Analista Administrativo",
+  "C.P. Miguel Edgardo Argáez Quijano": "Jefe de Departamento de la Unidad Administrativa y Financiera",
+  "Ing. Luis Gabriel Canul Mukul": "Administrativo Especializado",
+  "C.P. Katia Isabel Manzanilla Mena": "Administrativo Especializado",
+  "L.E. Rosalinda Villanueva Hau": "Coordinador Administrativo",
+  "Mtra. Carla Guadalupe Sanchez Colli": "Coordinador de Gestión Estratégica",
+  "Mtro. José David Encalada Avilés": "Director de la Universidad Virtual del Estado de Yucatán",
+  "Lic. Miguel Ángel Cob Uitz": "Jefe de Oficina de Trámites y Prestaciones del Instituto de Seguridad y Servicios Sociales de los Trabajadores del Estado (ISSSTE)"
+};
+
 function buscarCargoDePersona(nombre) {
-  if (!nombre || typeof CATALOGO_ORGANICO_SEGEY === 'undefined' || !Array.isArray(CATALOGO_ORGANICO_SEGEY)) return '';
+  if (!nombre) return '';
   const norm = normalizeText(nombre);
-  for (const u of CATALOGO_ORGANICO_SEGEY) {
-    if (u.titular && u.titular.nombre && normalizeText(u.titular.nombre) === norm) {
-      return u.titular.cargo || '';
+
+  // 1. Búsqueda directa en catálogo oficial de responsables
+  if (typeof CARGOS_RESPONSABLES_OFICIALES !== 'undefined' && CARGOS_RESPONSABLES_OFICIALES) {
+    if (CARGOS_RESPONSABLES_OFICIALES[nombre]) {
+      return CARGOS_RESPONSABLES_OFICIALES[nombre];
     }
-    if (u.subordinados && Array.isArray(u.subordinados)) {
-      for (const s of u.subordinados) {
-        if (s.nombre && normalizeText(s.nombre) === norm) {
-          return s.puesto || '';
+    for (const [k, v] of Object.entries(CARGOS_RESPONSABLES_OFICIALES)) {
+      if (normalizeText(k) === norm) {
+        return v;
+      }
+    }
+  }
+
+  // 2. Normalizar quitando prefijos de grado académico (Lic., Mtro., C.P., etc.)
+  const stripPrefix = (str) => {
+    return str.toLowerCase()
+      .replace(/^(lic\.|lic|mtro\.|mtra\.|mtro|mtra|c\.p\.|cp|cp\.|dr\.|dra\.|dr|dra|ing\.|ing|br\.|br|c\.|c|l\.a\.e\.|lae\.|lae|l\.c\.c\.|lcc\.|lcc|l\.c\.s\.|lcs\.|lcs|m\.e\.|me\.|me|m\.f\.|mf\.|mf|m\.a\.|ma\.|ma|l\.e\.|le\.|le|prof\.|profa\.|prof|profa|l\.a\.|la\.|la)\s+/i, '')
+      .trim();
+  };
+
+  const cleanNombre = normalizeText(stripPrefix(nombre));
+
+  if (typeof CARGOS_RESPONSABLES_OFICIALES !== 'undefined' && CARGOS_RESPONSABLES_OFICIALES) {
+    for (const [k, v] of Object.entries(CARGOS_RESPONSABLES_OFICIALES)) {
+      if (normalizeText(stripPrefix(k)) === cleanNombre) {
+        return v;
+      }
+    }
+  }
+
+  // 3. Búsqueda en CATALOGO_ORGANICO_SEGEY
+  if (typeof CATALOGO_ORGANICO_SEGEY !== 'undefined' && Array.isArray(CATALOGO_ORGANICO_SEGEY)) {
+    for (const u of CATALOGO_ORGANICO_SEGEY) {
+      if (u.titular && u.titular.nombre) {
+        if (normalizeText(u.titular.nombre) === norm || normalizeText(stripPrefix(u.titular.nombre)) === cleanNombre) {
+          return u.titular.cargo || '';
+        }
+      }
+      if (u.subordinados && Array.isArray(u.subordinados)) {
+        for (const s of u.subordinados) {
+          if (s.nombre) {
+            if (normalizeText(s.nombre) === norm || normalizeText(stripPrefix(s.nombre)) === cleanNombre) {
+              return s.puesto || '';
+            }
+          }
         }
       }
     }
@@ -3120,67 +3272,69 @@ function sincronizarTestigo1ConResponsable(nombreResponsable) {
     ? nombreResponsable.trim()
     : (respInput ? respInput.value.trim() : '');
 
-  if (t1Nom) {
-    t1Nom.value = nombreFinal;
-  }
-
   if (nombreFinal) {
-    const cargoEncontrado = buscarCargoDePersona(nombreFinal);
-    if (cargoEncontrado && t1Car) {
-      t1Car.value = cargoEncontrado;
-    }
-  } else {
-    if (t1Car && (!t1Nom || !t1Nom.value)) {
-      t1Car.value = '';
-    }
-  }
-
-  if (selT1) {
-    let matchedOption = false;
-    for (let i = 0; i < selT1.options.length; i++) {
-      const opt = selT1.options[i];
-      if (opt.dataset && opt.dataset.nombre && normalizeText(opt.dataset.nombre) === normalizeText(nombreFinal)) {
-        selT1.selectedIndex = i;
-        if (opt.dataset.cargo && t1Car && !t1Car.value) {
-          t1Car.value = opt.dataset.cargo;
-        }
-        matchedOption = true;
-        break;
-      }
-    }
-    if (!matchedOption && nombreFinal) {
-      selT1.value = '__MANUAL__';
-    } else if (!nombreFinal) {
-      selT1.selectedIndex = 0;
-    }
-  }
-
-  // =========================================================================
-  // BLOQUEO DE TESTIGO 1: Si ya se precargaron los datos vinculados con el
-  // Responsable de Captura, NO se puede modificar (Solo Lectura y Bloqueado).
-  // =========================================================================
-  if (nombreFinal) {
+    // 1. Asignar nombre
     if (t1Nom) {
+      t1Nom.value = nombreFinal;
       t1Nom.setAttribute('readonly', 'true');
       t1Nom.classList.add('bg-slate-100', 'text-slate-700', 'cursor-not-allowed');
       t1Nom.classList.remove('bg-white');
       t1Nom.title = 'Testigo (1) está vinculado automáticamente al Responsable de Captura y no se puede modificar.';
     }
+
+    // 2. Buscar y asignar cargo
+    const cargoEncontrado = buscarCargoDePersona(nombreFinal);
     if (t1Car) {
+      t1Car.value = cargoEncontrado || '';
       t1Car.setAttribute('readonly', 'true');
       t1Car.classList.add('bg-slate-100', 'text-slate-700', 'cursor-not-allowed');
       t1Car.classList.remove('bg-white');
       t1Car.title = 'El cargo está vinculado automáticamente al Responsable de Captura y no se puede modificar.';
     }
+
+    // 3. Formato para visualización en combobox
+    const displayText = cargoEncontrado
+      ? `${cargoEncontrado} — ${nombreFinal}`
+      : nombreFinal;
+
+    // 4. Seleccionar o insertar opción en el select
     if (selT1) {
-      selT1.disabled = true;
+      let matchedIdx = -1;
+      const normFinal = normalizeText(nombreFinal);
+      for (let i = 0; i < selT1.options.length; i++) {
+        const opt = selT1.options[i];
+        if (opt.dataset && opt.dataset.nombre && normalizeText(opt.dataset.nombre) === normFinal) {
+          matchedIdx = i;
+          break;
+        }
+      }
+      if (matchedIdx !== -1) {
+        selT1.selectedIndex = matchedIdx;
+      } else {
+        const optResp = document.createElement('option');
+        optResp.value = '__RESPONSABLE_VINCULADO__';
+        optResp.textContent = displayText;
+        optResp.setAttribute('data-nombre', nombreFinal);
+        if (cargoEncontrado) optResp.setAttribute('data-cargo', cargoEncontrado);
+        if (selT1.options.length > 1) {
+          selT1.insertBefore(optResp, selT1.options[1]);
+        } else {
+          selT1.appendChild(optResp);
+        }
+        selT1.selectedIndex = 1;
+      }
     }
+
+    // 5. Bloquear visual y funcionalmente el combobox
+    setComboboxDisabled('selectTestigo1', true, displayText);
+
+    // 6. Actualizar badge con candado y estilo de bloqueo oficial
     if (badgeT1) {
       badgeT1.className = 'text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-semibold border border-emerald-200';
       badgeT1.innerHTML = '<i class="fa-solid fa-lock text-emerald-600 mr-1"></i>Vinculado a Responsable (Bloqueado)';
     }
   } else {
-    // Si no hay responsable cargado, se desbloquea para captura manual
+    // Si no hay responsable cargado, desbloquear Testigo 1 para captura libre
     if (t1Nom) {
       t1Nom.removeAttribute('readonly');
       t1Nom.classList.remove('bg-slate-100', 'text-slate-700', 'cursor-not-allowed');
@@ -3193,8 +3347,9 @@ function sincronizarTestigo1ConResponsable(nombreResponsable) {
       t1Car.classList.add('bg-white');
       t1Car.title = '';
     }
+    setComboboxDisabled('selectTestigo1', false);
     if (selT1) {
-      selT1.disabled = false;
+      selT1.selectedIndex = 0;
     }
     if (badgeT1) {
       badgeT1.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
@@ -4447,17 +4602,23 @@ function poblarDropdownTestigo(num, unidad, etiqueta) {
     showToast(`El Testigo (${num}) se deseleccionó automáticamente porque fue asignado como Titular de Unidad Administrativa.`, 'warning');
   }
 
-  if (badge) {
-    badge.className = 'text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-semibold border border-emerald-200';
-    badge.innerHTML = `<i class="fa-solid fa-user-check text-emerald-600 mr-1"></i>${elegibles.length} puestos (${unidadTag})`;
-  }
-
   // Si es Testigo 1 y ya hay un Responsable de Captura precargado, asegurar su bloqueo
   if (num === 1) {
     const respInput = document.getElementById('responsableCaptura');
     const respVal = respInput ? respInput.value.trim() : '';
     if (respVal) {
       sincronizarTestigo1ConResponsable(respVal);
+    } else {
+      if (badge) {
+        badge.className = 'text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-semibold border border-emerald-200';
+        badge.innerHTML = `<i class="fa-solid fa-user-check text-emerald-600 mr-1"></i>${elegibles.length} puestos (${unidadTag})`;
+      }
+      setComboboxDisabled('selectTestigo1', false);
+    }
+  } else {
+    if (badge) {
+      badge.className = 'text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-semibold border border-emerald-200';
+      badge.innerHTML = `<i class="fa-solid fa-user-check text-emerald-600 mr-1"></i>${elegibles.length} puestos (${unidadTag})`;
     }
   }
 }
@@ -4992,6 +5153,13 @@ function handleTipoMovimientoChange() {
 
   // 5. Control de Listas Desplegables de Testigos (1 y 2)
   poblarSelectTestigos();
+
+  // Re-asegurar bloqueo de Testigo 1 con Responsable de Captura
+  const respInput = document.getElementById('responsableCaptura');
+  const respVal = respInput ? respInput.value.trim() : '';
+  if (respVal) {
+    sincronizarTestigo1ConResponsable(respVal);
+  }
 
   renderDocument(getCurrentFormDataForPreview());
 }
