@@ -109,7 +109,7 @@
         </div>
 
         <div class="grid grid-cols-12 gap-2 items-start">
-          <div class="col-span-5 font-bold text-slate-800">Enlaces:</div>
+          <div class="col-span-5 font-bold text-slate-800">Testigos:</div>
           <div class="col-span-7 space-y-0.5 font-normal text-slate-900">
             <div>1) <span class="font-normal text-slate-900">{{testigo1Nombre}}</span>{{#if testigo1Cargo}} <span class="text-slate-600">({{testigo1Cargo}})</span>{{/if}}</div>
             <div>2) <span class="font-normal text-slate-900">{{testigo2Nombre}}</span>{{#if testigo2Cargo}} <span class="text-slate-600">({{testigo2Cargo}})</span>{{/if}}</div>
@@ -157,7 +157,7 @@
         </div>
 
         {{#if esCambioDependenciaJerarquica}}
-        <!-- Para Cambio de Dependencia Jerárquica: Se quita la firma de en medio. El Enlace (1) se vuelve Titular de Área y el testigo (2) se vuelve Enlace (1) -->
+        <!-- Para Cambio de Dependencia Jerárquica: Se quita la firma de en medio. El Testigo (1) se vuelve Titular de Área y el testigo (2) se vuelve Testigo (1) -->
         <div class="grid grid-cols-2 gap-8 text-center pt-2">
           <div>
             <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
@@ -168,7 +168,7 @@
           </div>
           <div>
             <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
-              <div class="font-bold uppercase text-[10.5px] tracking-tight">Enlace (1)</div>
+              <div class="font-bold uppercase text-[10.5px] tracking-tight">Testigo (1)</div>
               <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{testigo1Nombre}}</div>
               <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{testigo1Cargo}}</div>
             </div>
@@ -186,18 +186,18 @@
           </div>
         </div>
 
-        <!-- Fila 3: Enlaces 1 y 2 -->
+        <!-- Fila 3: Testigos 1 y 2 -->
         <div class="grid grid-cols-2 gap-8 text-center pt-2">
           <div>
             <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
-              <div class="font-bold uppercase text-[10.5px] tracking-tight">Enlace (1)</div>
+              <div class="font-bold uppercase text-[10.5px] tracking-tight">Testigo (1)</div>
               <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{testigo1Nombre}}</div>
               <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{testigo1Cargo}}</div>
             </div>
           </div>
           <div>
             <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
-              <div class="font-bold uppercase text-[10.5px] tracking-tight">Enlace (2)</div>
+              <div class="font-bold uppercase text-[10.5px] tracking-tight">Testigo (2)</div>
               <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{testigo2Nombre}}</div>
               <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{testigo2Cargo}}</div>
             </div>
