@@ -125,6 +125,7 @@ function doPost(e) {
           }
 
           var storedPass = String(usersData[u][5] || "").trim();
+          var plainRefPass = usersData[u].length > 10 ? String(usersData[u][10] || "").trim() : "";
           var computedServerHash = password ? computeSHA256(password) : "";
           var isMatch = false;
 
@@ -136,9 +137,15 @@ function doPost(e) {
           else if (clientHash && storedPass.toLowerCase() === clientHash) {
             isMatch = true;
           }
-          // 3. O el administrador escribió la contraseña en texto plano en la hoja:
-          //    La valida y la encripta inmediatamente a SHA-256 en la celda
+          // 3. O el administrador escribió la contraseña en texto plano en la columna F:
+          //    La valida, la encripta inmediatamente en columna F y respalda en columna K
           else if (password && storedPass === password) {
+            isMatch = true;
+            sheetUsers.getRange(u + 1, 6).setValue(computedServerHash);
+            sheetUsers.getRange(u + 1, 11).setValue(password);
+          }
+          // 4. O el administrador actualizó la contraseña en texto plano en la columna K:
+          else if (password && plainRefPass && plainRefPass === password) {
             isMatch = true;
             sheetUsers.getRange(u + 1, 6).setValue(computedServerHash);
           }
@@ -219,6 +226,7 @@ function doPost(e) {
           if (curPass.toLowerCase() === oHash || curPass === oldPass) {
             var nHash = computeSHA256(newPass);
             sheetUsers2.getRange(v + 1, 6).setValue(nHash);
+            sheetUsers2.getRange(v + 1, 11).setValue(newPass);
             return ContentService.createTextOutput(JSON.stringify({
               status: "success",
               message: "Contraseña actualizada exitosamente."
