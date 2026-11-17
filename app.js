@@ -676,6 +676,8 @@ function initAllSearchableComboboxes() {
   initSearchableCombobox('selectTitularUnidad2', 'Buscar puesto o persona de la unidad...');
   initSearchableCombobox('selectAreaBaja', 'Buscar área o departamento a dar de baja...');
   initSearchableCombobox('selectAreaCambioNombre', 'Buscar área o departamento que cambia de nombre...');
+  initSearchableCombobox('selectAreaCambioDep', 'Buscar área o departamento a transferir...');
+  initSearchableCombobox('selectUnidadDestinoCambioDep', 'Buscar unidad administrativa de destino...');
   initSearchableCombobox('selectTestigo1', 'Buscar puesto o persona del Testigo 1...');
   initSearchableCombobox('selectTestigo2', 'Buscar puesto o persona del Testigo 2...');
 }
@@ -2365,6 +2367,139 @@ function handleSelectAreaCambioNombre(selectElem) {
 }
 
 /**
+ * Llena el menú desplegable de Áreas a transferir vinculadas con el área que notifica o elabora.
+ */
+function poblarSelectAreaCambioDep(areaNombre) {
+  const selectDep = document.getElementById('selectAreaCambioDep');
+  const badgeDep = document.getElementById('badgeAreasCambioDep');
+  if (!selectDep) return;
+
+  const areas = getAreasVinculadasPorUnidad(areaNombre);
+
+  let html = '<option value="" selected>-- Seleccione el Área o Departamento a transferir --</option>';
+
+  if (areas.length > 0) {
+    areas.forEach(area => {
+      html += `<option value="${escapeHtml(area)}">${escapeHtml(area)}</option>`;
+    });
+  }
+
+  html += '<option value="__OTRA__">✏️ Otra área (escribir manualmente en el cuadro inferior)...</option>';
+  selectDep.innerHTML = html;
+
+  if (badgeDep) {
+    if (areas.length > 0) {
+      badgeDep.className = 'text-[10px] bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full font-semibold border border-purple-300';
+      badgeDep.innerHTML = `<i class="fa-solid fa-list-check text-purple-600 mr-1"></i>${areas.length} áreas vinculadas`;
+    } else {
+      badgeDep.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
+      badgeDep.textContent = 'Seleccione el Área Notificadora arriba';
+    }
+  }
+}
+
+function handleSelectAreaCambioDep(selectElem) {
+  if (!selectElem) return;
+  const val = selectElem.value;
+  const ndTextarea = document.getElementById('nuevaDenominacion');
+  if (!ndTextarea) return;
+
+  if (val === '__OTRA__') {
+    ndTextarea.value = '';
+    ndTextarea.focus();
+    showToast('Escriba el nombre del área a transferir en el cuadro inferior.');
+    return;
+  }
+
+  if (val) {
+    ndTextarea.value = val.toUpperCase();
+    vincularTitularAreaConBaja(val);
+    showToast(`Área a transferir seleccionada: ${val}`);
+  }
+
+  renderDocument(getCurrentFormDataForPreview());
+}
+
+/**
+ * Llena el menú desplegable de Unidades Administrativas de Destino para Cambio de Dependencia Jerárquica.
+ */
+function poblarSelectUnidadDestinoCambioDep() {
+  const selectDestino = document.getElementById('selectUnidadDestinoCambioDep');
+  const badgeDestino = document.getElementById('badgeUnidadDestinoCambioDep');
+  if (!selectDestino) return;
+
+  if (typeof CATALOGO_ORGANICO_SEGEY === 'undefined' || !Array.isArray(CATALOGO_ORGANICO_SEGEY)) {
+    return;
+  }
+
+  const grupos = {};
+  CATALOGO_ORGANICO_SEGEY.forEach(u => {
+    const grp = u.grupo || 'Otras Unidades';
+    if (!grupos[grp]) grupos[grp] = [];
+    grupos[grp].push(u);
+  });
+
+  let html = '<option value="" disabled selected>-- Seleccione la Unidad Administrativa a la que se transfiere el Área --</option>';
+
+  Object.keys(grupos).forEach(nombreGrupo => {
+    html += `<optgroup label="${escapeHtml(nombreGrupo)}">`;
+    grupos[nombreGrupo].forEach(u => {
+      html += `<option value="${escapeHtml(u.id)}" data-nombre="${escapeHtml(u.titular.nombre)}" data-cargo="${escapeHtml(u.titular.cargo)}" data-unidad="${escapeHtml(u.unidad)}">${escapeHtml(u.unidad)} — ${escapeHtml(u.titular.nombre)}</option>`;
+    });
+    html += '</optgroup>';
+  });
+
+  html += '<option value="__MANUAL__">✏️ Otra unidad (capturar datos manualmente en el Apartado II)...</option>';
+  selectDestino.innerHTML = html;
+
+  if (badgeDestino) {
+    badgeDestino.className = 'text-[10px] bg-purple-100 text-purple-800 font-semibold px-2 py-0.5 rounded-full border border-purple-300';
+    badgeDestino.textContent = `${CATALOGO_ORGANICO_SEGEY.length} unidades oficiales`;
+  }
+
+  // Sincronizar si ya existe una unidad seleccionada en selectTitularUnidad2
+  const selT2 = document.getElementById('selectTitularUnidad2');
+  if (selT2 && selT2.value && selT2.value !== '__MANUAL__') {
+    selectDestino.value = selT2.value;
+  }
+}
+
+function handleSelectUnidadDestinoCambioDep(selectElem) {
+  if (!selectElem) return;
+  const val = selectElem.value;
+  const t2NomInput = document.getElementById('titularUnidad2Nombre');
+  const t2CarInput = document.getElementById('titularUnidad2Cargo');
+  const selectT2 = document.getElementById('selectTitularUnidad2');
+
+  if (val === '__MANUAL__') {
+    if (selectT2) selectT2.value = '__MANUAL__';
+    if (t2NomInput) { t2NomInput.value = ''; t2NomInput.focus(); }
+    if (t2CarInput) { t2CarInput.value = ''; }
+    showToast('Ingrese los datos del Titular de la Unidad de Destino en el Apartado II.');
+  } else if (val) {
+    const unidad = (typeof CATALOGO_ORGANICO_SEGEY !== 'undefined')
+      ? CATALOGO_ORGANICO_SEGEY.find(u => u.id === val)
+      : null;
+
+    if (unidad && unidad.titular) {
+      if (t2NomInput) t2NomInput.value = unidad.titular.nombre;
+      if (t2CarInput) t2CarInput.value = unidad.titular.cargo;
+      if (selectT2) selectT2.value = val;
+
+      // Actualizar Testigo 2 si corresponde a la unidad de destino
+      poblarDropdownTestigo(2, unidad, 'Dependencia de Destino');
+      if (typeof poblarSelectTitularArea2 === 'function') {
+        poblarSelectTitularArea2(unidad);
+      }
+
+      showToast(`Dependencia de Destino vinculada: ${unidad.unidad}`);
+    }
+  }
+
+  renderDocument(getCurrentFormDataForPreview());
+}
+
+/**
  * Vincula automáticamente el Jefe Inmediato de acuerdo con el Área que Cambia de Nombre,
  * seleccionando su mando superior en selectTitularUnidad2 pero dejando siempre la libertad
  * de cambiarlo o elegir otro en el Apartado II.
@@ -2491,6 +2626,10 @@ function vincularJefeInmediatoConArea(areaNombre) {
 window.poblarSelectAreaCambioNombre = poblarSelectAreaCambioNombre;
 window.handleSelectAreaCambioNombre = handleSelectAreaCambioNombre;
 window.vincularJefeInmediatoConArea = vincularJefeInmediatoConArea;
+window.poblarSelectAreaCambioDep = poblarSelectAreaCambioDep;
+window.handleSelectAreaCambioDep = handleSelectAreaCambioDep;
+window.poblarSelectUnidadDestinoCambioDep = poblarSelectUnidadDestinoCambioDep;
+window.handleSelectUnidadDestinoCambioDep = handleSelectUnidadDestinoCambioDep;
 
 /**
  * Busca de forma inteligente el Titular oficial (nombre y cargo) de un Área o Departamento específico.
@@ -2860,6 +2999,10 @@ function actualizarTitularesPorArea(areaNombre) {
   if (tipoMovVal === 'Cambio de nombre') {
     poblarSelectAreaCambioNombre(areaNombre);
   }
+  if (tipoMovVal === 'Cambio de dependencia jerárquica') {
+    poblarSelectAreaCambioDep(areaNombre);
+    poblarSelectUnidadDestinoCambioDep();
+  }
 
   // 6. Actualizar listas desplegables de Testigos (1 y 2) con el personal del Área
   poblarSelectTestigos(areaNombre);
@@ -3191,8 +3334,12 @@ function handleTitularUnidad2Select(selectElem) {
     if (u2Car) u2Car.value = opt.dataset.cargo || '';
   }
 
-  // Si es Cambio de dependencia jerárquica, sincronizar lista de Titular de Área (2) con la unidad de destino
+  // Si es Cambio de dependencia jerárquica, sincronizar lista de Titular de Área (2) con la unidad de destino y el selector superior de Apartado I
   if (tipo === 'Cambio de dependencia jerárquica') {
+    const selDestino = document.getElementById('selectUnidadDestinoCambioDep');
+    if (selDestino && selDestino.value !== val) {
+      selDestino.value = val;
+    }
     poblarSelectTitularArea2();
   }
 
@@ -4754,14 +4901,23 @@ function handleTipoMovimientoChange() {
 
   const containerAreaCambio = document.getElementById('containerSelectAreaCambioNombre');
   const containerNuevoNombre = document.getElementById('containerNuevoNombre');
+  const containerAreaCambioDep = document.getElementById('containerSelectAreaCambioDep');
+  const containerUnidadDestino = document.getElementById('containerSelectUnidadDestinoCambioDep');
   const lblNuevaDenom = document.getElementById('lblNuevaDenominacion');
   const ndInputElem = document.getElementById('nuevaDenominacion');
   const nnInputElem = document.getElementById('nuevoNombre');
 
+  // Obtener Área Notificadora actual
+  const selNotifActual = document.getElementById('areaNotificadoraSelect');
+  const custNotifActual = document.getElementById('areaNotificadora');
+  const currentNotifArea = (selNotifActual && selNotifActual.value && selNotifActual.value !== '__OTRA__')
+    ? selNotifActual.value
+    : (custNotifActual ? custNotifActual.value : '');
+
   if (val === 'Cambio de nombre') {
     if (containerAreaCambio) {
       containerAreaCambio.classList.remove('hidden');
-      poblarSelectAreaCambioNombre();
+      poblarSelectAreaCambioNombre(currentNotifArea);
       const selCambio = document.getElementById('selectAreaCambioNombre');
       if (selCambio && selCambio.value && selCambio.value !== '__OTRA__') {
         vincularJefeInmediatoConArea(selCambio.value);
@@ -4786,15 +4942,46 @@ function handleTipoMovimientoChange() {
     if (containerNuevoNombre) {
       containerNuevoNombre.classList.add('hidden');
     }
+    if (nnInputElem) {
+      nnInputElem.required = false;
+      nnInputElem.value = '';
+    }
+  }
+
+  if (val === 'Cambio de dependencia jerárquica') {
+    if (containerAreaCambioDep) {
+      containerAreaCambioDep.classList.remove('hidden');
+      poblarSelectAreaCambioDep(currentNotifArea);
+      const selDep = document.getElementById('selectAreaCambioDep');
+      if (selDep && selDep.value && selDep.value !== '__OTRA__') {
+        vincularTitularAreaConBaja(selDep.value);
+      }
+    }
+    if (containerUnidadDestino) {
+      containerUnidadDestino.classList.remove('hidden');
+      poblarSelectUnidadDestinoCambioDep();
+    }
+    if (lblNuevaDenom) {
+      lblNuevaDenom.innerHTML = '<i class="fa-solid fa-arrows-split-up-and-left text-purple-700 mr-1"></i>Nombre del Área o Adscripción a Transferir <span class="text-red-500">*</span>';
+    }
+    if (ndInputElem) {
+      ndInputElem.placeholder = 'NOMBRE DEL ÁREA O ADSCRIPCIÓN QUE SE TRANSFIERE (SELECCIONE ARRIBA O ESCRIBA AQUÍ)...';
+    }
+  } else {
+    if (containerAreaCambioDep) {
+      containerAreaCambioDep.classList.add('hidden');
+    }
+    if (containerUnidadDestino) {
+      containerUnidadDestino.classList.add('hidden');
+    }
+  }
+
+  if (val !== 'Cambio de nombre' && val !== 'Cambio de dependencia jerárquica') {
     if (lblNuevaDenom) {
       lblNuevaDenom.innerHTML = 'Nombre del Área o Adscripción <span class="text-red-500">*</span>';
     }
     if (ndInputElem) {
       ndInputElem.placeholder = 'ESPECIFIQUE CON PRECISIÓN EL NOMBRE DEL ÁREA, CLAVE O ADSCRIPCIÓN DETERMINADA...';
-    }
-    if (nnInputElem) {
-      nnInputElem.required = false;
-      nnInputElem.value = '';
     }
   }
 
