@@ -2587,23 +2587,28 @@ function vincularJefeInmediatoConArea(areaNombre) {
     jefeEncontrado = buscarJefeInmediatoPorArea(areaNombre, areaNotificadora);
   }
 
-  if (jefeEncontrado && jefeEncontrado.jefe_nombre && jefeEncontrado.jefe_nombre !== 'None' && jefeEncontrado.jefe_nombre.toLowerCase() !== 'vacante') {
-    const jNom = jefeEncontrado.jefe_nombre;
+  if (jefeEncontrado && jefeEncontrado.jefe_cargo) {
+    const rawNom = jefeEncontrado.jefe_nombre || '';
+    const esVacanteJefe = !rawNom || rawNom === 'None' || rawNom.toLowerCase().trim() === 'vacante';
+    const jNom = esVacanteJefe ? '' : rawNom;
     const jCar = jefeEncontrado.jefe_cargo || 'Titular Superior';
     const jNomNorm = normalizeText(jNom);
 
-    // Buscar si ya existe una opción en selectTitularUnidad2 con este jefe
+    gestionarAlertaVacanteGenerales('titular2', esVacanteJefe, jCar, jNom);
+
+    // Buscar si ya existe una opción en selectTitularUnidad2 con este jefe o cargo
     let matchIdx = -1;
     for (let i = 1; i < selectT2.options.length; i++) {
       const opt = selectT2.options[i];
       if (opt.value === '__MANUAL__') continue;
       const optNom = opt.dataset && opt.dataset.nombre ? normalizeText(opt.dataset.nombre) : '';
+      const optCar = opt.dataset && opt.dataset.cargo ? normalizeText(opt.dataset.cargo) : '';
       const optText = normalizeText(opt.textContent);
-      if (optNom && (optNom === jNomNorm || optNom.includes(jNomNorm) || jNomNorm.includes(optNom))) {
+      if (jNom && (optNom === jNomNorm || optText.includes(jNomNorm))) {
         matchIdx = i;
         break;
       }
-      if (optText.includes(jNomNorm)) {
+      if (optCar && optCar === normalizeText(jCar)) {
         matchIdx = i;
         break;
       }
@@ -2615,8 +2620,8 @@ function vincularJefeInmediatoConArea(areaNombre) {
       // Insertar la opción vinculada en el selector para que esté visible en la lista
       const newOpt = document.createElement('option');
       newOpt.value = `jefe_vinculado_${Date.now()}`;
-      newOpt.textContent = `${jCar} — ${jNom}`;
-      newOpt.setAttribute('data-nombre', jNom);
+      newOpt.textContent = esVacanteJefe ? `${jCar} — [Vacante en catálogo / En funciones]` : `${jCar} — ${jNom}`;
+      newOpt.setAttribute('data-nombre', esVacanteJefe ? 'Vacante' : jNom);
       newOpt.setAttribute('data-cargo', jCar);
       if (selectT2.options.length > 1) {
         selectT2.insertBefore(newOpt, selectT2.options[1]);
@@ -2631,6 +2636,7 @@ function vincularJefeInmediatoConArea(areaNombre) {
       u2Nom.value = jNom;
       u2Nom.removeAttribute('readonly');
       u2Nom.disabled = false;
+      if (esVacanteJefe) u2Nom.focus();
     }
     if (u2Car) {
       u2Car.value = jCar;
@@ -2639,8 +2645,6 @@ function vincularJefeInmediatoConArea(areaNombre) {
     }
 
     selectT2.disabled = false;
-    selectT2.dispatchEvent(new Event('change', { bubbles: true }));
-    showToast(`Jefe Inmediato vinculado: ${jCar} — ${jNom}. Puedes cambiarlo o editarlo libremente en el Apartado II.`);
     renderDocument(getCurrentFormDataForPreview());
     return;
   }
@@ -2787,6 +2791,113 @@ function buscarTitularPorNombreArea(areaNombre, areaNotificadora = '') {
 }
 
 /**
+ * =========================================================================
+ * GESTIÓN INSTITUCIONAL DE PUESTOS VACANTES EN APARTADO II (GENERALES)
+ * =========================================================================
+ * Si se detecta un puesto vacante en el catálogo oficial:
+ * 1. Mantiene habilitada la edición del Nombre Completo y del Cargo o Puesto.
+ * 2. Muestra un mensaje/alerta visual indicando que se detectó vacante el puesto y
+ *    se necesita especificar los datos de la persona en funciones para la firma.
+ * 3. Notifica al usuario vía toast y resalta los campos de captura.
+ */
+function gestionarAlertaVacanteGenerales(rol, esVacante, cargoSugerido = '', nombreSugerido = '') {
+  const configs = {
+    titular1: {
+      alertId: 'alertaVacanteTitular1',
+      nomId: 'titularUnidad1Nombre',
+      carId: 'titularUnidad1Cargo',
+      badgeId: 'badgeTitular1',
+      defaultBadge: '<i class="fa-solid fa-link mr-1"></i>Según Área que Notifica'
+    },
+    titular2: {
+      alertId: 'alertaVacanteTitular2',
+      nomId: 'titularUnidad2Nombre',
+      carId: 'titularUnidad2Cargo',
+      badgeId: 'badgeTitular2',
+      defaultBadge: '<i class="fa-solid fa-user-shield mr-1"></i>Jefe Inmediato'
+    },
+    area1: {
+      alertId: 'alertaVacanteArea',
+      nomId: 'titularAreaNombre',
+      carId: 'titularAreaCargo',
+      badgeId: 'badgeAreaSubordinados',
+      defaultBadge: null
+    },
+    area2: {
+      alertId: 'alertaVacanteArea2',
+      nomId: 'titularArea2Nombre',
+      carId: 'titularArea2Cargo',
+      badgeId: 'badgeAreaSubordinados2',
+      defaultBadge: '<i class="fa-solid fa-arrow-right-arrow-left mr-1"></i>Dependencia de Destino (2)'
+    }
+  };
+
+  const cfg = configs[rol];
+  if (!cfg) return;
+
+  const alertEl = document.getElementById(cfg.alertId);
+  const nomEl = document.getElementById(cfg.nomId);
+  const carEl = document.getElementById(cfg.carId);
+  const badgeEl = document.getElementById(cfg.badgeId);
+
+  // Asegurar siempre habilitada la edición del nombre y cargo
+  if (nomEl) {
+    nomEl.disabled = false;
+    nomEl.readOnly = false;
+  }
+  if (carEl) {
+    carEl.disabled = false;
+    carEl.readOnly = false;
+  }
+
+  if (esVacante) {
+    if (alertEl) alertEl.classList.remove('hidden');
+
+    if (nomEl) {
+      if (!nomEl.value || nomEl.value.trim().toLowerCase() === 'vacante') {
+        nomEl.value = '';
+      }
+      nomEl.placeholder = 'Puesto vacante en catálogo: capture el nombre de quien firma...';
+      nomEl.classList.add('border-amber-400', 'focus:ring-amber-500', 'bg-amber-50/20');
+      nomEl.classList.remove('border-slate-300');
+    }
+
+    if (carEl) {
+      if (cargoSugerido) carEl.value = cargoSugerido;
+      carEl.placeholder = 'Puesto oficial: confirme o ajuste el cargo para la firma...';
+      carEl.classList.add('border-amber-400', 'focus:ring-amber-500', 'bg-amber-50/20');
+      carEl.classList.remove('border-slate-300', 'bg-slate-50', 'text-slate-700');
+      carEl.classList.add('bg-white', 'text-slate-900');
+    }
+
+    if (badgeEl && rol !== 'area1') {
+      badgeEl.className = 'text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold border border-amber-300';
+      badgeEl.innerHTML = '<i class="fa-solid fa-user-clock text-amber-700 mr-1"></i>Puesto Vacante';
+    }
+
+    showToast(`Se detectó vacante el puesto (${cargoSugerido || 'oficial'}). Por favor especifique el nombre y puesto para la firma.`, 'warning');
+  } else {
+    if (alertEl) alertEl.classList.add('hidden');
+
+    if (nomEl) {
+      if (nombreSugerido !== undefined && nombreSugerido !== null) {
+        nomEl.value = (nombreSugerido.toLowerCase() === 'vacante') ? '' : nombreSugerido;
+      }
+      nomEl.classList.remove('border-amber-400', 'focus:ring-amber-500', 'bg-amber-50/20');
+      nomEl.classList.add('border-slate-300');
+    }
+
+    if (carEl) {
+      if (cargoSugerido) carEl.value = cargoSugerido;
+      carEl.classList.remove('border-amber-400', 'focus:ring-amber-500', 'bg-amber-50/20');
+      carEl.classList.add('border-slate-300', 'bg-white', 'text-slate-800');
+    }
+  }
+}
+
+window.gestionarAlertaVacanteGenerales = gestionarAlertaVacanteGenerales;
+
+/**
  * Vincula y precarga automáticamente el Titular de Área en el Apartado II (Datos Generales)
  * cuando se elige el Área Oficial a dar de Baja en el Apartado I.
  */
@@ -2808,12 +2919,8 @@ function vincularTitularAreaConBaja(areaNombre) {
 
   if (titular) {
     if (titular.esVacante) {
-      if (aCar) aCar.value = titular.cargo;
-      if (aNom) {
-        aNom.value = '';
-        aNom.placeholder = 'Puesto vacante en catálogo: capture el nombre del titular o encargado(a)...';
-        aNom.focus();
-      }
+      gestionarAlertaVacanteGenerales('area1', true, titular.cargo, '');
+      if (aNom) aNom.focus();
 
       if (selectArea) {
         let matchedIdx = -1;
@@ -2843,8 +2950,7 @@ function vincularTitularAreaConBaja(areaNombre) {
 
       showToast(`Puesto oficial vinculado: ${titular.cargo}. Registrado como vacante en catálogo; capture el titular en funciones.`, 'info');
     } else if (titular.nombre) {
-      if (aNom) aNom.value = titular.nombre;
-      if (aCar) aCar.value = titular.cargo;
+      gestionarAlertaVacanteGenerales('area1', false, titular.cargo, titular.nombre);
 
       // Sincronizar selectTitularArea si existe la opción coincidente
       if (selectArea) {
@@ -2956,9 +3062,9 @@ function actualizarTitularesPorArea(areaNombre) {
     selectT1.innerHTML = t1Html;
   }
 
-  // Autocompletar inputs de Titular (1)
-  if (u1Nom) u1Nom.value = unidad.titular.nombre || '';
-  if (u1Car) u1Car.value = unidad.titular.cargo || '';
+  // Autocompletar inputs de Titular (1) con detección de vacantes
+  const esVacanteT1 = !unidad.titular.nombre || unidad.titular.nombre.toLowerCase().trim() === 'vacante';
+  gestionarAlertaVacanteGenerales('titular1', esVacanteT1, unidad.titular.cargo || '', esVacanteT1 ? '' : (unidad.titular.nombre || ''));
 
   // 3. Filtrar y cargar menú desplegable dependiente de "Titular de Área" (Puesto — Nombre)
   const selectArea = document.getElementById('selectTitularArea');
@@ -3003,6 +3109,7 @@ function actualizarTitularesPorArea(areaNombre) {
     selectArea.innerHTML = areaHtml;
 
     // Limpiar campos de titular de área para que el usuario elija
+    gestionarAlertaVacanteGenerales('area1', false);
     const aNom = document.getElementById('titularAreaNombre');
     const aCar = document.getElementById('titularAreaCargo');
     if (aNom) aNom.value = '';
@@ -3458,12 +3565,15 @@ function handleTitularUnidad1Select(selectElem) {
   const u1Car = document.getElementById('titularUnidad1Cargo');
 
   if (val === '__MANUAL__') {
+    gestionarAlertaVacanteGenerales('titular1', false);
     if (u1Nom) { u1Nom.value = ''; u1Nom.focus(); }
     if (u1Car) { u1Car.value = ''; }
     showToast('Ingrese el nombre y cargo del Titular (1) manualmente.');
-  } else if (opt && opt.dataset && opt.dataset.nombre) {
-    if (u1Nom) u1Nom.value = opt.dataset.nombre;
-    if (u1Car) u1Car.value = opt.dataset.cargo || '';
+  } else if (opt && opt.dataset) {
+    const nom = opt.dataset.nombre || '';
+    const car = opt.dataset.cargo || '';
+    const esVac = !nom || nom.toLowerCase().trim() === 'vacante';
+    gestionarAlertaVacanteGenerales('titular1', esVac, car, nom);
   }
 
   // Actualizar listas desplegables de Testigos omitiendo al Titular seleccionado
@@ -3483,12 +3593,15 @@ function handleTitularUnidad2Select(selectElem) {
   const isJefeInmediato = (tipo === 'Alta' || tipo === 'Baja' || tipo === 'Cambio de nombre');
 
   if (val === '__MANUAL__') {
+    gestionarAlertaVacanteGenerales('titular2', false);
     if (u2Nom) { u2Nom.value = ''; u2Nom.focus(); }
     if (u2Car) { u2Car.value = ''; }
     showToast(isJefeInmediato ? 'Ingrese el nombre y cargo del Jefe Inmediato manualmente.' : 'Ingrese el nombre y cargo del Titular (2) de Destino manualmente.');
-  } else if (opt && opt.dataset && opt.dataset.nombre) {
-    if (u2Nom) u2Nom.value = opt.dataset.nombre;
-    if (u2Car) u2Car.value = opt.dataset.cargo || '';
+  } else if (opt && opt.dataset) {
+    const nom = opt.dataset.nombre || '';
+    const car = opt.dataset.cargo || '';
+    const esVac = !nom || nom.toLowerCase().trim() === 'vacante';
+    gestionarAlertaVacanteGenerales('titular2', esVac, car, nom);
   }
 
   // Si es Cambio de dependencia jerárquica, sincronizar lista de Titular de Área (2) con la unidad de destino y el selector superior de Apartado I
@@ -3513,24 +3626,15 @@ function handleTitularAreaSelect(selectElem) {
   const aCar = document.getElementById('titularAreaCargo');
 
   if (val === '__MANUAL__') {
+    gestionarAlertaVacanteGenerales('area1', false);
     if (aNom) { aNom.value = ''; aNom.focus(); }
     if (aCar) aCar.value = '';
     showToast('Ingrese el nombre y cargo del Titular de Área manualmente.');
   } else if (selectedOption && selectedOption.dataset) {
     const nom = selectedOption.dataset.nombre || '';
     const pue = selectedOption.dataset.puesto || '';
-    if (nom.toLowerCase() === 'vacante' || nom === '') {
-      if (aNom) {
-        aNom.value = '';
-        aNom.placeholder = 'Puesto vacante en catálogo: escriba el nombre del titular o encargado(a)...';
-        aNom.focus();
-      }
-      if (aCar) aCar.value = pue;
-      showToast(`Puesto seleccionado: ${pue}. Capture el nombre del titular en funciones.`, 'info');
-    } else {
-      if (aNom) aNom.value = nom;
-      if (aCar) aCar.value = pue;
-    }
+    const esVac = !nom || nom.toLowerCase().trim() === 'vacante';
+    gestionarAlertaVacanteGenerales('area1', esVac, pue, nom);
   }
 
   renderDocument(getCurrentFormDataForPreview());
@@ -3595,12 +3699,15 @@ function handleTitularArea2Select(selectElem) {
   const a2Car = document.getElementById('titularArea2Cargo');
 
   if (val === '__MANUAL__') {
+    gestionarAlertaVacanteGenerales('area2', false);
     if (a2Nom) { a2Nom.value = ''; a2Nom.focus(); }
     if (a2Car) a2Car.value = '';
     showToast('Ingrese el nombre y cargo del Titular de Área (2) manualmente.');
-  } else if (selectedOption && selectedOption.dataset && selectedOption.dataset.nombre) {
-    if (a2Nom) a2Nom.value = selectedOption.dataset.nombre;
-    if (a2Car) a2Car.value = selectedOption.dataset.puesto;
+  } else if (selectedOption && selectedOption.dataset) {
+    const nom = selectedOption.dataset.nombre || '';
+    const pue = selectedOption.dataset.puesto || '';
+    const esVac = !nom || nom.toLowerCase().trim() === 'vacante';
+    gestionarAlertaVacanteGenerales('area2', esVac, pue, nom);
   }
 
   renderDocument(getCurrentFormDataForPreview());
@@ -5352,12 +5459,30 @@ function handleFormSubmit(event) {
   // Comparecientes: Nombre y Cargo por separado
   const titularUnidad1Nombre = document.getElementById('titularUnidad1Nombre').value.trim();
   const titularUnidad1Cargo = document.getElementById('titularUnidad1Cargo').value.trim();
-
   const titularUnidad2Nombre = document.getElementById('titularUnidad2Nombre').value.trim();
   const titularUnidad2Cargo = document.getElementById('titularUnidad2Cargo').value.trim();
-
   const titularAreaNombre = document.getElementById('titularAreaNombre').value.trim();
   const titularAreaCargo = document.getElementById('titularAreaCargo').value.trim();
+
+  // Validación institucional de plazas vacantes: no se permite estampar "Vacante" en la firma
+  if (titularUnidad1Nombre.toLowerCase() === 'vacante') {
+    showToast('Por favor capture el nombre de la persona en funciones que firmará por Titular de Unidad 1 (no puede quedar como "Vacante").', 'error');
+    document.getElementById('titularUnidad1Nombre')?.focus();
+    isSubmittingForm = false;
+    return;
+  }
+  if (titularAreaNombre.toLowerCase() === 'vacante') {
+    showToast('Por favor capture el nombre de la persona en funciones que firmará por Titular de Área (no puede quedar como "Vacante").', 'error');
+    document.getElementById('titularAreaNombre')?.focus();
+    isSubmittingForm = false;
+    return;
+  }
+  if (titularUnidad2Nombre.toLowerCase() === 'vacante') {
+    showToast('Por favor capture el nombre de la persona en funciones que firmará como Jefe Inmediato / Titular (2) (no puede quedar como "Vacante").', 'error');
+    document.getElementById('titularUnidad2Nombre')?.focus();
+    isSubmittingForm = false;
+    return;
+  }
 
   const titularArea2Nombre = document.getElementById('titularArea2Nombre')?.value.trim() || '';
   const titularArea2Cargo = document.getElementById('titularArea2Cargo')?.value.trim() || '';
@@ -6748,6 +6873,7 @@ function resetForm() {
   const editingBanner = document.getElementById('editing-folio-banner');
   if (editingBanner) editingBanner.classList.add('hidden');
   document.getElementById('constancia-form').reset();
+  ['titular1', 'titular2', 'area1', 'area2'].forEach(r => gestionarAlertaVacanteGenerales(r, false));
   setAreaNotificadoraValue('');
   setResponsableCapturaValue('');
 
