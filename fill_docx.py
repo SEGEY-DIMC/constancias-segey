@@ -292,7 +292,7 @@ def generate_filled_docx(data, template_path, output_path):
     p20.paragraph_format.space_before = Pt(0)
     p20.paragraph_format.space_after = Pt(1)
     p20.paragraph_format.line_spacing = 1.05
-    r = p20.add_run("Testigo:" if is_cambio_dep else "Testigos:")
+    r = p20.add_run("Testigos:" if is_cambio_dep else "Testigo:")
     r.bold = True
     r.font.name = "Lato"
     r.font.size = Pt(10.5)
@@ -306,7 +306,7 @@ def generate_filled_docx(data, template_path, output_path):
     r.font.name = "Lato"
     r.font.size = Pt(10.5)
     r.bold = False
-    if not is_cambio_dep and w2_nom:
+    if is_cambio_dep and w2_nom:
         w2_txt = f"\n2) {w2_nom}" + (f" ({w2_car})" if w2_car else "")
         r = p21.add_run(w2_txt)
         r.font.name = "Lato"
@@ -406,19 +406,7 @@ def generate_filled_docx(data, template_path, output_path):
         set_sig_cell_solid(t1.rows[0].cells[2], "", "", "", has_border=False)
 
     if is_cambio_dep:
-        # Para Cambio de Dependencia Jerárquica: Se quita la firma de en medio.
-        # El Testigo (1) se vuelve Titular de Área y el testigo (2) se vuelve Testigo (1)
-        add_spacer(20)
-        t3 = doc.add_table(rows=1, cols=3)
-        t3.alignment = WD_TABLE_ALIGNMENT.CENTER
-        t3.rows[0].cells[0].width = Inches(3.0)
-        t3.rows[0].cells[1].width = Inches(0.6)
-        t3.rows[0].cells[2].width = Inches(3.0)
-        set_sig_cell_solid(t3.rows[0].cells[0], "TITULAR DE ÁREA", ta_nom, ta_car, has_border=True)
-        set_sig_cell_solid(t3.rows[0].cells[1], "", "", "", has_border=False)
-        set_sig_cell_solid(t3.rows[0].cells[2], "TESTIGO (1)", w1_nom, w1_car, has_border=True)
-    else:
-        # Fila 2: Titular de Área al centro
+        # Para Cambio de Dependencia Jerárquica: 5 FIRMAS (Titular 1 y 2 arriba, Titular de Área al centro, Testigos 1 y 2 abajo)
         add_spacer(16)
         t2 = doc.add_table(rows=1, cols=3)
         t2.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -429,26 +417,27 @@ def generate_filled_docx(data, template_path, output_path):
         set_sig_cell_solid(t2.rows[0].cells[1], "TITULAR DE ÁREA", ta_nom, ta_car, has_border=True)
         set_sig_cell_solid(t2.rows[0].cells[2], "", "", "", has_border=False)
 
-        # Fila 3: Testigos 1 y 2
         add_spacer(16)
-        if w2_nom:
-            t3 = doc.add_table(rows=1, cols=3)
-            t3.alignment = WD_TABLE_ALIGNMENT.CENTER
-            t3.rows[0].cells[0].width = Inches(3.0)
-            t3.rows[0].cells[1].width = Inches(0.6)
-            t3.rows[0].cells[2].width = Inches(3.0)
-            set_sig_cell_solid(t3.rows[0].cells[0], "TESTIGO (1)", w1_nom, w1_car, has_border=True)
-            set_sig_cell_solid(t3.rows[0].cells[1], "", "", "", has_border=False)
-            set_sig_cell_solid(t3.rows[0].cells[2], "TESTIGO (2)", w2_nom, w2_car, has_border=True)
-        else:
-            t3 = doc.add_table(rows=1, cols=3)
-            t3.alignment = WD_TABLE_ALIGNMENT.CENTER
-            t3.rows[0].cells[0].width = Inches(1.8)
-            t3.rows[0].cells[1].width = Inches(3.0)
-            t3.rows[0].cells[2].width = Inches(1.8)
-            set_sig_cell_solid(t3.rows[0].cells[0], "", "", "", has_border=False)
-            set_sig_cell_solid(t3.rows[0].cells[1], "TESTIGO", w1_nom, w1_car, has_border=True)
-            set_sig_cell_solid(t3.rows[0].cells[2], "", "", "", has_border=False)
+        t3 = doc.add_table(rows=1, cols=3)
+        t3.alignment = WD_TABLE_ALIGNMENT.CENTER
+        t3.rows[0].cells[0].width = Inches(3.0)
+        t3.rows[0].cells[1].width = Inches(0.6)
+        t3.rows[0].cells[2].width = Inches(3.0)
+        set_sig_cell_solid(t3.rows[0].cells[0], "TESTIGO (1)", w1_nom, w1_car, has_border=True)
+        set_sig_cell_solid(t3.rows[0].cells[1], "", "", "", has_border=False)
+        set_sig_cell_solid(t3.rows[0].cells[2], "TESTIGO (2)", w2_nom, w2_car, has_border=True)
+    else:
+        # Para Alta, Baja y Cambio de Nombre: 4 FIRMAS (2 filas de 2)
+        # Fila 2: Izquierda Titular de Área, Derecha Testigo (1)
+        add_spacer(18)
+        t2 = doc.add_table(rows=1, cols=3)
+        t2.alignment = WD_TABLE_ALIGNMENT.CENTER
+        t2.rows[0].cells[0].width = Inches(3.0)
+        t2.rows[0].cells[1].width = Inches(0.6)
+        t2.rows[0].cells[2].width = Inches(3.0)
+        set_sig_cell_solid(t2.rows[0].cells[0], "TITULAR DE ÁREA", ta_nom, ta_car, has_border=True)
+        set_sig_cell_solid(t2.rows[0].cells[1], "", "", "", has_border=False)
+        set_sig_cell_solid(t2.rows[0].cells[2], "TESTIGO (1)", w1_nom, w1_car, has_border=True)
 
     doc.save(output_path)
     return output_path
