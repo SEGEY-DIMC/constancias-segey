@@ -525,19 +525,26 @@ function initSearchableCombobox(selectId, placeholderText = 'Escriba o seleccion
     }
     input.disabled = select.disabled;
     if (select.disabled) {
-      input.classList.add('bg-slate-50', 'text-slate-400', 'cursor-not-allowed');
+      input.classList.add('bg-slate-100', 'text-slate-600', 'cursor-not-allowed');
       input.classList.remove('bg-white', 'text-slate-800');
+      clearBtn.classList.add('hidden');
+      toggleBtn.disabled = true;
+      toggleBtn.classList.add('cursor-not-allowed', 'opacity-50');
     } else {
-      input.classList.remove('bg-slate-50', 'text-slate-400', 'cursor-not-allowed');
+      input.classList.remove('bg-slate-100', 'text-slate-600', 'cursor-not-allowed');
       input.classList.add('bg-white', 'text-slate-800');
+      toggleBtn.disabled = false;
+      toggleBtn.classList.remove('cursor-not-allowed', 'opacity-50');
     }
   }
 
   input.addEventListener('focus', () => {
+    if (select.disabled) return;
     openMenu();
   });
 
   input.addEventListener('input', (e) => {
+    if (select.disabled) return;
     openMenu();
     renderMenu(e.target.value);
     if (e.target.value.trim().length > 0) {
@@ -602,6 +609,7 @@ function initSearchableCombobox(selectId, placeholderText = 'Escriba o seleccion
 
   toggleBtn.addEventListener('click', (e) => {
     e.stopPropagation();
+    if (select.disabled) return;
     if (menu.classList.contains('hidden')) {
       input.focus();
       openMenu();
@@ -2908,12 +2916,14 @@ function buscarCargoDePersona(nombre) {
 
 /**
  * Sincroniza automáticamente el nombre y cargo del Testigo (1) con el Responsable de Captura.
+ * Si ya se precargaron datos vinculados al Responsable de Captura, Testigo 1 queda bloqueado (readonly).
  */
 function sincronizarTestigo1ConResponsable(nombreResponsable) {
   const respInput = document.getElementById('responsableCaptura');
   const t1Nom = document.getElementById('testigo1Nombre');
   const t1Car = document.getElementById('testigo1Cargo');
   const selT1 = document.getElementById('selectTestigo1');
+  const badgeT1 = document.getElementById('badgeTestigo1');
 
   const nombreFinal = (typeof nombreResponsable === 'string')
     ? nombreResponsable.trim()
@@ -2951,6 +2961,53 @@ function sincronizarTestigo1ConResponsable(nombreResponsable) {
       selT1.value = '__MANUAL__';
     } else if (!nombreFinal) {
       selT1.selectedIndex = 0;
+    }
+  }
+
+  // =========================================================================
+  // BLOQUEO DE TESTIGO 1: Si ya se precargaron los datos vinculados con el
+  // Responsable de Captura, NO se puede modificar (Solo Lectura y Bloqueado).
+  // =========================================================================
+  if (nombreFinal) {
+    if (t1Nom) {
+      t1Nom.setAttribute('readonly', 'true');
+      t1Nom.classList.add('bg-slate-100', 'text-slate-700', 'cursor-not-allowed');
+      t1Nom.classList.remove('bg-white');
+      t1Nom.title = 'Testigo (1) está vinculado automáticamente al Responsable de Captura y no se puede modificar.';
+    }
+    if (t1Car) {
+      t1Car.setAttribute('readonly', 'true');
+      t1Car.classList.add('bg-slate-100', 'text-slate-700', 'cursor-not-allowed');
+      t1Car.classList.remove('bg-white');
+      t1Car.title = 'El cargo está vinculado automáticamente al Responsable de Captura y no se puede modificar.';
+    }
+    if (selT1) {
+      selT1.disabled = true;
+    }
+    if (badgeT1) {
+      badgeT1.className = 'text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-semibold border border-emerald-200';
+      badgeT1.innerHTML = '<i class="fa-solid fa-lock text-emerald-600 mr-1"></i>Vinculado a Responsable (Bloqueado)';
+    }
+  } else {
+    // Si no hay responsable cargado, se desbloquea para captura manual
+    if (t1Nom) {
+      t1Nom.removeAttribute('readonly');
+      t1Nom.classList.remove('bg-slate-100', 'text-slate-700', 'cursor-not-allowed');
+      t1Nom.classList.add('bg-white');
+      t1Nom.title = '';
+    }
+    if (t1Car) {
+      t1Car.removeAttribute('readonly');
+      t1Car.classList.remove('bg-slate-100', 'text-slate-700', 'cursor-not-allowed');
+      t1Car.classList.add('bg-white');
+      t1Car.title = '';
+    }
+    if (selT1) {
+      selT1.disabled = false;
+    }
+    if (badgeT1) {
+      badgeT1.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
+      badgeT1.innerHTML = '<i class="fa-solid fa-filter text-slate-400 mr-1"></i>Según Área que Notifica';
     }
   }
 
@@ -4153,10 +4210,20 @@ function poblarDropdownTestigo(num, unidad, etiqueta) {
     badge.className = 'text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-semibold border border-emerald-200';
     badge.innerHTML = `<i class="fa-solid fa-user-check text-emerald-600 mr-1"></i>${elegibles.length} puestos (${unidadTag})`;
   }
+
+  // Si es Testigo 1 y ya hay un Responsable de Captura precargado, asegurar su bloqueo
+  if (num === 1) {
+    const respInput = document.getElementById('responsableCaptura');
+    const respVal = respInput ? respInput.value.trim() : '';
+    if (respVal) {
+      sincronizarTestigo1ConResponsable(respVal);
+    }
+  }
 }
 
 function handleTestigoSelect(selectElem, num) {
   if (!selectElem) return;
+  if (num === 1 && selectElem.disabled) return;
   const val = selectElem.value;
   const opt = selectElem.options[selectElem.selectedIndex];
   const nomInput = document.getElementById(`testigo${num}Nombre`);
@@ -4402,6 +4469,7 @@ function handleTipoMovimientoChange() {
   const a2Car = document.getElementById('titularArea2Cargo');
 
   const contTestigo2 = document.getElementById('containerTestigo2');
+  const test1Nom = document.getElementById('testigo1Nombre');
   const test2Nom = document.getElementById('testigo2Nombre');
   const test2Car = document.getElementById('testigo2Cargo');
   const lblTestigo1 = document.getElementById('lblTestigo1');
@@ -4422,7 +4490,16 @@ function handleTipoMovimientoChange() {
     if (test2Nom) { test2Nom.required = false; test2Nom.value = ''; }
     if (test2Car) { test2Car.required = false; test2Car.value = ''; }
     if (lblTestigo1) lblTestigo1.innerHTML = '<i class="fa-solid fa-users text-segey-700"></i> Testigo (1) <span class="text-red-500">*</span>';
-    if (badgeTestigo1) badgeTestigo1.innerHTML = '<i class="fa-solid fa-check mr-1 text-emerald-600"></i>Testigo del Trámite';
+    if (badgeTestigo1) {
+      const isLocked = test1Nom && test1Nom.hasAttribute('readonly');
+      if (isLocked) {
+        badgeTestigo1.className = 'text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-semibold border border-emerald-200';
+        badgeTestigo1.innerHTML = '<i class="fa-solid fa-lock text-emerald-600 mr-1"></i>Vinculado a Responsable (Bloqueado)';
+      } else {
+        badgeTestigo1.className = 'text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-semibold border border-emerald-200';
+        badgeTestigo1.innerHTML = '<i class="fa-solid fa-check mr-1 text-emerald-600"></i>Testigo del Trámite';
+      }
+    }
   } else {
     if (lblArea1) lblArea1.innerHTML = '<i class="fa-solid fa-user-tie text-segey-700"></i> Titular de Área <span class="text-red-500">*</span>';
     if (wrapTitularesArea) wrapTitularesArea.className = 'space-y-4';
@@ -4438,7 +4515,16 @@ function handleTipoMovimientoChange() {
     if (test2Nom) test2Nom.required = true;
     if (test2Car) test2Car.required = true;
     if (lblTestigo1) lblTestigo1.innerHTML = '<i class="fa-solid fa-users text-segey-700"></i> Testigo (1) <span class="text-red-500">*</span>';
-    if (badgeTestigo1) badgeTestigo1.innerHTML = '<i class="fa-solid fa-filter text-slate-400 mr-1"></i>Según Área que Notifica';
+    if (badgeTestigo1) {
+      const isLocked = test1Nom && test1Nom.hasAttribute('readonly');
+      if (isLocked) {
+        badgeTestigo1.className = 'text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-semibold border border-emerald-200';
+        badgeTestigo1.innerHTML = '<i class="fa-solid fa-lock text-emerald-600 mr-1"></i>Vinculado a Responsable (Bloqueado)';
+      } else {
+        badgeTestigo1.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
+        badgeTestigo1.innerHTML = '<i class="fa-solid fa-filter text-slate-400 mr-1"></i>Según Área que Notifica';
+      }
+    }
 
     if (val === 'Alta') {
       if (contSelectArea) contSelectArea.classList.add('hidden');
