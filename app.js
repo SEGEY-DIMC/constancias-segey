@@ -1625,9 +1625,13 @@ function updateAdminUI() {
 }
 
 function updateEstatusPermissions(isAdmin) {
+  if (typeof isAdmin === 'undefined') {
+    isAdmin = isSuperAdmin();
+  }
   const estatusSelect = document.getElementById('estatus');
   const badgeRol = document.getElementById('badge-estatus-rol');
   const hintEl = document.getElementById('estatus-admin-hint');
+  const isFolioCargado = Boolean(editingRecordId);
 
   if (badgeRol) {
     if (isAdmin) {
@@ -1641,11 +1645,21 @@ function updateEstatusPermissions(isAdmin) {
 
   if (hintEl) {
     if (isAdmin) {
-      hintEl.className = 'text-[10px] text-emerald-700 mt-1';
-      hintEl.innerHTML = '<i class="fa-solid fa-check-circle mr-1"></i>Modo Administrador activo: Acceso total para gestionar todos los estatus del trámite.';
+      if (isFolioCargado) {
+        hintEl.className = 'text-[10px] text-amber-700 mt-1';
+        hintEl.innerHTML = '<i class="fa-solid fa-file-pen mr-1 text-amber-600"></i>Modo Administrador: Folio existente cargado en pantalla. Puede seleccionar <strong>Modificación</strong> para guardar los cambios y mantener la trazabilidad.';
+      } else {
+        hintEl.className = 'text-[10px] text-emerald-700 mt-1';
+        hintEl.innerHTML = '<i class="fa-solid fa-check-circle mr-1"></i>Modo Administrador activo: Trámites nuevos inician como <strong>Generada</strong> o <strong>Borrador</strong>. La opción <em>Modificación</em> solo está disponible al cargar un folio guardado.';
+      }
     } else {
-      hintEl.className = 'text-[10px] text-slate-500 mt-1';
-      hintEl.innerHTML = '<i class="fa-solid fa-circle-info mr-1"></i>Trámites nuevos inician como <strong>Generada (Listo para Firmar)</strong>. Si edita un folio existente, seleccione <strong>Modificación</strong>.';
+      if (isFolioCargado) {
+        hintEl.className = 'text-[10px] text-amber-800 font-medium mt-1';
+        hintEl.innerHTML = '<i class="fa-solid fa-file-pen mr-1 text-amber-600"></i>Folio guardado cargado en pantalla. Si realiza correcciones, seleccione <strong>Modificación</strong> antes de guardar.';
+      } else {
+        hintEl.className = 'text-[10px] text-slate-500 mt-1';
+        hintEl.innerHTML = '<i class="fa-solid fa-circle-info mr-1"></i>Trámites nuevos inician como <strong>Generada (Listo para Firmar)</strong> o <strong>Borrador</strong>. La opción <strong>Modificación</strong> solo se habilita al cargar un folio guardado.';
+      }
     }
   }
 
@@ -1657,15 +1671,21 @@ function updateEstatusPermissions(isAdmin) {
         opt.className = 'text-slate-800 font-medium';
         opt.textContent = 'Generada (Listo para Firmar)';
       } else if (opt.value === 'Modificación') {
-        opt.disabled = false;
-        opt.className = 'text-amber-800 font-semibold bg-amber-50';
-        opt.textContent = 'Modificación (Folio en corrección o edición)';
+        if (isFolioCargado) {
+          opt.disabled = false;
+          opt.className = 'text-amber-800 font-semibold bg-amber-50';
+          opt.textContent = 'Modificación (Folio en corrección o edición)';
+        } else {
+          opt.disabled = true;
+          opt.className = 'text-slate-400 bg-slate-50 italic';
+          opt.textContent = '🔒 Modificación (Disponible solo al cargar un folio guardado)';
+        }
       } else if (opt.value === 'Borrador') {
         opt.disabled = false;
         opt.className = 'text-slate-700 font-medium';
         opt.textContent = 'Borrador (En proceso de integración)';
       } else if (opt.value === 'Firmada y Concluida') {
-        if (isAdmin || editingRecordId) {
+        if (isAdmin) {
           opt.disabled = false;
           opt.className = 'text-slate-800 font-semibold';
           opt.textContent = '✅ Firmada y Concluida (Trámite finalizado)';
@@ -1686,8 +1706,26 @@ function updateEstatusPermissions(isAdmin) {
         }
       }
     }
-    if (!isAdmin && !editingRecordId && !estatusSelect.value) {
+
+    // Si no hay un folio cargado y estaba seleccionado 'Modificación', regresar a 'Generada para Firma'
+    if (!isFolioCargado && estatusSelect.value === 'Modificación') {
       estatusSelect.value = 'Generada para Firma';
+    }
+
+    if (!isAdmin && !isFolioCargado && !estatusSelect.value) {
+      estatusSelect.value = 'Generada para Firma';
+    }
+
+    // Protección adicional: detector de cambios en el selector para evitar manipulación en DOM
+    if (!estatusSelect.dataset.listenerAttached) {
+      estatusSelect.dataset.listenerAttached = 'true';
+      estatusSelect.addEventListener('change', (e) => {
+        if (e.target.value === 'Modificación' && !editingRecordId) {
+          showToast('La opción "Modificación" solo está disponible cuando se carga un folio ya guardado o generado.', 'warning');
+          e.target.value = 'Generada para Firma';
+          renderDocument(getCurrentFormDataForPreview());
+        }
+      });
     }
   }
 }
@@ -5972,6 +6010,7 @@ function handleFormSubmit(event) {
   updateStats();
   renderTable();
   populateAreaFilter();
+  updateEstatusPermissions(isSuperAdmin());
 
   // Avanzar folio de control al siguiente número libre para evitar duplicados en capturas subsecuentes
   const nextFolio = generateNextFolio();
@@ -6748,13 +6787,20 @@ function viewRecord(id) {
   switchTab('tab-preview', true);
 }
 
-function editRecord(id) {
-  if (!isSuperAdmin()) {
-    showToast('Solo los administradores tienen permiso para editar constancias emitidas.', 'error');
-    return;
-  }
+function editRecord(id, allowCapturista = false) {
   const record = records.find(r => r.id === id);
   if (!record) return;
+
+  const admin = isSuperAdmin();
+  if (!admin && !allowCapturista) {
+    showToast('Solo los administradores tienen permiso para editar constancias emitidas desde la bitácora.', 'error');
+    return;
+  }
+
+  if (!admin && (record.estatus === 'Firmada y Concluida' || record.estatus === 'Inactivo')) {
+    showToast('Esta constancia ya está concluida o inactiva. Solo un Administrador puede autorizar su edición.', 'error');
+    return;
+  }
 
   editingRecordId = record.id;
 
@@ -6889,7 +6935,8 @@ function editRecord(id) {
   }
 
   switchTab('tab-form');
-  showToast(`Editando constancia ${record.folio}.`);
+  updateEstatusPermissions(isSuperAdmin());
+  showToast(`Editando constancia ${record.folio}. La opción 'Modificación' ya está disponible en el Apartado IV.`);
 }
 
 let currentInactivarRecordId = null;
@@ -7259,6 +7306,7 @@ function resetForm() {
   if (containerNuevoNombre) containerNuevoNombre.classList.add('hidden');
   handleTipoMovimientoChange();
   renderDocument(getCurrentFormDataForPreview());
+  updateEstatusPermissions(isSuperAdmin());
   showToast('Formulario restablecido.');
 }
 
@@ -7743,7 +7791,7 @@ function mostrarResultadosBusquedaFolio(items, isRecent = false) {
 
 function cargarFolioParaEdicion(id) {
   closeBuscarFolioModal();
-  editRecord(id);
+  editRecord(id, true);
   const banner = document.getElementById('editing-folio-banner');
   const record = records.find(r => r.id === id);
   if (banner && record) {
