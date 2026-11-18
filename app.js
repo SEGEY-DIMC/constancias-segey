@@ -223,7 +223,7 @@ const DEFAULT_LAYOUT_HTML = `
   <div>
     <div class="font-bold text-[11pt] mb-1 uppercase tracking-wide text-slate-900 text-left">III. JUSTIFICACIÓN Y MOTIVOS DEL CAMBIO</div>
     <div class="pl-3 space-y-1 text-[11pt]">
-      <p class="italic text-[10.5pt] text-slate-700">Se hace constar los siguientes hechos y circunstancias de carácter administrativo…</p>
+      <p class="italic text-[10.5pt] text-slate-700">Se hace constar los siguientes movimientos de carácter administrativo…</p>
       <div class="text-justify leading-relaxed whitespace-pre-wrap font-normal text-slate-900 uppercase">
         {{justificacion}}
       </div>
@@ -1191,12 +1191,12 @@ function compileLayout(templateStr, data) {
     nuevaDenominacion: (data.nuevaDenominacion || '—').toUpperCase(),
     justificacion: (() => {
       let j = (data.justificacion || '—').trim();
-      if (j && j.startsWith('Se hace constar')) {
+      if (j && (j.startsWith('Se hace constar') || j.startsWith('SE HACE CONSTAR'))) {
         const idx = j.indexOf(':');
         if (idx !== -1) {
           j = j.substring(idx + 1).trim();
         } else {
-          j = j.replace(/Se hace constar los siguientes hechos y circunstancias de carácter administrativo…?/g, '').trim();
+          j = j.replace(/Se hace constar los siguientes (hechos y circunstancias|movimientos) de carácter administrativo…?/gi, '').trim();
         }
       }
       return j.toUpperCase();
@@ -4441,7 +4441,7 @@ function handleSelectJustificacionPredefinida(selectEl) {
     if (allPredefinidas.includes(justTextarea.value.trim().toUpperCase())) {
       justTextarea.value = '';
     }
-    justTextarea.placeholder = 'DESCRIBA AQUÍ LOS HECHOS Y CIRCUNSTANCIAS DE CARÁCTER ADMINISTRATIVO QUE MOTIVAN EL CAMBIO...';
+    justTextarea.placeholder = 'SE HACE CONSTAR LOS SIGUIENTES MOVIMIENTOS DE CARÁCTER ADMINISTRATIVO...';
     justTextarea.focus();
     renderDocument(getCurrentFormDataForPreview());
     showToast('Opción "Otros" seleccionada. Describa la justificación en el cuadro inferior.');
