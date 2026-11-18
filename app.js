@@ -64,6 +64,7 @@ const DEFAULT_AREAS_NOTIFICADORAS = [
   'Departamento de Registro y Certificación',
   'Departamento de Sistemas de Gestión de Nómina',
   'Departamento de Telebachillerato Comunitario del Estado de Yucatán y Bachillerato Intercultural',
+  'Despacho del Secretario',
   'Dirección de Administración y Finanzas',
   'Dirección de Desarrollo Educativo',
   'Dirección de Desarrollo Educativo y Proyectos Estratégicos',
@@ -1797,6 +1798,7 @@ function populateAreaSelect() {
 // Mapeo oficial de las 58 Áreas Notificadoras a su respectiva Unidad Administrativa en CATALOGO_ORGANICO_SEGEY
 const AREA_TO_UNIDAD_MAP = {
   // Despacho del Secretario y Unidades de Apoyo
+  'Despacho del Secretario': 'despacho_secretario',
   'Jefatura del Despacho': 'jefatura_despacho',
   'Secretario Particular': 'despacho_secretario',
   'Coordinación General de Programas Estratégicos': 'cg_programas_estrategicos',
@@ -2056,8 +2058,12 @@ const ENLACE_DIRECTO_POR_AREA = {
   'Departamento de Registro y Certificación': 'Tec. Mattia de Jesús Tun Peña',
   'Departamento de Sistemas de Gestión de Nómina': 'C.P. Manuel Jesús Heredia Ceballos',
   'Departamento de Telebachillerato Comunitario del Estado de Yucatán y Bachillerato Intercultural': 'Mtro. Alberto Solís Cámara',
+  'Despacho del Secretario': [
+    'Ing. Gladys Gahona Cámara',
+    'L.E. Rosalinda Villanueva Hau'
+  ],
   'Dirección Jurídica': 'Lic. Alonso Hernández Núñez',
-  'Dirección de Administración y Finanzas': 'C.P. Ángel Ermilo Sarabia Gamboa',
+  'Dirección de Administración y Finanzas': 'Lic. Yazmin Eugenia Cob Caballero',
   'Dirección de Desarrollo Educativo': 'Mtra. Ligia del Socorro Sánchez Castañeda',
   'Dirección de Desarrollo Educativo y Proyectos Estratégicos': 'Mtra. Ligia Margarita Cícero Galán',
   'Dirección de Educación Artística': 'Tec. Maria de Lourdes Méndez Villafaña',
@@ -2074,8 +2080,14 @@ const ENLACE_DIRECTO_POR_AREA = {
   'Dirección de Servicios Educativos de Media Superior': 'C.P. Miguel Edgardo Argáez Quijano',
   'Dirección de Servicios Regionales': 'Ing. Luis Gabriel Canul Mukul',
   'Enlace Estatal con la Unidad del Sistema para la Carrera de las Maestras y los Maestros (USICAMM)': 'C.P. Katia Isabel Manzanilla Mena',
-  'Jefatura del Despacho': 'Ing. Vidal Aarón Ché Zapata',
-  'Secretario Particular': 'L.E. Rosalinda Villanueva Hau',
+  'Jefatura del Despacho': [
+    'Ing. Gladys Gahona Cámara',
+    'L.E. Rosalinda Villanueva Hau'
+  ],
+  'Secretario Particular': [
+    'Ing. Gladys Gahona Cámara',
+    'L.E. Rosalinda Villanueva Hau'
+  ],
   'Subdirección de Organización y Administración de Personal': 'L.C.C. Mirna Arleny Canché Moo',
   'Subsecretaría de Educación Básica': 'Mtra. Carla Guadalupe Sanchez Colli',
   'Subsecretaría de Educación Media Superior': 'C.P. Miguel Edgardo Argáez Quijano',
@@ -3196,7 +3208,7 @@ function actualizarTitularesPorArea(areaNombre) {
     if (aCar) aCar.value = '';
   }
 
-  // 4. Actualizar Responsable de Captura exclusivo del Área (1 por área, sin mezclar)
+  // 4. Actualizar Responsable de Captura exclusivo del Área (admite múltiples enlaces por área)
   const selectResp = document.getElementById('selectResponsableCaptura');
   const respInput = document.getElementById('responsableCaptura');
   const customRespWrapper = document.getElementById('responsableCapturaCustomWrapper');
@@ -3204,24 +3216,28 @@ function actualizarTitularesPorArea(areaNombre) {
   const badgeResp = document.getElementById('badgeResponsableEnlaces');
 
   if (selectResp) {
-    const catalogResp = getResponsablesCatalog();
-    const respAsignado = catalogResp[areaNombre] || '';
+    const enlacesList = getResponsablesForArea(areaNombre);
 
-    let respHtml = '<option value="" disabled>-- Responsable oficial asignado a esta Área --</option>';
-    if (respAsignado) {
-      respHtml += `<option value="${escapeHtml(respAsignado)}" selected>${escapeHtml(respAsignado)}</option>`;
-    }
+    let respHtml = '<option value="" disabled' + (enlacesList.length === 0 ? ' selected' : '') + '>-- Seleccione un Enlace oficial de la Unidad --</option>';
+    enlacesList.forEach((enlace, idx) => {
+      const isSel = idx === 0 ? ' selected' : '';
+      respHtml += `<option value="${escapeHtml(enlace)}"${isSel}>${escapeHtml(enlace)}</option>`;
+    });
     respHtml += '<option value="__MANUAL__">✏️ Ingresar otro responsable manualmente...</option>';
     selectResp.innerHTML = respHtml;
 
-    if (respAsignado) {
-      selectResp.value = respAsignado;
-      if (respInput) respInput.value = respAsignado;
+    if (enlacesList.length > 0) {
+      const selectedResp = enlacesList[0];
+      selectResp.value = selectedResp;
+      if (respInput) respInput.value = selectedResp;
       if (badgeResp) {
         badgeResp.className = 'text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-semibold border border-emerald-200';
-        badgeResp.innerHTML = `<i class="fa-solid fa-user-check text-emerald-600 mr-1"></i>1 responsable asignado`;
+        badgeResp.innerHTML = enlacesList.length === 1
+          ? `<i class="fa-solid fa-user-check text-emerald-600 mr-1"></i>1 responsable asignado`
+          : `<i class="fa-solid fa-users text-emerald-600 mr-1"></i>${enlacesList.length} responsables asignados`;
       }
       if (customRespWrapper) customRespWrapper.classList.add('hidden');
+      sincronizarTestigo1ConResponsable(selectedResp);
     } else {
       selectResp.value = '';
       if (respInput) respInput.value = '';
@@ -3229,6 +3245,7 @@ function actualizarTitularesPorArea(areaNombre) {
         badgeResp.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
         badgeResp.innerHTML = `<i class="fa-solid fa-circle-info text-slate-400 mr-1"></i>Sin responsable asignado`;
       }
+      sincronizarTestigo1ConResponsable('');
     }
 
     if (customRespInput) {
@@ -4449,7 +4466,7 @@ window.restoreDefaultJustificaciones = restoreDefaultJustificaciones;
  * Evita mezclar enlaces de diferentes áreas en el formulario.
  * =========================================================================
  */
-const RESPONSABLES_STORAGE_KEY = 'segey_constancias_responsables_area_v1';
+const RESPONSABLES_STORAGE_KEY = 'segey_constancias_responsables_area_v2';
 
 function getResponsablesCatalog() {
   try {
@@ -4457,6 +4474,15 @@ function getResponsablesCatalog() {
     if (stored) {
       const parsed = JSON.parse(stored);
       if (parsed && typeof parsed === 'object') {
+        // Asegurar que las áreas clave con enlaces actualizados o múltiples estén al día
+        ['Jefatura del Despacho', 'Secretario Particular', 'Despacho del Secretario'].forEach(k => {
+          if (!parsed[k] || (typeof parsed[k] === 'string' && parsed[k].includes('Vidal'))) {
+            parsed[k] = ENLACE_DIRECTO_POR_AREA[k];
+          }
+        });
+        if (!parsed['Dirección de Administración y Finanzas'] || (typeof parsed['Dirección de Administración y Finanzas'] === 'string' && parsed['Dirección de Administración y Finanzas'].includes('Sarabia'))) {
+          parsed['Dirección de Administración y Finanzas'] = ENLACE_DIRECTO_POR_AREA['Dirección de Administración y Finanzas'];
+        }
         return parsed;
       }
     }
@@ -4464,6 +4490,35 @@ function getResponsablesCatalog() {
     console.warn('Error al leer catálogo de responsables de captura:', e);
   }
   return { ...ENLACE_DIRECTO_POR_AREA };
+}
+
+function getResponsablesForArea(areaNombre, catalog) {
+  if (!areaNombre) return [];
+  const cat = catalog || getResponsablesCatalog();
+  let val = cat[areaNombre];
+
+  // Aliases de coincidencia institucional
+  if (!val) {
+    if (areaNombre === 'Despacho del Secretario') val = cat['Jefatura del Despacho'] || cat['Secretario Particular'];
+    else if (areaNombre === 'Jefatura del Despacho') val = cat['Despacho del Secretario'] || cat['Secretario Particular'];
+    else if (areaNombre === 'Secretario Particular') val = cat['Despacho del Secretario'] || cat['Jefatura del Despacho'];
+  }
+
+  if (!val) return [];
+
+  let list = [];
+  if (Array.isArray(val)) {
+    list = val;
+  } else if (typeof val === 'string') {
+    if (val.includes(',') || val.includes(';') || val.includes('\n')) {
+      list = val.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean);
+    } else {
+      list = [val.trim()].filter(Boolean);
+    }
+  }
+
+  // Deduplicar respetando orden de aparición
+  return Array.from(new Set(list));
 }
 
 function saveResponsablesCatalog(catalog) {
@@ -4475,21 +4530,26 @@ function saveResponsablesCatalog(catalog) {
 }
 
 function restoreDefaultResponsables() {
-  if (confirm('¿Desea restablecer a los 58 Enlaces de Captura oficiales iniciales de la SEGEY?')) {
+  if (confirm('¿Desea restablecer a los Enlaces de Captura oficiales iniciales de la SEGEY?')) {
     saveResponsablesCatalog(ENLACE_DIRECTO_POR_AREA);
     renderAdminResponsablesList();
     const areaSel = document.getElementById('areaNotificadoraSelect');
     if (areaSel && areaSel.value && areaSel.value !== '__OTRA__') {
       actualizarTitularesPorArea(areaSel.value);
     }
-    showToast('Catálogo de 58 responsables de captura oficiales restablecido.');
+    showToast('Catálogo de responsables de captura oficiales restablecido.');
   }
 }
 
 function updateResponsableForArea(areaNombre, nuevoResponsable) {
   if (!areaNombre) return;
   const catalog = getResponsablesCatalog();
-  catalog[areaNombre] = nuevoResponsable.trim();
+  const trimmed = (nuevoResponsable || '').trim();
+  if (trimmed.includes(',') || trimmed.includes(';') || trimmed.includes('\n')) {
+    catalog[areaNombre] = trimmed.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean);
+  } else {
+    catalog[areaNombre] = trimmed;
+  }
   saveResponsablesCatalog(catalog);
   renderAdminResponsablesList();
 
@@ -4524,7 +4584,8 @@ function renderAdminResponsablesList(filterText = '') {
 
   const filtered = areas.filter(area => {
     if (!q) return true;
-    const resp = catalog[area] || '';
+    const raw = catalog[area] || '';
+    const resp = Array.isArray(raw) ? raw.join(' ') : raw;
     return normalizeText(area).includes(q) || normalizeText(resp).includes(q);
   });
 
@@ -4543,7 +4604,8 @@ function renderAdminResponsablesList(filterText = '') {
   }
 
   container.innerHTML = filtered.map((area, idx) => {
-    const currentResp = catalog[area] || '';
+    const rawResp = catalog[area] || '';
+    const currentResp = Array.isArray(rawResp) ? rawResp.join(', ') : rawResp;
     const inputId = `resp-input-${idx}`;
     return `
       <div class="flex flex-col sm:flex-row sm:items-center justify-between p-2.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-emerald-500/50 gap-2 transition">
@@ -4552,7 +4614,7 @@ function renderAdminResponsablesList(filterText = '') {
           <span class="text-[10px] text-slate-400">Área Notificadora Oficial</span>
         </div>
         <div class="sm:w-1/2 flex items-center gap-2">
-          <input type="text" id="${inputId}" value="${escapeHtml(currentResp)}" placeholder="Nombre del enlace o responsable..."
+          <input type="text" id="${inputId}" value="${escapeHtml(currentResp)}" placeholder="Nombre del enlace o responsable (separe con coma si son varios)..."
             class="w-full text-xs px-2.5 py-1.5 rounded bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-medium">
           <button onclick="saveResponsableFromRow('${escapeHtml(area)}', '${inputId}')" title="Guardar cambios para esta área"
             class="px-2.5 py-1.5 text-xs font-semibold rounded bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center gap-1 shrink-0 shadow">
@@ -8053,8 +8115,13 @@ async function syncResponsablesFromGoogleSheets(forceToast = false) {
         const currentCat = getResponsablesCatalog();
         let changed = false;
         keys.forEach(area => {
-          if (result.responsables[area]) {
-            currentCat[area] = result.responsables[area];
+          const val = result.responsables[area];
+          if (val) {
+            let parsedVal = val;
+            if (typeof val === 'string' && (val.includes(',') || val.includes(';') || val.includes('\n'))) {
+              parsedVal = val.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean);
+            }
+            currentCat[area] = parsedVal;
             if (!predefinedAreas.includes(area)) {
               predefinedAreas.push(area);
             }
@@ -8068,6 +8135,10 @@ async function syncResponsablesFromGoogleSheets(forceToast = false) {
           populateAreaSelect();
           if (typeof renderAdminResponsablesList === 'function') {
             renderAdminResponsablesList();
+          }
+          const currentArea = document.getElementById('areaNotificadoraSelect');
+          if (currentArea && currentArea.value && currentArea.value !== '__OTRA__') {
+            actualizarTitularesPorArea(currentArea.value);
           }
         }
         if (forceToast) {
