@@ -82,6 +82,12 @@
             <span id="badge-total-records" class="bg-segey-500 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
           </button>
 
+          <!-- Instructivo / Manual de Usuario en PDF -->
+          <a href="assets/manual_usuario_constancias.pdf" target="_blank" download="Manual_de_Usuario_Constancias_SEGEY.pdf" id="btn-manual-usuario-header" class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition flex items-center gap-1.5 border border-amber-400/40 shadow-xs" title="Descargar Instructivo y Manual de Uso en PDF">
+            <i class="fa-solid fa-book-open"></i>
+            <span>Instructivo</span>
+          </a>
+
           <!-- Control de Acceso Administrador -->
           <div class="ml-2 pl-2 border-l border-white/20 flex items-center gap-2" id="admin-auth-container">
             <button id="btn-admin-login" onclick="openAdminLoginModal()" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition flex items-center gap-1.5 border border-white/20 shadow-xs">
@@ -113,6 +119,9 @@
       <button onclick="switchTab('tab-registry')" id="btn-tab-registry-mobile" class="hidden p-2 text-center text-slate-200 hover:text-white">
         <i class="fa-solid fa-table-list block text-base mb-1"></i> Bitácora
       </button>
+      <a href="assets/manual_usuario_constancias.pdf" target="_blank" download="Manual_de_Usuario_Constancias_SEGEY.pdf" class="p-2 text-center text-amber-300 hover:text-white" title="Descargar Instructivo en PDF">
+        <i class="fa-solid fa-book-open block text-base mb-1"></i> Manual
+      </a>
       <button id="btn-admin-login-mobile" onclick="openAdminLoginModal()" class="p-2 text-center text-slate-200 hover:text-white">
         <i class="fa-solid fa-lock block text-base mb-1"></i> Admin
       </button>
@@ -159,6 +168,9 @@
             <button type="button" onclick="resetForm()" class="bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-2 rounded-lg border border-white/20 transition flex items-center gap-1.5">
               <i class="fa-solid fa-eraser"></i> Limpiar Campos
             </button>
+            <a href="assets/manual_usuario_constancias.pdf" target="_blank" download="Manual_de_Usuario_Constancias_SEGEY.pdf" class="bg-amber-600 hover:bg-amber-500 text-white text-xs px-3 py-2 rounded-lg border border-amber-400/40 transition flex items-center gap-1.5 font-bold shadow-xs" title="Descargar Instructivo y Manual de Usuario en PDF">
+              <i class="fa-solid fa-book-open"></i> Instructivo PDF
+            </a>
             <button type="button" onclick="openBuscarFolioModal()" class="bg-amber-500/90 hover:bg-amber-500 text-white text-xs px-3 py-2 rounded-lg border border-amber-300/40 transition flex items-center gap-1.5 font-bold shadow-xs">
               <i class="fa-solid fa-magnifying-glass"></i> Buscar Folio
             </button>
@@ -2442,6 +2454,6 @@
   <!-- Scripts -->
   <script src="assets/catalogo_organico.js?v=2.4.5"></script>
   <script src="assets/mapa_jefes_inmediatos.js?v=2.4.5"></script>
-  <script src="app.js?v=2.4.5"></script>
+  <script src="app.js?v=2.4.6"></script>
 </body>
 </html>
