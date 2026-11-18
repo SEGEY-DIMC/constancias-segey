@@ -793,10 +793,10 @@
                 </div>
                 <select id="estatus" class="w-full text-sm rounded-lg border-slate-300 border p-2.5 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-white font-medium">
                   <option value="Generada para Firma" selected>Generada (Listo para Firmar)</option>
-                  <option value="Modificación">Modificación (Folio en corrección o edición)</option>
+                  <option value="Modificación" disabled class="text-slate-400 bg-slate-50 italic">🔒 Modificación (Disponible solo al cargar un folio guardado)</option>
                   <option value="Borrador">Borrador (En proceso de integración)</option>
-                  <option value="Firmada y Concluida">Firmada y Concluida (Trámite finalizado)</option>
-                  <option value="Inactivo">Inactivo (Cancelada / Sin efecto)</option>
+                  <option value="Firmada y Concluida" disabled class="text-slate-400 bg-slate-50">🔒 Firmada y Concluida (Exclusivo Administrador tras firmas físicas)</option>
+                  <option value="Inactivo" disabled class="text-slate-400 bg-slate-50">🔒 Inactivo (Exclusivo Administrador para cancelar/reactivar)</option>
                 </select>
                 <p id="estatus-admin-hint" class="text-[10px] text-slate-500 mt-1">
                   <i class="fa-solid fa-circle-info mr-1"></i>Trámites nuevos inician como <strong>Generada (Listo para Firmar)</strong>. Si edita un folio existente, seleccione <strong>Modificación</strong>.
@@ -2490,9 +2490,9 @@
   </div>
 
   <!-- Scripts -->
-  <script src="assets/catalogo_organico.js?v=2.5.3"></script>
-  <script src="assets/mapa_jefes_inmediatos.js?v=2.5.3"></script>
-  <script src="assets/mapa_areas_subordinadas.js?v=2.5.3"></script>
-  <script src="app.js?v=2.5.3"></script>
+  <script src="assets/catalogo_organico.js?v=2.5.4"></script>
+  <script src="assets/mapa_jefes_inmediatos.js?v=2.5.4"></script>
+  <script src="assets/mapa_areas_subordinadas.js?v=2.5.4"></script>
+  <script src="app.js?v=2.5.4"></script>
 </body>
 </html>
