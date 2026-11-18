@@ -2234,14 +2234,10 @@ function poblarSelectJefeInmediato(areaNombre) {
 }
 
 /**
- * Obtiene todas las áreas, coordinaciones y departamentos oficiales
- * vinculados a la Unidad Administrativa seleccionada.
+ * Obtiene las áreas vinculadas que se encuentran al nivel o debajo del nivel
+ * del área que notifica y elabora (subordinadas en la estructura orgánica oficial).
  */
 function getAreasVinculadasPorUnidad(areaNombre) {
-  if (typeof CATALOGO_ORGANICO_SEGEY === 'undefined' || !Array.isArray(CATALOGO_ORGANICO_SEGEY)) {
-    return [];
-  }
-
   if (!areaNombre) {
     const areaSelect = document.getElementById('areaNotificadoraSelect');
     if (areaSelect && areaSelect.value && areaSelect.value !== '__OTRA__') {
@@ -2254,144 +2250,35 @@ function getAreasVinculadasPorUnidad(areaNombre) {
     }
   }
 
-  if (!areaNombre) return [];
+  if (!areaNombre || areaNombre === '__OTRA__') return [];
 
-  let unidadId = (typeof AREA_TO_UNIDAD_MAP !== 'undefined') ? AREA_TO_UNIDAD_MAP[areaNombre] : null;
-  let unidad = null;
-  if (unidadId) {
-    unidad = CATALOGO_ORGANICO_SEGEY.find(u => u.id === unidadId);
-  }
-  if (!unidad) {
-    unidad = CATALOGO_ORGANICO_SEGEY.find(u => u.unidad === areaNombre) ||
-             CATALOGO_ORGANICO_SEGEY.find(u => areaNombre.toLowerCase().includes(u.unidad.toLowerCase()) || u.unidad.toLowerCase().includes(areaNombre.toLowerCase()));
-    if (unidad) unidadId = unidad.id;
-  }
+  // 1. Buscar en el MAPA_AREAS_SUBORDINADAS oficial
+  if (typeof MAPA_AREAS_SUBORDINADAS !== 'undefined' && MAPA_AREAS_SUBORDINADAS) {
+    if (MAPA_AREAS_SUBORDINADAS[areaNombre] && MAPA_AREAS_SUBORDINADAS[areaNombre].length > 0) {
+      return [...MAPA_AREAS_SUBORDINADAS[areaNombre]];
+    }
 
-  const areasSet = new Set();
+    const norm = normalizeText(areaNombre);
+    const key = Object.keys(MAPA_AREAS_SUBORDINADAS).find(k => normalizeText(k) === norm);
+    if (key && MAPA_AREAS_SUBORDINADAS[key] && MAPA_AREAS_SUBORDINADAS[key].length > 0) {
+      return [...MAPA_AREAS_SUBORDINADAS[key]];
+    }
 
-  // 1. Incluir el nombre del área seleccionada y el de la unidad oficial
-  if (unidad && unidad.unidad) areasSet.add(unidad.unidad);
-  if (areaNombre && areaNombre !== '__OTRA__') areasSet.add(areaNombre);
-
-  // 2. Mapeo de áreas del catálogo oficial vinculadas a esta misma unidad
-  if (unidadId && typeof AREA_TO_UNIDAD_MAP !== 'undefined') {
-    Object.keys(AREA_TO_UNIDAD_MAP).forEach(k => {
-      if (AREA_TO_UNIDAD_MAP[k] === unidadId) {
-        areasSet.add(k);
-      }
+    const keyContain = Object.keys(MAPA_AREAS_SUBORDINADAS).find(k => {
+      const kn = normalizeText(k);
+      return kn.includes(norm) || norm.includes(kn);
     });
-  }
-
-  // 3. Departamentos y coordinaciones derivados de mandos y subordinados de la unidad
-  if (unidad && Array.isArray(unidad.subordinados)) {
-    unidad.subordinados.forEach(s => {
-      const p = (s.puesto || '').trim();
-      let a = p;
-      if (/^Jefe de Departamento de /i.test(a)) a = a.replace(/^Jefe de Departamento de /i, 'Departamento de ');
-      else if (/^Jefe de Departamento /i.test(a)) a = a.replace(/^Jefe de Departamento /i, 'Departamento de ');
-      else if (/^Jefa de Departamento de /i.test(a)) a = a.replace(/^Jefa de Departamento de /i, 'Departamento de ');
-      else if (/^Jefa de Departamento /i.test(a)) a = a.replace(/^Jefa de Departamento /i, 'Departamento de ');
-      else if (/^Subdirector de /i.test(a)) a = a.replace(/^Subdirector de /i, 'Subdirección de ');
-      else if (/^Subdirector /i.test(a)) a = a.replace(/^Subdirector /i, 'Subdirección ');
-      else if (/^Subdirectora de /i.test(a)) a = a.replace(/^Subdirectora de /i, 'Subdirección de ');
-      else if (/^Subdirectora /i.test(a)) a = a.replace(/^Subdirectora /i, 'Subdirección ');
-      else if (/^Coordinador General de /i.test(a)) a = a.replace(/^Coordinador General de /i, 'Coordinación General de ');
-      else if (/^Coordinadora General de /i.test(a)) a = a.replace(/^Coordinadora General de /i, 'Coordinación General de ');
-      else if (/^Coordinador de Área de /i.test(a)) a = a.replace(/^Coordinador de Área de /i, 'Coordinación de Área de ');
-      else if (/^Coordinadora de Área de /i.test(a)) a = a.replace(/^Coordinadora de Área de /i, 'Coordinación de Área de ');
-      else if (/^Coordinador de /i.test(a)) a = a.replace(/^Coordinador de /i, 'Coordinación de ');
-      else if (/^Coordinadora de /i.test(a)) a = a.replace(/^Coordinadora de /i, 'Coordinación de ');
-      else if (/^Responsable de Área de /i.test(a)) a = a.replace(/^Responsable de Área de /i, 'Área de ');
-      else if (/^Encargado de Área de /i.test(a)) a = a.replace(/^Encargado de Área de /i, 'Área de ');
-      else if (/^Director de Plantel de /i.test(a)) a = a.replace(/^Director de Plantel de /i, 'Plantel de ');
-
-      if (a && a !== p && a.length > 5 && !a.startsWith('Supervisor') && !a.startsWith('Subjefe') && !a.startsWith('Asesor')) {
-        areasSet.add(a);
-      }
-    });
-  }
-
-  return Array.from(areasSet).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
-}
-
-/**
- * Determina si el área seleccionada tiene niveles organizacionales subordinados (más de un nivel debajo)
- * o si es un nivel terminal (departamento, oficina o área sin dependencias subordinadas).
- * - Si NO tiene otro nivel debajo -> retorna false (el sistema debe llenar en automático el nombre).
- * - Si SÍ tiene más de un nivel debajo (ej. Dirección General, Dirección o Subsecretaría) -> retorna true (deja libre para seleccionar).
- * @param {string} areaNombre Nombre del Área que Notifica o Elabora
- * @returns {boolean}
- */
-function tieneNivelesSubordinados(areaNombre) {
-  if (!areaNombre || typeof areaNombre !== 'string') return false;
-  const norm = areaNombre.trim().toLowerCase();
-
-  // 1. Departamentos, Áreas operativas, Oficinas y Coordinaciones internas terminales
-  if (norm.startsWith('departamento de ') || 
-      norm.startsWith('departamento ') || 
-      norm.startsWith('área de ') || 
-      norm.startsWith('area de ') || 
-      norm.startsWith('oficina de ') || 
-      norm.startsWith('subjefatura de ') ||
-      norm.startsWith('subjefatura ') ||
-      norm.startsWith('coordinación de ') ||
-      norm.startsWith('coordinacion de ')) {
-    return false;
-  }
-
-  // 2. Si es una Dirección, Subsecretaría, Despacho o Centro con departamentos mapeados
-  if (typeof AREA_TO_UNIDAD_MAP !== 'undefined') {
-    const unidadId = AREA_TO_UNIDAD_MAP[areaNombre];
-    if (unidadId) {
-      // Contar áreas mapeadas a esta misma unidad que sean distintas
-      const childAreas = Object.keys(AREA_TO_UNIDAD_MAP).filter(k => {
-        return AREA_TO_UNIDAD_MAP[k] === unidadId && k.trim().toLowerCase() !== norm;
-      });
-
-      if (childAreas.length > 0) {
-        if (typeof CATALOGO_ORGANICO_SEGEY !== 'undefined') {
-          const unidad = CATALOGO_ORGANICO_SEGEY.find(u => u.id === unidadId);
-          if (unidad) {
-            const uNorm = unidad.unidad.trim().toLowerCase();
-            if (norm === uNorm || norm.includes(uNorm) || uNorm.includes(norm) ||
-                norm.startsWith('dirección') || norm.startsWith('direccion') ||
-                norm.startsWith('subsecretaría') || norm.startsWith('subsecretaria') ||
-                norm.startsWith('despacho') || norm.startsWith('centro estatal')) {
-              return true;
-            }
-          }
-        }
-        return norm.startsWith('dirección') || norm.startsWith('direccion') || norm.startsWith('subsecretaría') || norm.startsWith('subsecretaria');
-      }
+    if (keyContain && MAPA_AREAS_SUBORDINADAS[keyContain] && MAPA_AREAS_SUBORDINADAS[keyContain].length > 0) {
+      return [...MAPA_AREAS_SUBORDINADAS[keyContain]];
     }
   }
 
-  // 3. Revisar en CATALOGO_ORGANICO_SEGEY si tiene subordinados de tipo departamento
-  if (typeof CATALOGO_ORGANICO_SEGEY !== 'undefined' && Array.isArray(CATALOGO_ORGANICO_SEGEY)) {
-    const uMatch = CATALOGO_ORGANICO_SEGEY.find(u => {
-      const uNorm = u.unidad.trim().toLowerCase();
-      return uNorm === norm || norm.includes(uNorm) || uNorm.includes(norm);
-    });
-    if (uMatch && Array.isArray(uMatch.subordinados)) {
-      const tieneDepartamentos = uMatch.subordinados.some(s => {
-        const p = String(s.puesto || '').toLowerCase();
-        return p.includes('departamento') || p.includes('coordinador de área') || p.includes('director de');
-      });
-      if (tieneDepartamentos) return true;
-    }
-  }
-
-  if (norm.startsWith('dirección') || norm.startsWith('direccion') || norm.startsWith('subsecretaría') || norm.startsWith('subsecretaria')) {
-    return true;
-  }
-
-  return false;
+  // Fallback: incluir al menos el área misma
+  return [areaNombre];
 }
 
 /**
- * Llena el menú desplegable de Áreas a dar de Baja vinculadas con el área que notifica o elabora.
- * - Si el área no tiene otro nivel debajo (ej. Departamento): se llena en automático en el cuadro inferior y se preselecciona.
- * - Si tiene más de un nivel debajo (ej. Dirección o Subsecretaría): queda libre para seleccionar.
+ * Llena el menú desplegable de Áreas a dar de Baja vinculadas debajo del nivel del área que notifica o elabora.
  */
 function poblarSelectAreaBaja(areaNombre) {
   const selectBaja = document.getElementById('selectAreaBaja');
@@ -2411,10 +2298,6 @@ function poblarSelectAreaBaja(areaNombre) {
   }
 
   const areas = getAreasVinculadasPorUnidad(areaNombre);
-  const ndTextarea = document.getElementById('nuevaDenominacion');
-
-  // Determinar si hay otro nivel debajo del área seleccionada
-  const tieneSubniveles = tieneNivelesSubordinados(areaNombre);
 
   let html = '<option value="">-- Seleccione el Área o Departamento a dar de baja --</option>';
 
@@ -2427,73 +2310,24 @@ function poblarSelectAreaBaja(areaNombre) {
   html += '<option value="__OTRA__">✏️ Otra área (escribir manualmente en el cuadro inferior)...</option>';
   selectBaja.innerHTML = html;
 
-  // CASO 1: NO HAY OTRO NIVEL DEBAJO (ej. se eligió un Departamento, Área u Oficina)
-  // -> LLENAR EN AUTOMÁTICO el nombre del área o adscripción y vincular firmas
-  if (areaNombre && !tieneSubniveles) {
-    let matched = false;
-    for (let i = 0; i < selectBaja.options.length; i++) {
-      if (selectBaja.options[i].value && selectBaja.options[i].value.trim().toLowerCase() === areaNombre.trim().toLowerCase()) {
-        selectBaja.selectedIndex = i;
-        matched = true;
-        break;
-      }
-    }
-    if (!matched) {
-      const opt = document.createElement('option');
-      opt.value = areaNombre;
-      opt.textContent = areaNombre;
-      selectBaja.insertBefore(opt, selectBaja.options[1] || null);
-      selectBaja.value = areaNombre;
-    }
+  selectBaja.selectedIndex = 0;
+  selectBaja.value = '';
 
-    if (ndTextarea && (!editingRecordId || !ndTextarea.value.trim())) {
-      ndTextarea.value = areaNombre.toUpperCase();
-    }
+  const wrapper = selectBaja.parentElement?.querySelector('.segey-combobox[data-for="selectAreaBaja"]') || selectBaja.parentElement?.querySelector('.segey-combobox');
+  if (wrapper) {
+    const input = wrapper.querySelector('.combobox-input');
+    const clearBtn = wrapper.querySelector('.combobox-clear');
+    if (input) input.value = '';
+    if (clearBtn) clearBtn.classList.add('hidden');
+  }
 
-    // Vincular automáticamente Jefe Inmediato y Titular de Área
-    vincularJefeInmediatoConArea(areaNombre);
-    vincularTitularAreaConBaja(areaNombre);
-
-    // Sincronizar combobox visual
-    const wrapper = selectBaja.parentElement?.querySelector('.segey-combobox');
-    if (wrapper) {
-      const input = wrapper.querySelector('.combobox-input');
-      const clearBtn = wrapper.querySelector('.combobox-clear');
-      if (input) input.value = areaNombre;
-      if (clearBtn) clearBtn.classList.remove('hidden');
-    }
-
-    if (badgeBaja) {
-      badgeBaja.className = 'text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-semibold border border-emerald-300';
-      badgeBaja.innerHTML = `<i class="fa-solid fa-check text-emerald-600 mr-1"></i>Área fijada automáticamente`;
-    }
-  } 
-  // CASO 2: SÍ EXISTE MÁS DE UN NIVEL DEBAJO (ej. Dirección o Subsecretaría)
-  // -> DEJAR LIBRE PARA SELECCIONAR
-  else {
-    selectBaja.selectedIndex = 0;
-    selectBaja.value = '';
-
-    if (ndTextarea && !editingRecordId) {
-      ndTextarea.value = '';
-    }
-
-    const wrapper = selectBaja.parentElement?.querySelector('.segey-combobox');
-    if (wrapper) {
-      const input = wrapper.querySelector('.combobox-input');
-      const clearBtn = wrapper.querySelector('.combobox-clear');
-      if (input) input.value = '';
-      if (clearBtn) clearBtn.classList.add('hidden');
-    }
-
-    if (badgeBaja) {
-      if (areas.length > 0) {
-        badgeBaja.className = 'text-[10px] bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full font-semibold border border-rose-300';
-        badgeBaja.innerHTML = `<i class="fa-solid fa-list-check text-rose-600 mr-1"></i>${areas.length} áreas vinculadas (elija cuál dar de baja)`;
-      } else {
-        badgeBaja.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
-        badgeBaja.textContent = 'Seleccione el Área Notificadora arriba';
-      }
+  if (badgeBaja) {
+    if (areas.length > 0) {
+      badgeBaja.className = 'text-[10px] bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full font-semibold border border-rose-300';
+      badgeBaja.innerHTML = `<i class="fa-solid fa-list-check text-rose-600 mr-1"></i>${areas.length} áreas vinculadas`;
+    } else {
+      badgeBaja.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
+      badgeBaja.textContent = 'Seleccione el Área Notificadora arriba';
     }
   }
 
@@ -2514,6 +2348,7 @@ function handleSelectAreaBaja(selectElem) {
     ndTextarea.value = val.toUpperCase();
     vincularJefeInmediatoConArea(val);
     vincularTitularAreaConBaja(val);
+    showToast(`Área a dar de baja seleccionada: ${val}`);
   } else {
     ndTextarea.value = '';
   }
@@ -2522,9 +2357,7 @@ function handleSelectAreaBaja(selectElem) {
 }
 
 /**
- * Llena el menú desplegable de Áreas que cambian de nombre vinculadas con el área que notifica o elabora.
- * - Si el área no tiene otro nivel debajo (ej. Departamento): se llena en automático y se preselecciona.
- * - Si tiene más de un nivel debajo: queda libre para seleccionar.
+ * Llena el menú desplegable de Áreas que cambian de nombre vinculadas debajo del nivel del área que notifica o elabora.
  */
 function poblarSelectAreaCambioNombre(areaNombre) {
   const selectCambio = document.getElementById('selectAreaCambioNombre');
@@ -2544,8 +2377,6 @@ function poblarSelectAreaCambioNombre(areaNombre) {
   }
 
   const areas = getAreasVinculadasPorUnidad(areaNombre);
-  const ndTextarea = document.getElementById('nuevaDenominacion');
-  const tieneSubniveles = tieneNivelesSubordinados(areaNombre);
 
   let html = '<option value="">-- Seleccione el Área o Departamento que cambia de nombre --</option>';
 
@@ -2558,68 +2389,24 @@ function poblarSelectAreaCambioNombre(areaNombre) {
   html += '<option value="__OTRA__">✏️ Otra área (escribir manualmente en el cuadro inferior)...</option>';
   selectCambio.innerHTML = html;
 
-  // CASO 1: NO HAY OTRO NIVEL DEBAJO -> LLENAR EN AUTOMÁTICO
-  if (areaNombre && !tieneSubniveles) {
-    let matched = false;
-    for (let i = 0; i < selectCambio.options.length; i++) {
-      if (selectCambio.options[i].value && selectCambio.options[i].value.trim().toLowerCase() === areaNombre.trim().toLowerCase()) {
-        selectCambio.selectedIndex = i;
-        matched = true;
-        break;
-      }
-    }
-    if (!matched) {
-      const opt = document.createElement('option');
-      opt.value = areaNombre;
-      opt.textContent = areaNombre;
-      selectCambio.insertBefore(opt, selectCambio.options[1] || null);
-      selectCambio.value = areaNombre;
-    }
+  selectCambio.selectedIndex = 0;
+  selectCambio.value = '';
 
-    if (ndTextarea && (!editingRecordId || !ndTextarea.value.trim())) {
-      ndTextarea.value = areaNombre.toUpperCase();
-    }
+  const wrapper = selectCambio.parentElement?.querySelector('.segey-combobox[data-for="selectAreaCambioNombre"]') || selectCambio.parentElement?.querySelector('.segey-combobox');
+  if (wrapper) {
+    const input = wrapper.querySelector('.combobox-input');
+    const clearBtn = wrapper.querySelector('.combobox-clear');
+    if (input) input.value = '';
+    if (clearBtn) clearBtn.classList.add('hidden');
+  }
 
-    vincularJefeInmediatoConArea(areaNombre);
-
-    const wrapper = selectCambio.parentElement?.querySelector('.segey-combobox');
-    if (wrapper) {
-      const input = wrapper.querySelector('.combobox-input');
-      const clearBtn = wrapper.querySelector('.combobox-clear');
-      if (input) input.value = areaNombre;
-      if (clearBtn) clearBtn.classList.remove('hidden');
-    }
-
-    if (badgeCambio) {
-      badgeCambio.className = 'text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-semibold border border-emerald-300';
-      badgeCambio.innerHTML = `<i class="fa-solid fa-check text-emerald-600 mr-1"></i>Nombre actual fijado automáticamente`;
-    }
-  } 
-  // CASO 2: SÍ EXISTE MÁS DE UN NIVEL DEBAJO -> DEJAR LIBRE PARA SELECCIONAR
-  else {
-    selectCambio.selectedIndex = 0;
-    selectCambio.value = '';
-
-    if (ndTextarea && !editingRecordId) {
-      ndTextarea.value = '';
-    }
-
-    const wrapper = selectCambio.parentElement?.querySelector('.segey-combobox');
-    if (wrapper) {
-      const input = wrapper.querySelector('.combobox-input');
-      const clearBtn = wrapper.querySelector('.combobox-clear');
-      if (input) input.value = '';
-      if (clearBtn) clearBtn.classList.add('hidden');
-    }
-
-    if (badgeCambio) {
-      if (areas.length > 0) {
-        badgeCambio.className = 'text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold border border-amber-300';
-        badgeCambio.innerHTML = `<i class="fa-solid fa-list-check text-amber-600 mr-1"></i>${areas.length} áreas vinculadas (seleccione cuál cambia)`;
-      } else {
-        badgeCambio.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
-        badgeCambio.textContent = 'Seleccione el Área Notificadora arriba';
-      }
+  if (badgeCambio) {
+    if (areas.length > 0) {
+      badgeCambio.className = 'text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold border border-amber-300';
+      badgeCambio.innerHTML = `<i class="fa-solid fa-list-check text-amber-600 mr-1"></i>${areas.length} áreas vinculadas`;
+    } else {
+      badgeCambio.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium';
+      badgeCambio.textContent = 'Seleccione el Área Notificadora arriba';
     }
   }
 
@@ -2630,40 +2417,43 @@ function handleSelectAreaCambioNombre(selectElem) {
   if (!selectElem) return;
   const val = selectElem.value;
   const ndTextarea = document.getElementById('nuevaDenominacion');
-  const nuevoNombreTextarea = document.getElementById('nuevoNombre');
+  if (!ndTextarea) return;
 
   if (val === '__OTRA__') {
-    if (ndTextarea) {
-      ndTextarea.value = '';
-      ndTextarea.focus();
-    }
-    showToast('Escriba el nombre actual del área en el primer cuadro.');
-    return;
-  }
-
-  if (val && ndTextarea) {
+    ndTextarea.value = '';
+    ndTextarea.focus();
+    showToast('Escriba el nombre actual del área en el cuadro inferior.');
+  } else if (val) {
     ndTextarea.value = val.toUpperCase();
-    showToast(`Nombre actual seleccionado: ${val}. Escriba el nuevo nombre en el segundo cuadro.`);
-    if (nuevoNombreTextarea && !nuevoNombreTextarea.value.trim()) {
-      setTimeout(() => nuevoNombreTextarea.focus(), 150);
-    }
-  }
-
-  // Vincular automáticamente el Jefe Inmediato en el Apartado II con la selección
-  if (val) {
     vincularJefeInmediatoConArea(val);
+    vincularTitularAreaConBaja(val);
+    showToast(`Área seleccionada: ${val}. Escriba el nuevo nombre propuesto.`);
+  } else {
+    ndTextarea.value = '';
   }
 
   renderDocument(getCurrentFormDataForPreview());
 }
 
 /**
- * Llena el menú desplegable de Áreas a transferir vinculadas con el área que notifica o elabora.
+ * Llena el menú desplegable de Áreas a transferir vinculadas debajo del nivel del área que notifica o elabora.
  */
 function poblarSelectAreaCambioDep(areaNombre) {
   const selectDep = document.getElementById('selectAreaCambioDep');
   const badgeDep = document.getElementById('badgeAreasCambioDep');
   if (!selectDep) return;
+
+  if (!areaNombre) {
+    const areaSelect = document.getElementById('areaNotificadoraSelect');
+    if (areaSelect && areaSelect.value && areaSelect.value !== '__OTRA__') {
+      areaNombre = areaSelect.value;
+    } else {
+      const areaCustom = document.getElementById('areaNotificadora');
+      if (areaCustom && areaCustom.value) {
+        areaNombre = areaCustom.value;
+      }
+    }
+  }
 
   const areas = getAreasVinculadasPorUnidad(areaNombre);
 
@@ -2678,6 +2468,17 @@ function poblarSelectAreaCambioDep(areaNombre) {
   html += '<option value="__OTRA__">✏️ Otra área (escribir manualmente en el cuadro inferior)...</option>';
   selectDep.innerHTML = html;
 
+  selectDep.selectedIndex = 0;
+  selectDep.value = '';
+
+  const wrapper = selectDep.parentElement?.querySelector('.segey-combobox[data-for="selectAreaCambioDep"]') || selectDep.parentElement?.querySelector('.segey-combobox');
+  if (wrapper) {
+    const input = wrapper.querySelector('.combobox-input');
+    const clearBtn = wrapper.querySelector('.combobox-clear');
+    if (input) input.value = '';
+    if (clearBtn) clearBtn.classList.add('hidden');
+  }
+
   if (badgeDep) {
     if (areas.length > 0) {
       badgeDep.className = 'text-[10px] bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full font-semibold border border-purple-300';
@@ -2687,6 +2488,8 @@ function poblarSelectAreaCambioDep(areaNombre) {
       badgeDep.textContent = 'Seleccione el Área Notificadora arriba';
     }
   }
+
+  renderDocument(getCurrentFormDataForPreview());
 }
 
 function handleSelectAreaCambioDep(selectElem) {
@@ -2705,6 +2508,7 @@ function handleSelectAreaCambioDep(selectElem) {
   if (val) {
     ndTextarea.value = val.toUpperCase();
     vincularTitularAreaConBaja(val);
+    vincularJefeInmediatoConArea(val);
     showToast(`Área a transferir seleccionada: ${val}`);
   }
 
