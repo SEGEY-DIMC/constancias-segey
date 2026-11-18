@@ -3,7 +3,7 @@
 // Generado automáticamente a partir de Catalogo_Funcionarios_y_Puestos.xlsx
 // =========================================================================
 
-const MAPA_AREAS_SUBORDINADAS = {
+var MAPA_AREAS_SUBORDINADAS = {
   "Casa de la Historia de la Educación de Yucatán": [
     "Casa de la Historia de la Educación de Yucatán"
   ],
