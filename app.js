@@ -4904,12 +4904,50 @@ function initFormDefaults() {
     folioInput.value = generateNextFolio();
   }
 
-  // Vincular eventos de Tipo de Movimiento para Titular (2)
+  // Vincular eventos de Tipo de Movimiento con detección de cambios y advertencia
+  const currentCheckedRadio = document.querySelector('input[name="tipoMovimiento"]:checked');
+  currentTipoMovimiento = currentCheckedRadio ? currentCheckedRadio.value : 'Alta';
+
   document.querySelectorAll('input[name="tipoMovimiento"]').forEach(radio => {
     radio.removeEventListener('change', handleTipoMovimientoChange);
-    radio.addEventListener('change', handleTipoMovimientoChange);
+    radio.addEventListener('change', (e) => {
+      const nuevoVal = radio.value;
+      if (nuevoVal === currentTipoMovimiento) return;
+
+      if (hayInformacionMovimientoLlenada()) {
+        // Revertir temporalmente el radio al valor previo mientras el usuario confirma
+        const prevRadio = document.querySelector(`input[name="tipoMovimiento"][value="${currentTipoMovimiento}"]`);
+        if (prevRadio) prevRadio.checked = true;
+
+        pendingTipoMovimiento = nuevoVal;
+        mostrarModalCambioMovimiento(nuevoVal);
+      } else {
+        // Si no hay datos capturados, cambiar limpiamente y ajustar formato
+        currentTipoMovimiento = nuevoVal;
+        limpiarCamposPorCambioMovimiento(nuevoVal);
+        handleTipoMovimientoChange();
+      }
+    });
   });
   handleTipoMovimientoChange();
+
+  // Escuchar clic fuera del modal o tecla Escape para cancelar cambio de movimiento
+  const modalCambio = document.getElementById('modal-cambio-movimiento');
+  if (modalCambio) {
+    modalCambio.addEventListener('click', (e) => {
+      if (e.target === modalCambio) {
+        cancelarCambioMovimiento();
+      }
+    });
+  }
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('modal-cambio-movimiento');
+      if (modal && !modal.classList.contains('hidden')) {
+        cancelarCambioMovimiento();
+      }
+    }
+  });
 
   // Forzar restricción estricta a mayúsculas en Apartados II y III y actualizar vista previa en vivo
   const ndInput = document.getElementById('nuevaDenominacion');
@@ -5005,6 +5043,211 @@ function initFormDefaults() {
   }
 }
 
+// =========================================================================
+// GESTIÓN Y ADVERTENCIA DE CAMBIO DE TIPO DE MOVIMIENTO
+// =========================================================================
+
+let currentTipoMovimiento = 'Alta';
+let pendingTipoMovimiento = null;
+
+/**
+ * Detecta si el usuario ya ingresó o seleccionó información en los campos
+ * específicos del trámite (Apartado I, Apartado II o Apartado III).
+ */
+function hayInformacionMovimientoLlenada() {
+  // Apartado I: Denominación y Nuevo Nombre
+  const nd = document.getElementById('nuevaDenominacion');
+  if (nd && nd.value.trim().length > 0) return true;
+
+  const nn = document.getElementById('nuevoNombre');
+  if (nn && nn.value.trim().length > 0) return true;
+
+  // Apartado I: Selectores específicos
+  const selBaja = document.getElementById('selectAreaBaja');
+  if (selBaja && selBaja.value && selBaja.value !== '__OTRA__') return true;
+
+  const selCambio = document.getElementById('selectAreaCambioNombre');
+  if (selCambio && selCambio.value && selCambio.value !== '__OTRA__') return true;
+
+  const selDep = document.getElementById('selectAreaCambioDep');
+  if (selDep && selDep.value && selDep.value !== '__OTRA__') return true;
+
+  const selDest = document.getElementById('selectUnidadDestinoCambioDep');
+  if (selDest && selDest.value && selDest.value !== '__OTRA__') return true;
+
+  const uDestCustom = document.getElementById('unidadDestinoCambioDepCustom');
+  if (uDestCustom && uDestCustom.value.trim().length > 0) return true;
+
+  // Apartado II: Titulares de Unidad 2 / Área 2 (Destino / 5ta firma)
+  const t2Nom = document.getElementById('titularUnidad2Nombre');
+  if (t2Nom && t2Nom.value.trim().length > 0) return true;
+
+  const a2Nom = document.getElementById('titularArea2Nombre');
+  if (a2Nom && a2Nom.value.trim().length > 0) return true;
+
+  // Apartado III: Justificación y Motivos
+  const just = document.getElementById('justificacion');
+  if (just && just.value.trim().length > 0) return true;
+
+  const selJust = document.getElementById('selectJustificacionPredefinida');
+  if (selJust && selJust.value && selJust.value !== '__OTRO__') return true;
+
+  return false;
+}
+
+/**
+ * Muestra el modal de advertencia al intentar cambiar el tipo de movimiento
+ * habiendo datos ya capturados.
+ */
+function mostrarModalCambioMovimiento(nuevoVal) {
+  const modal = document.getElementById('modal-cambio-movimiento');
+  const spanNom = document.getElementById('modal-nuevo-movimiento-nombre');
+  if (spanNom) spanNom.textContent = nuevoVal;
+  if (modal) {
+    modal.classList.remove('hidden');
+  }
+}
+
+/**
+ * Cierra el modal de advertencia.
+ */
+function cerrarModalCambioMovimiento() {
+  const modal = document.getElementById('modal-cambio-movimiento');
+  if (modal) {
+    modal.classList.add('hidden');
+  }
+}
+
+/**
+ * Cancela el cambio de tipo de movimiento y preserva todos los datos intactos.
+ */
+function cancelarCambioMovimiento() {
+  cerrarModalCambioMovimiento();
+  const activeRadio = document.querySelector(`input[name="tipoMovimiento"][value="${currentTipoMovimiento}"]`);
+  if (activeRadio) {
+    activeRadio.checked = true;
+  }
+  pendingTipoMovimiento = null;
+}
+
+/**
+ * Confirma el cambio de tipo de movimiento: limpia los campos del movimiento
+ * anterior, ajusta el formato oficial y actualiza la vista previa.
+ */
+function confirmarCambioMovimiento() {
+  cerrarModalCambioMovimiento();
+  if (!pendingTipoMovimiento) return;
+
+  const nuevoMovimiento = pendingTipoMovimiento;
+  currentTipoMovimiento = nuevoMovimiento;
+
+  const newRadio = document.querySelector(`input[name="tipoMovimiento"][value="${nuevoMovimiento}"]`);
+  if (newRadio) {
+    newRadio.checked = true;
+  }
+
+  // Limpiar campos del movimiento anterior
+  limpiarCamposPorCambioMovimiento(nuevoMovimiento);
+
+  // Ejecutar el ajuste oficial del formulario para el nuevo tipo de movimiento
+  handleTipoMovimientoChange();
+
+  showToast(`Formato ajustado a "${nuevoMovimiento}". Se limpió la información anterior para evitar errores.`, 'info');
+  pendingTipoMovimiento = null;
+}
+
+/**
+ * Limpia la información residual de las áreas y justificación para adaptar
+ * el formulario al nuevo trámite sin inconsistencias.
+ */
+function limpiarCamposPorCambioMovimiento(nuevoMovimiento) {
+  // 1. Limpiar campos de texto del Apartado I
+  const ndInput = document.getElementById('nuevaDenominacion');
+  if (ndInput) ndInput.value = '';
+
+  const nnInput = document.getElementById('nuevoNombre');
+  if (nnInput) nnInput.value = '';
+
+  // 2. Limpiar selector de Área a dar de Baja y su combobox
+  const selBaja = document.getElementById('selectAreaBaja');
+  if (selBaja) {
+    selBaja.selectedIndex = 0;
+    selBaja.value = '';
+    const wrapper = selBaja.parentElement?.querySelector('.segey-combobox[data-for="selectAreaBaja"]') || selBaja.parentElement?.querySelector('.segey-combobox');
+    if (wrapper) {
+      const input = wrapper.querySelector('.combobox-input');
+      const clearBtn = wrapper.querySelector('.combobox-clear');
+      if (input) input.value = '';
+      if (clearBtn) clearBtn.classList.add('hidden');
+    }
+  }
+
+  // 3. Limpiar selector de Área que cambia de nombre y su combobox
+  const selCambio = document.getElementById('selectAreaCambioNombre');
+  if (selCambio) {
+    selCambio.selectedIndex = 0;
+    selCambio.value = '';
+    const wrapper = selCambio.parentElement?.querySelector('.segey-combobox[data-for="selectAreaCambioNombre"]') || selCambio.parentElement?.querySelector('.segey-combobox');
+    if (wrapper) {
+      const input = wrapper.querySelector('.combobox-input');
+      const clearBtn = wrapper.querySelector('.combobox-clear');
+      if (input) input.value = '';
+      if (clearBtn) clearBtn.classList.add('hidden');
+    }
+  }
+
+  // 4. Limpiar selector de Área a transferir y su combobox
+  const selDep = document.getElementById('selectAreaCambioDep');
+  if (selDep) {
+    selDep.selectedIndex = 0;
+    selDep.value = '';
+    const wrapper = selDep.parentElement?.querySelector('.segey-combobox[data-for="selectAreaCambioDep"]') || selDep.parentElement?.querySelector('.segey-combobox');
+    if (wrapper) {
+      const input = wrapper.querySelector('.combobox-input');
+      const clearBtn = wrapper.querySelector('.combobox-clear');
+      if (input) input.value = '';
+      if (clearBtn) clearBtn.classList.add('hidden');
+    }
+  }
+
+  // 5. Limpiar selector de Unidad Destino (Cambio Jerárquico) y su combobox
+  const selDest = document.getElementById('selectUnidadDestinoCambioDep');
+  if (selDest) {
+    selDest.selectedIndex = 0;
+    selDest.value = '';
+    const wrapper = selDest.parentElement?.querySelector('.segey-combobox[data-for="selectUnidadDestinoCambioDep"]') || selDest.parentElement?.querySelector('.segey-combobox');
+    if (wrapper) {
+      const input = wrapper.querySelector('.combobox-input');
+      const clearBtn = wrapper.querySelector('.combobox-clear');
+      if (input) input.value = '';
+      if (clearBtn) clearBtn.classList.add('hidden');
+    }
+  }
+  const uDestCustom = document.getElementById('unidadDestinoCambioDepCustom');
+  if (uDestCustom) uDestCustom.value = '';
+
+  // 6. Limpiar campos de Titulares de Unidad 2 y Área 2 (Destino / 5ta firma)
+  const t2Nom = document.getElementById('titularUnidad2Nombre');
+  if (t2Nom) t2Nom.value = '';
+  const t2Car = document.getElementById('titularUnidad2Cargo');
+  if (t2Car) t2Car.value = '';
+  const a2Nom = document.getElementById('titularArea2Nombre');
+  if (a2Nom) a2Nom.value = '';
+  const a2Car = document.getElementById('titularArea2Cargo');
+  if (a2Car) a2Car.value = '';
+
+  // 7. Limpiar Apartado III: Justificación y Motivos
+  const just = document.getElementById('justificacion');
+  if (just) just.value = '';
+  const selJust = document.getElementById('selectJustificacionPredefinida');
+  if (selJust) selJust.selectedIndex = 0;
+}
+
+window.cancelarCambioMovimiento = cancelarCambioMovimiento;
+window.confirmarCambioMovimiento = confirmarCambioMovimiento;
+window.hayInformacionMovimientoLlenada = hayInformacionMovimientoLlenada;
+window.limpiarCamposPorCambioMovimiento = limpiarCamposPorCambioMovimiento;
+
 /**
  * Controla la configuración dinámica del formulario según el Tipo de Movimiento:
  * - Para "Alta": el Titular de Área se captura manualmente (se oculta el dropdown selectTitularArea).
@@ -5016,6 +5259,7 @@ function handleTipoMovimientoChange() {
   const selectedRadio = document.querySelector('input[name="tipoMovimiento"]:checked');
   if (!selectedRadio) return;
   const val = selectedRadio.value;
+  currentTipoMovimiento = val;
 
   const containerT2 = document.getElementById('containerTitularUnidad2');
   const lblT2 = document.getElementById('lblTitularUnidad2');
@@ -6911,6 +7155,8 @@ function closeDetailsModal() {
 
 function resetForm() {
   editingRecordId = null;
+  currentTipoMovimiento = 'Alta';
+  pendingTipoMovimiento = null;
   try { localStorage.removeItem(AUTOSAVE_DRAFT_KEY); } catch(e){}
   const editingBanner = document.getElementById('editing-folio-banner');
   if (editingBanner) editingBanner.classList.add('hidden');
