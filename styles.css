@@ -83,8 +83,78 @@ body {
 
 /* Evitar saltos de página dentro de bloques críticos como firmas */
 .page-break-avoid {
-  page-break-inside: avoid;
-  break-inside: avoid;
+  page-break-inside: auto;
+  break-inside: auto;
+}
+
+/* Optimización para generación de PDF en navegador (html2pdf) */
+.official-sheet.generating-pdf {
+  min-height: auto !important;
+  height: auto !important;
+  max-width: 750px !important;
+  padding: 0 2px 0 2px !important;
+  margin: 0 auto !important;
+  box-shadow: none !important;
+  background-color: #ffffff !important;
+}
+
+.official-sheet.generating-pdf .official-header {
+  margin-bottom: 4px !important;
+}
+
+.official-sheet.generating-pdf .official-header table td {
+  padding: 3px 6px !important;
+}
+
+.official-sheet.generating-pdf .official-body {
+  font-size: 9.5pt !important;
+  line-height: 1.28 !important;
+}
+
+.official-sheet.generating-pdf .official-body > div {
+  margin-bottom: 4px !important;
+}
+
+.official-sheet.generating-pdf .official-body p {
+  margin-bottom: 2px !important;
+  line-height: 1.28 !important;
+}
+
+.official-sheet.generating-pdf .space-y-3 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 4px !important;
+}
+
+.official-sheet.generating-pdf .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 6px !important;
+}
+
+.official-sheet.generating-pdf .mt-8 {
+  margin-top: 8px !important;
+}
+
+.official-sheet.generating-pdf .pt-2 {
+  padding-top: 4px !important;
+}
+
+.official-sheet.generating-pdf .gap-8 {
+  gap: 1.25rem !important;
+}
+
+/* Ocultar el pie de página HTML plano para que jsPDF estampe el pie oficial dinámico y continuo */
+.official-sheet.generating-pdf .official-footer,
+#print-sheet.generating-pdf .official-footer,
+.generating-pdf .official-footer,
+.generating-pdf .official-footer-table,
+.official-footer.generating-pdf {
+  display: none !important;
+}
+
+.official-sheet.generating-pdf,
+.official-sheet.generating-pdf * {
+  page-break-inside: auto !important;
+  break-inside: auto !important;
+  page-break-before: auto !important;
+  break-before: auto !important;
 }
 
 /* Animación de carga para generación de PDF */
@@ -118,3 +188,76 @@ select[data-combobox-hidden="true"] {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* ==============================================================
+   REGLAS DE IMPRESIÓN NATIVA (@media print) VECTORIAL
+   ============================================================== */
+@media print {
+  @page {
+    size: letter portrait;
+    margin: 8mm 12mm 8mm 12mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Ocultar interfaz web (navegación, pestañas, botones, barra de herramientas) */
+  header,
+  nav,
+  aside,
+  button,
+  .no-print,
+  #tabs-header,
+  #tab-form,
+  #tab-registry,
+  #tab-catalog,
+  #toast-container,
+  #modal-container,
+  .sticky,
+  .fixed,
+  [data-no-print="true"] {
+    display: none !important;
+  }
+
+  #tab-preview {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    background: transparent !important;
+  }
+
+  #print-sheet {
+    display: block !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 8.8pt !important;
+    line-height: 1.22 !important;
+  }
+
+  .print-page {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .page-break-avoid,
+  .official-header,
+  .signatures-grid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
+
