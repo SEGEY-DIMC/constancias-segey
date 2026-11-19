@@ -83,6 +83,318 @@ function registrarAreaSubordinadaDinamica(areaPadre, subArea) {
   }
 }
 
+// Catálogo de respaldo directo para áreas subordinadas clave
+const FALLBACK_MAPA_SUBORDINADAS = {
+  "Subsecretaría de Educación Superior": [
+    "Coordinación de Atención a Escuelas Normales",
+    "Coordinación de Vinculación Académica y Proyectos",
+    "Coordinación de Área Académica",
+    "Coordinación de Área de Difusión y Extensión Educativa",
+    "Coordinación de Área de Investigación",
+    "Departamento de Incorporación y Revalidación de Estudios",
+    "Departamento de Instituciones Formadoras de Docentes y Actualización del Magisterio",
+    "Departamento de Instituciones Particulares y Supervisión",
+    "Departamento de Instituciones de Educación Superior Públicas",
+    "Departamento de Registro y Certificación de Servicio Profesional",
+    "Departamento de Validación Profesional",
+    "Dirección de Fortalecimiento de Educación Superior",
+    "Dirección de Servicio Profesional",
+    "Dirección del Centro de Actualización del Magisterio (CAM)",
+    "Subdirector Académico del Centro de Actualización del Magisterio (CAM)",
+    "Subdirector Administrativo del Centro de Actualización del Magisterio (CAM)",
+    "Subsecretaría de Educación Superior",
+    "Área de Atención a Colegios de Profesionistas",
+    "Área de Equivalencia a Estudios",
+    "Área de Formación y Actualización",
+    "Área de Formalización de Reconocimiento de Validez Oficial de Estudios (RVOE)",
+    "Área de Instituciones Educativas",
+    "Área de Instituciones Educativas Formadoras",
+    "Área de Planificación",
+    "Área de Procesos Estadísticos",
+    "Área de Proyectos",
+    "Área de Refrendo de Reconocimiento de Validez Oficial de Estudios (RVOE)",
+    "Área de Registro y Actualización de Instituciones",
+    "Área de Revalidación de Estudios",
+    "Área del Proceso de Incorporación de Reconocimiento de Validez Oficial de Estudios (RVOE)",
+    "Área del Registro Estatal de Profesionistas y Autorizaciones Temporales para Ejercer Actos Profesionales"
+  ],
+  "Subsecretaría de Educación Media Superior": [
+    "Coordinación de Área Institucional y Desarrollo Académico",
+    "Coordinación de Área de Acompañamiento Institucional para la Mejora Educativa",
+    "Coordinación de Área de Educación Física de Preparatorias Estatales y Particulares Incorporadas",
+    "Coordinación de Área de Escuelas Particulares",
+    "Coordinación de Área de Estrategias para la Cobertura y Prevención del Abandono",
+    "Coordinación de Área de Vinculación con Organismos Descentralizados",
+    "Coordinador Institucional",
+    "Departamento de Gestión Educativa y Fortalecimiento Académico",
+    "Departamento de Preparatoria Abierta",
+    "Departamento de Preparatorias Estatales y Particulares Incorporadas",
+    "Departamento de Telebachillerato Comunitario del Estado de Yucatán",
+    "Departamento de la Unidad Administrativa y Financiera",
+    "Dirección de Desarrollo Educativo y Proyectos Estratégicos",
+    "Dirección de Servicios Educativos de Media Superior",
+    "Subsecretaría de Educación Media Superior",
+    "Área Académica en el Proyecto de Preparatoria Abierta con el Instituto de Formación Policial del Estado de Yucatán",
+    "Área Administrativa y Financiera",
+    "Área Pedagógica",
+    "Área de Aplicación de Exámenes",
+    "Área de Atención al Usuario Matutino",
+    "Área de Atención al Usuario Vespertino",
+    "Área de Certificación",
+    "Área de Control Escolar",
+    "Área de Desarrollo Académico",
+    "Área de Gestión de Servicios y Proyectos Educativos",
+    "Área de Orientación Educativa y Tutorías",
+    "Área de Patrimonio",
+    "Área de Preparatorias Estatales",
+    "Área de Procesos de la Información y Tecnología",
+    "Área de Proyectos y Presupuestos",
+    "Área de Recursos Humanos",
+    "Área de Trámite y Control",
+    "Área de la Unidad de Trámite y Control Escolar",
+    "Área del Módulo de Preparatoria Abierta en el Centro de Alto Rendimiento Deportivo"
+  ],
+  "Subsecretaría de Educación Básica": [
+    "Coordinación General de Servicios Educativos",
+    "Coordinación General de Trámite y Control",
+    "Coordinación de Bienes",
+    "Coordinación de Contraloría Escolar",
+    "Coordinación de Desarrollo Artístico",
+    "Coordinación de Gestión Estratégica",
+    "Coordinación de Promoción y Reconocimiento Docente",
+    "Coordinación de Proyecto y Vinculación",
+    "Coordinación de Proyectos Estratégicos",
+    "Coordinación del Despacho de la Subsecretaría de Educación Básica",
+    "Coordinación del Programa de Atención al Alumnado en Situación de Extraedad (PAASE)",
+    "Coordinación para la Promoción y Reconocimiento Docente",
+    "Departamento de Administrativo",
+    "Departamento de Asesoría y Gestión de la Información",
+    "Departamento de Cultura Física y Deporte Escolar",
+    "Departamento de Desarrollo Organizacional",
+    "Departamento de Diseño de Materiales Educativos en Lengua Maya",
+    "Departamento de Educación Escolarizada y No Escolarizada",
+    "Departamento de Escuelas Particulares",
+    "Departamento de Fortalecimiento Docente",
+    "Departamento de Gestión y Trámite",
+    "Departamento de Lengua y Cultura Maya",
+    "Departamento de Secundarias Estatales",
+    "Departamento de Secundarias Federales",
+    "Departamento de Secundarias Técnicas",
+    "Departamento de Servicios Educativos",
+    "Departamento de Telesecundarias",
+    "Departamento de Trámite y Control",
+    "Departamento de para la Promoción y Reconocimiento Docente",
+    "Dirección de Educación Artística",
+    "Dirección de Educación Especial",
+    "Dirección de Educación Física",
+    "Dirección de Educación Indígena",
+    "Dirección de Educación Inicial",
+    "Dirección de Educación Preescolar",
+    "Dirección de Educación Primaria",
+    "Dirección de Educación Secundaria",
+    "Subjefatura Estatal",
+    "Subjefatura Federal",
+    "Subsecretaría de Educación Básica",
+    "Área Académica",
+    "Área Administrativa",
+    "Área Escolarizada de los Centros de Atención Infantil",
+    "Área No Escolarizada",
+    "Área Técnica Pedagógica",
+    "Área Técnico Escolar",
+    "Área de Bolsa de Trabajo",
+    "Área de Deporte Escolar",
+    "Área de Escuelas Particulares de Inicial",
+    "Área de Escuelas Particulares de Preescolar",
+    "Área de Escuelas Particulares de Primaria",
+    "Área de Escuelas Particulares de Secundaria",
+    "Área de Escuelas Particulares del Área Pedagógica",
+    "Área de Espacio de Interacción Educativa",
+    "Área de Eventos Cívicos Deportivos y Ceremonias",
+    "Área de Gestión",
+    "Área de Investigación e Innovación en Educación Física",
+    "Área de Programas de Estrategias Didácticas",
+    "Área de Programas y Proyectos",
+    "Área de Promoción de la Cultura Física en Escuelas de Educación Indígena",
+    "Área de Proyectos y Concursos",
+    "Área de Sectores",
+    "Área de Servicios Educativos",
+    "Área de Trámite y Control",
+    "Área de Trámites Educativos",
+    "Área del Espacio de Interacción Educativa",
+    "Área para la Promoción y Reconocimiento Docente"
+  ],
+  "Dirección de Fortalecimiento de Educación Superior": [
+    "Coordinación de Atención a Escuelas Normales",
+    "Coordinación de Área Académica",
+    "Coordinación de Área de Difusión y Extensión Educativa",
+    "Coordinación de Área de Investigación",
+    "Departamento de Instituciones Formadoras de Docentes y Actualización del Magisterio",
+    "Departamento de Instituciones Particulares y Supervisión",
+    "Departamento de Instituciones de Educación Superior Públicas",
+    "Dirección de Fortalecimiento de Educación Superior",
+    "Dirección del Centro de Actualización del Magisterio (CAM)",
+    "Subdirector Académico del Centro de Actualización del Magisterio (CAM)",
+    "Subdirector Administrativo del Centro de Actualización del Magisterio (CAM)"
+  ],
+  "Dirección de Servicios Educativos de Media Superior": [
+    "Coordinación de Área Institucional y Desarrollo Académico",
+    "Coordinación de Área de Educación Física de Preparatorias Estatales y Particulares Incorporadas",
+    "Coordinación de Área de Escuelas Particulares",
+    "Departamento de Preparatoria Abierta",
+    "Departamento de Preparatorias Estatales y Particulares Incorporadas",
+    "Departamento de Telebachillerato Comunitario del Estado de Yucatán",
+    "Dirección de Servicios Educativos de Media Superior",
+    "Área Académica en el Proyecto de Preparatoria Abierta con el Instituto de Formación Policial del Estado de Yucatán",
+    "Área Administrativa y Financiera",
+    "Área Pedagógica",
+    "Área de Aplicación de Exámenes",
+    "Área de Atención al Usuario Matutino",
+    "Área de Atención al Usuario Vespertino",
+    "Área de Certificación",
+    "Área de Control Escolar",
+    "Área de Desarrollo Académico",
+    "Área de Orientación Educativa y Tutorías",
+    "Área de Procesos de la Información y Tecnología",
+    "Área de Trámite y Control",
+    "Área de la Unidad de Trámite y Control Escolar",
+    "Área del Módulo de Preparatoria Abierta en el Centro de Alto Rendimiento Deportivo"
+  ],
+  "Dirección de Administración y Finanzas": [
+    "Coordinación de Archivos",
+    "Coordinación de Enlace con Direcciones y Otras Dependencias",
+    "Coordinación de Gestión y Revisión",
+    "Departamento de Administración de Personal de Contrato",
+    "Departamento de Adquisiciones",
+    "Departamento de Control Patrimonial",
+    "Departamento de Distribución de Libros de Texto y Mobiliario",
+    "Departamento de Gestión de Información, Capacitación y Ética",
+    "Departamento de Innovación y Mejora Continua",
+    "Departamento de Presupuestos",
+    "Departamento de Recursos Financieros",
+    "Departamento de Recursos Humanos",
+    "Departamento de Recursos Materiales y Servicios",
+    "Departamento de Sistemas de Gestión de Nómina",
+    "Dirección de Administración y Finanzas",
+    "Oficina de Administración de Plazas",
+    "Oficina de Captura de Nómina",
+    "Oficina de Enteros No Institucionales",
+    "Oficina de Formas Valoradas y Dispersión de Nómina",
+    "Oficina de Gasto Corriente y Recursos Propios",
+    "Oficina de Gestión",
+    "Oficina de Gestión de Gastos",
+    "Oficina de Glosa y Archivo",
+    "Oficina de Impuestos y Seguridad Social",
+    "Oficina de Informes Estadísticos",
+    "Oficina de Procesamiento de Nóminas Estatales",
+    "Oficina de Procesos de Nómina Universidad Pedagógica Nacional",
+    "Oficina de Productos Propios",
+    "Oficina de Programas Federales y Estatales",
+    "Oficina de Proveedores",
+    "Oficina de Reembolsos y Fondo Fijo",
+    "Oficina de Seguimiento y Control",
+    "Oficina de Servicios Médicos de Contrato de Apoyo",
+    "Oficina de Trámites y Prestaciones del Instituto de Seguridad y Servicios Sociales de los Trabajadores del Estado (ISSSTE)",
+    "Oficina de Validación de Nómina Estatal",
+    "Oficina de Validación de Nómina Federal",
+    "Oficina de Vinculación Administrativa",
+    "Oficina de Viáticos, Pasajes y Fondos Fijos de Productos Propios",
+    "Oficina del Sistema del Fondo de Aportaciones para la Nómina Educativa (FONE)",
+    "Subdirección de Organización y Administración de Personal",
+    "Subjefatura de Administración y de Compensación",
+    "Subjefatura de Almacén",
+    "Subjefatura de Asistencia y Previsión",
+    "Subjefatura de Capacitación",
+    "Subjefatura de Compras",
+    "Subjefatura de Contabilidad",
+    "Subjefatura de Contrataciones",
+    "Subjefatura de Contratos Adscritos a la Dirección General (ADG)",
+    "Subjefatura de Control Interno y Calidad",
+    "Subjefatura de Control Patrimonial Escolar",
+    "Subjefatura de Control Patrimonial de Oficinas",
+    "Subjefatura de Control de Nómina",
+    "Subjefatura de Control y Seguimiento Presupuestal",
+    "Subjefatura de Fiscalización",
+    "Subjefatura de Gestión Organizacional",
+    "Subjefatura de Gestión de Gastos",
+    "Subjefatura de Gestión de Información",
+    "Subjefatura de Gestión y Enteros No Institucionales de Nómina",
+    "Subjefatura de Información",
+    "Subjefatura de Mejora Regulatoria",
+    "Subjefatura de Pensión Alimenticia y Distribución de Cheques",
+    "Subjefatura de Personal Estatal",
+    "Subjefatura de Personal Federal",
+    "Subjefatura de Personal de Apoyo Estatal",
+    "Subjefatura de Personal de Apoyo Federal",
+    "Subjefatura de Personal de Contrato Estatal",
+    "Subjefatura de Personal de Contrato Federal",
+    "Subjefatura de Procedimientos de Adjudicación",
+    "Subjefatura de Procesos de Nómina",
+    "Subjefatura de Producción de Nómina Federal y Estatal",
+    "Subjefatura de Proyectos Transversales",
+    "Subjefatura de Servicios Generales",
+    "Subjefatura de Tesorería",
+    "Subjefatura de Transparencia",
+    "Subjefatura de Trámites",
+    "Área Administrativa",
+    "Área Administrativa de la Bodega de Bienes Reaprovechables y Bajas",
+    "Área de Actividades de Control",
+    "Área de Apoyo en la Entrega Recepción de Centros de Trabajo Educativos",
+    "Área de Apoyo en la Entrega Recepción de Unidades Administrativas",
+    "Área de Archivo",
+    "Área de Archivo de Expedientes de Personal Federal y Estatal",
+    "Área de Archivo de Trámite",
+    "Área de Archivo del Personal de Contrato",
+    "Área de Aseo y Vigilancia Edificio Amelia Azarcoya",
+    "Área de Aseo y Vigilancia Edificio Bellas Artes",
+    "Área de Aseo y Vigilancia Edificio Casa de la Historia de la Educación de Yucatán",
+    "Área de Aseo y Vigilancia Edificio Central",
+    "Área de Aseo y Vigilancia Edificio Centro de Actualización del Magisterio (CAM) Fénix",
+    "Área de Aseo y Vigilancia Edificio Ex Facultad de Psicología",
+    "Área de Aseo y Vigilancia Edificio Paulo Freire",
+    "Área de Aseo y Vigilancia Edificio Zamná y Edificio Espacio Común de la Subsecretaría de Educación Básica",
+    "Área de Asignación y Facturación",
+    "Área de Atención a Escuelas",
+    "Área de Bodega",
+    "Área de Boletos de Avión, Hospedajes y Eventos en Hoteles",
+    "Área de Contrataciones",
+    "Área de Contratos",
+    "Área de Control Interno y Calidad (A)",
+    "Área de Control Interno y Calidad (B)",
+    "Área de Control Presupuestal Interno y Organismos Públicos Descentralizados (OPD)",
+    "Área de Control de Bajas de Bienes",
+    "Área de Control de Bienes (A)",
+    "Área de Control de Bienes (B)",
+    "Área de Control y Seguimiento de Contratos de Mantenimientos y Servicios",
+    "Área de Correspondencia",
+    "Área de Distribución de Cafetería",
+    "Área de Existencias Físicas de Bodega de Libros de Texto y Mobiliario",
+    "Área de Gestión Organizacional",
+    "Área de Gráficos",
+    "Área de Libros de Texto",
+    "Área de Logística y Transporte",
+    "Área de Mantenimiento Vehicular",
+    "Área de Mantenimiento a Edificios",
+    "Área de Módulo de Información y Acceso al Público",
+    "Área de Prestaciones Sociales",
+    "Área de Presupuesto Estatal",
+    "Área de Presupuesto Federal",
+    "Área de Procesos Transversales",
+    "Área de Proyectos y Conservación de Áreas Administrativas",
+    "Área de Revisión de Centros de Trabajo Educativos",
+    "Área de Revisión de Unidades Administrativas",
+    "Área de Sistema de Información y Gestión Educativa (SIGE)",
+    "Área de Supervisión",
+    "Área de Traslados de Personal",
+    "Área de Trámite y Control de Facturación Sistema Integral de Recursos Materiales y Servicios (SIRMYS)",
+    "Área de Ventanilla Única",
+    "Área de la Bodega de Bienes Reaprovechables y Bajas",
+    "Área de la Distribución y Entrega de Vales de Gasolina",
+    "Área de la Unidad de Correspondencia",
+    "Área del Centro de Atención Digital (CAD)",
+    "Área del Sistema de Control Patrimonial (SCP)"
+  ]
+};
+
 function getGoogleScriptWebhookUrl() {
   return localStorage.getItem(WEBHOOK_KEY) || DEFAULT_WEBHOOK_URL;
 }
@@ -216,20 +528,22 @@ const DEFAULT_LAYOUT_HTML = `
     <div class="font-bold text-[11pt] mb-1 uppercase tracking-wide text-slate-900 text-left">I. TIPO DE CAMBIO QUE DETERMINA LA UNIDAD ADMINISTRATIVA</div>
     <div class="pl-3 space-y-1 text-[11pt] text-left">
       <p>Se determinó la modificación conforme a lo siguiente:</p>
-      <div class="flex flex-wrap gap-4 items-center my-1 text-[10.5pt]">
-        <span class="font-bold">• Tipo de movimiento:</span>
-        <span class="inline-flex items-center gap-1.5">
-          <span class="font-mono font-bold">{{chkAlta}}</span> Alta
-        </span>
-        <span class="inline-flex items-center gap-1.5">
-          <span class="font-mono font-bold">{{chkBaja}}</span> Baja
-        </span>
-        <span class="inline-flex items-center gap-1.5">
-          <span class="font-mono font-bold">{{chkNombre}}</span> Cambio de nombre
-        </span>
-        <span class="inline-flex items-center gap-1.5">
-          <span class="font-mono font-bold">{{chkJerarquica}}</span> Cambio de dependencia jerárquica
-        </span>
+      <div class="grid grid-cols-12 gap-1 items-center my-0.5 text-[10pt]">
+        <div class="col-span-12 sm:col-span-3 font-bold">• Tipo de movimiento:</div>
+        <div class="col-span-12 sm:col-span-9 flex flex-wrap gap-x-4 gap-y-1 items-center">
+          <span style="white-space: nowrap; display: inline-block;">
+            <span class="font-mono font-bold" style="white-space: pre;">{{chkAlta}}</span>&nbsp;Alta
+          </span>
+          <span style="white-space: nowrap; display: inline-block;">
+            <span class="font-mono font-bold" style="white-space: pre;">{{chkBaja}}</span>&nbsp;Baja
+          </span>
+          <span style="white-space: nowrap; display: inline-block;">
+            <span class="font-mono font-bold" style="white-space: pre;">{{chkNombre}}</span>&nbsp;Cambio de nombre
+          </span>
+          <span style="white-space: nowrap; display: inline-block;">
+            <span class="font-mono font-bold" style="white-space: pre;">{{chkJerarquica}}</span>&nbsp;Cambio de dependencia jerárquica
+          </span>
+        </div>
       </div>
       {{#if esCambioNombre}}
       <div>
@@ -806,6 +1120,32 @@ function setComboboxDisabled(selectId, disabled, customText) {
 }
 window.setComboboxDisabled = setComboboxDisabled;
 
+/**
+ * Sincroniza visualmente un combobox de búsqueda con el valor y texto de su <select> original.
+ * @param {string} selectId ID del elemento select.
+ */
+function syncComboboxFromSelect(selectId) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  if (typeof select._comboboxSync === 'function') {
+    select._comboboxSync();
+    return;
+  }
+  const wrapper = select.parentElement ? select.parentElement.querySelector(`.segey-combobox[data-for="${selectId}"]`) : null;
+  if (!wrapper) return;
+  const input = wrapper.querySelector('.combobox-input');
+  const clearBtn = wrapper.querySelector('.combobox-clear');
+  const selIdx = select.selectedIndex;
+  if (selIdx >= 0 && select.options[selIdx] && select.options[selIdx].value) {
+    if (input) input.value = select.options[selIdx].textContent.trim();
+    if (clearBtn) clearBtn.classList.remove('hidden');
+  } else {
+    if (input) input.value = '';
+    if (clearBtn) clearBtn.classList.add('hidden');
+  }
+}
+window.syncComboboxFromSelect = syncComboboxFromSelect;
+
 function initAllSearchableComboboxes() {
 
   initSearchableCombobox('areaNotificadoraSelect', 'Buscar área oficial o escribir...');
@@ -923,8 +1263,14 @@ function initStorage() {
       .then(res => res.json())
       .then(serverRecords => {
         if (Array.isArray(serverRecords) && serverRecords.length > 0) {
-          if (!records || records.length === 0) {
-            records = serverRecords;
+          let updatedFromDisk = false;
+          serverRecords.forEach(sr => {
+            if (sr.folio && !records.some(r => r.folio === sr.folio)) {
+              records.push(sr);
+              updatedFromDisk = true;
+            }
+          });
+          if (updatedFromDisk) {
             try { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); } catch (e) {}
             renderTable();
             updateStats();
@@ -1232,10 +1578,10 @@ function compileLayout(templateStr, data) {
     testigo1Linea: test1Nom ? (test1Car ? `${test1Nom} (${test1Car})` : test1Nom) : '',
     testigo2Linea: test2Nom ? (test2Car ? `${test2Nom} (${test2Car})` : test2Nom) : '',
     tipoMovimiento: tipo,
-    chkAlta: tipo === 'Alta' ? '[ X ]' : '[   ]',
-    chkBaja: tipo === 'Baja' ? '[ X ]' : '[   ]',
-    chkNombre: tipo === 'Cambio de nombre' ? '[ X ]' : '[   ]',
-    chkJerarquica: tipo === 'Cambio de dependencia jerárquica' ? '[ X ]' : '[   ]',
+    chkAlta: tipo === 'Alta' ? '[\u00A0X\u00A0]' : '[\u00A0\u00A0\u00A0]',
+    chkBaja: tipo === 'Baja' ? '[\u00A0X\u00A0]' : '[\u00A0\u00A0\u00A0]',
+    chkNombre: tipo === 'Cambio de nombre' ? '[\u00A0X\u00A0]' : '[\u00A0\u00A0\u00A0]',
+    chkJerarquica: tipo === 'Cambio de dependencia jerárquica' ? '[\u00A0X\u00A0]' : '[\u00A0\u00A0\u00A0]',
 
     esCambioDependenciaJerarquica: esCambioDependenciaJerarquica,
     noEsCambioDependenciaJerarquica: noEsCambioDependenciaJerarquica,
@@ -1808,14 +2154,16 @@ function updateEstatusPermissions(isAdmin) {
  */
 function initAreasNotificadoras() {
   const AREAS_VERSION_KEY = 'segey_areas_catalog_version';
-  const CURRENT_CATALOG_VERSION = '2026_11_areas_59_oficiales_v5';
+  const CURRENT_CATALOG_VERSION = '2026_11_areas_59_oficiales_v7';
 
   const savedVersion = localStorage.getItem(AREAS_VERSION_KEY);
   const saved = localStorage.getItem(AREAS_STORAGE_KEY);
 
   if (saved && savedVersion === CURRENT_CATALOG_VERSION) {
     try {
-      predefinedAreas = JSON.parse(saved).filter(a => DEFAULT_AREAS_NOTIFICADORAS.includes(a));
+      predefinedAreas = JSON.parse(saved)
+        .map(a => a.replace(/\s*\(Oficina Central\)/gi, '').trim())
+        .filter(a => DEFAULT_AREAS_NOTIFICADORAS.includes(a));
     } catch (e) {
       console.error('Error al cargar áreas predefinidas:', e);
       predefinedAreas = [];
@@ -2385,52 +2733,70 @@ function getAreasVinculadasPorUnidad(areaNombre) {
 
   if (!areaNombre || areaNombre === '__OTRA__') return [];
 
-  const subSet = new Set([areaNombre]);
+  // Limpiar cualquier residuo de "(Oficina Central)"
+  const cleanAreaNombre = areaNombre.replace(/\s*\(Oficina Central\)/gi, '').trim();
+  const subSet = new Set([cleanAreaNombre]);
+
+  const dictSubordinadas = (typeof window !== 'undefined' && window.MAPA_AREAS_SUBORDINADAS)
+    ? window.MAPA_AREAS_SUBORDINADAS
+    : (typeof MAPA_AREAS_SUBORDINADAS !== 'undefined' && MAPA_AREAS_SUBORDINADAS ? MAPA_AREAS_SUBORDINADAS : FALLBACK_MAPA_SUBORDINADAS);
 
   // 1. Buscar en el MAPA_AREAS_SUBORDINADAS oficial pre-compilado (0 segundos)
-  if (typeof MAPA_AREAS_SUBORDINADAS !== 'undefined' && MAPA_AREAS_SUBORDINADAS) {
-    if (MAPA_AREAS_SUBORDINADAS[areaNombre] && MAPA_AREAS_SUBORDINADAS[areaNombre].length > 0) {
-      MAPA_AREAS_SUBORDINADAS[areaNombre].forEach(a => subSet.add(a));
+  if (dictSubordinadas) {
+    if (dictSubordinadas[cleanAreaNombre] && dictSubordinadas[cleanAreaNombre].length > 0) {
+      dictSubordinadas[cleanAreaNombre].forEach(a => subSet.add(a));
     } else {
-      const norm = normalizeText(areaNombre);
-      const key = Object.keys(MAPA_AREAS_SUBORDINADAS).find(k => normalizeText(k) === norm);
-      if (key && MAPA_AREAS_SUBORDINADAS[key] && MAPA_AREAS_SUBORDINADAS[key].length > 0) {
-        MAPA_AREAS_SUBORDINADAS[key].forEach(a => subSet.add(a));
+      const norm = normalizeText(cleanAreaNombre);
+      const key = Object.keys(dictSubordinadas).find(k => normalizeText(k) === norm);
+      if (key && dictSubordinadas[key] && dictSubordinadas[key].length > 0) {
+        dictSubordinadas[key].forEach(a => subSet.add(a));
       } else {
-        const keyContain = Object.keys(MAPA_AREAS_SUBORDINADAS).find(k => {
+        const keyContain = Object.keys(dictSubordinadas).find(k => {
           const kn = normalizeText(k);
           return kn.includes(norm) || norm.includes(kn);
         });
-        if (keyContain && MAPA_AREAS_SUBORDINADAS[keyContain] && MAPA_AREAS_SUBORDINADAS[keyContain].length > 0) {
-          MAPA_AREAS_SUBORDINADAS[keyContain].forEach(a => subSet.add(a));
+        if (keyContain && dictSubordinadas[keyContain] && dictSubordinadas[keyContain].length > 0) {
+          dictSubordinadas[keyContain].forEach(a => subSet.add(a));
         }
       }
     }
   }
 
   // 2. Combinar con registros dinámicos sincronizados en memoria o localStorage
-  if (MAPA_AREAS_SUBORDINADAS_DINAMICO && MAPA_AREAS_SUBORDINADAS_DINAMICO[areaNombre] && MAPA_AREAS_SUBORDINADAS_DINAMICO[areaNombre].length > 0) {
-    MAPA_AREAS_SUBORDINADAS_DINAMICO[areaNombre].forEach(a => subSet.add(a));
+  if (MAPA_AREAS_SUBORDINADAS_DINAMICO && MAPA_AREAS_SUBORDINADAS_DINAMICO[cleanAreaNombre] && MAPA_AREAS_SUBORDINADAS_DINAMICO[cleanAreaNombre].length > 0) {
+    MAPA_AREAS_SUBORDINADAS_DINAMICO[cleanAreaNombre].forEach(a => subSet.add(a));
   }
 
-  // 3. Fallback inteligente si solo tiene el área misma: buscar en CATALOGO_ORGANICO_SEGEY para áreas o unidades nuevas
+  // 3. Fallback inteligente en CATALOGO_ORGANICO_SEGEY (soporta grupos y jerarquía completa)
   if (subSet.size <= 1 && typeof CATALOGO_ORGANICO_SEGEY !== 'undefined' && Array.isArray(CATALOGO_ORGANICO_SEGEY)) {
-    const org = CATALOGO_ORGANICO_SEGEY.find(u => u.unidad === areaNombre) ||
-                CATALOGO_ORGANICO_SEGEY.find(u => normalizeText(u.unidad) === normalizeText(areaNombre));
-    if (org && Array.isArray(org.subordinados) && org.subordinados.length > 0) {
-      org.subordinados.forEach(s => {
-        if (s.puesto && s.puesto !== 'None') {
-          const a = clientPuestoToAreaName(s.puesto);
-          if (a && a !== areaNombre && a.length > 4) {
-            subSet.add(a);
-          }
+    const normClean = normalizeText(cleanAreaNombre);
+    const orgs = CATALOGO_ORGANICO_SEGEY.filter(u => {
+      const uNorm = normalizeText(u.unidad.replace(/\s*\(Oficina Central\)/gi, ''));
+      const gNorm = normalizeText(u.grupo || '');
+      return uNorm === normClean || gNorm === normClean || uNorm.includes(normClean) || gNorm.includes(normClean);
+    });
+
+    if (orgs.length > 0) {
+      orgs.forEach(org => {
+        const cleanU = org.unidad.replace(/\s*\(Oficina Central\)/gi, '').trim();
+        if (cleanU && cleanU.length > 4) subSet.add(cleanU);
+        if (Array.isArray(org.subordinados)) {
+          org.subordinados.forEach(s => {
+            if (s.puesto && s.puesto !== 'None') {
+              const a = clientPuestoToAreaName(s.puesto);
+              if (a && a.length > 4) subSet.add(a);
+            }
+          });
         }
       });
-      subSet.forEach(item => registrarAreaSubordinadaDinamica(areaNombre, item));
+      subSet.forEach(item => registrarAreaSubordinadaDinamica(cleanAreaNombre, item));
     }
   }
 
-  return Array.from(subSet).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+  return Array.from(subSet)
+    .map(a => a.replace(/\s*\(Oficina Central\)/gi, '').trim())
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
 }
 
 /**
@@ -2834,6 +3200,8 @@ function vincularJefeInmediatoConArea(areaNombre) {
     }
 
     selectT2.disabled = false;
+    syncComboboxFromSelect('selectTitularUnidad2');
+    actualizarOpcionesTitularAreaPorJefe(jCar, jNom, areaNombre);
     renderDocument(getCurrentFormDataForPreview());
     return;
   }
@@ -2874,6 +3242,7 @@ function vincularJefeInmediatoConArea(areaNombre) {
   if (bestIdx !== -1) {
     selectT2.selectedIndex = bestIdx;
     handleTitularUnidad2Select(selectT2);
+    syncComboboxFromSelect('selectTitularUnidad2');
     showToast(`Jefe Inmediato vinculado: ${bestLabel}. Puedes cambiarlo o editarlo libremente en el Apartado II.`);
   }
 }
@@ -3043,9 +3412,7 @@ function gestionarAlertaVacanteGenerales(rol, esVacante, cargoSugerido = '', nom
     if (alertEl) alertEl.classList.remove('hidden');
 
     if (nomEl) {
-      if (!nomEl.value || nomEl.value.trim().toLowerCase() === 'vacante') {
-        nomEl.value = '';
-      }
+      nomEl.value = '';
       nomEl.placeholder = 'Puesto vacante en catálogo: capture el nombre de quien firma...';
       nomEl.classList.add('border-amber-400', 'focus:ring-amber-500', 'bg-amber-50/20');
       nomEl.classList.remove('border-slate-300');
@@ -3109,7 +3476,13 @@ function vincularTitularAreaConBaja(areaNombre) {
   if (titular) {
     if (titular.esVacante) {
       gestionarAlertaVacanteGenerales('area1', true, titular.cargo, '');
-      if (aNom) aNom.focus();
+      if (aNom) {
+        aNom.value = '';
+        aNom.focus();
+      }
+      if (aCar) {
+        aCar.value = titular.cargo;
+      }
 
       if (selectArea) {
         let matchedIdx = -1;
@@ -3135,11 +3508,14 @@ function vincularTitularAreaConBaja(areaNombre) {
             selectArea.selectedIndex = selectArea.options.length - 1;
           }
         }
+        syncComboboxFromSelect('selectTitularArea');
       }
 
       showToast(`Puesto oficial vinculado: ${titular.cargo}. Registrado como vacante en catálogo; capture el titular en funciones.`, 'info');
     } else if (titular.nombre) {
       gestionarAlertaVacanteGenerales('area1', false, titular.cargo, titular.nombre);
+      if (aNom) aNom.value = titular.nombre;
+      if (aCar) aCar.value = titular.cargo;
 
       // Sincronizar selectTitularArea si existe la opción coincidente
       if (selectArea) {
@@ -3181,6 +3557,7 @@ function vincularTitularAreaConBaja(areaNombre) {
             selectArea.selectedIndex = selectArea.options.length - 1;
           }
         }
+        syncComboboxFromSelect('selectTitularArea');
       }
 
       showToast(`Titular de Área precargado para Baja: ${titular.nombre}`);
@@ -3195,6 +3572,95 @@ window.vincularTitularAreaConBaja = vincularTitularAreaConBaja;
  * Actualiza automáticamente Titular de Unidad Administrativa (1) y filtra
  * el catálogo de Titular de Área de acuerdo al Área que Notifica o Elabora seleccionada arriba.
  */
+/**
+ * Filtra dinámicamente las opciones del selector de Titular de Área para que
+ * contenga estrictamente los puestos y personal vinculados al Jefe Inmediato seleccionado.
+ */
+function actualizarOpcionesTitularAreaPorJefe(jefeCargo, jefeNombre, areaTarget = '') {
+  const selectArea = document.getElementById('selectTitularArea');
+  const badgeArea = document.getElementById('badgeAreaSubordinados');
+  if (!selectArea) return false;
+
+  function norm(str) {
+    if (!str) return '';
+    return str.toString()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9 ]/g, ' ')
+      .trim();
+  }
+
+  const nJefeCar = norm(jefeCargo);
+  const nJefeNom = norm(jefeNombre);
+  const nAreaTarget = norm(areaTarget);
+
+  let subs = [];
+
+  const jerarquia = (typeof window !== 'undefined' && window.MAPA_JERARQUIA_JEFES) ? window.MAPA_JERARQUIA_JEFES : (typeof MAPA_JERARQUIA_JEFES !== 'undefined' ? MAPA_JERARQUIA_JEFES : []);
+
+  if (Array.isArray(jerarquia) && jerarquia.length > 0) {
+    subs = jerarquia.filter(node => {
+      const nodeJNom = norm(node.jefe_nombre);
+      const nodeJCar = norm(node.jefe_cargo);
+      if (nJefeNom && (nodeJNom === nJefeNom || (nodeJNom.length > 5 && nJefeNom.includes(nodeJNom)) || (nJefeNom.length > 5 && nodeJNom.includes(nJefeNom)))) {
+        return true;
+      }
+      if (nJefeCar && (nodeJCar === nJefeCar || (nodeJCar.length > 6 && nJefeCar.includes(nodeJCar)))) {
+        return true;
+      }
+      return false;
+    });
+  }
+
+  // Deduplicar puestos por titular_cargo + titular_nombre
+  const seen = new Set();
+  const uniqueSubs = [];
+  subs.forEach(s => {
+    const key = `${norm(s.titular_cargo)}|${norm(s.titular_nombre)}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      uniqueSubs.push(s);
+    }
+  });
+
+  if (uniqueSubs.length > 0) {
+    // Si hay un área objetivo (ej. bodega a dar de baja), priorizarla arriba
+    uniqueSubs.sort((a, b) => {
+      if (nAreaTarget) {
+        const aMatch = norm(a.titular_cargo).includes(nAreaTarget) || (a.norm_aliases && a.norm_aliases.some(al => al.includes(nAreaTarget)));
+        const bMatch = norm(b.titular_cargo).includes(nAreaTarget) || (b.norm_aliases && b.norm_aliases.some(al => al.includes(nAreaTarget)));
+        if (aMatch && !bMatch) return -1;
+        if (!aMatch && bMatch) return 1;
+      }
+      return (a.titular_cargo || '').localeCompare(b.titular_cargo || '', 'es', { sensitivity: 'base' });
+    });
+
+    let html = '<option value="">-- Seleccione Puesto y Subordinado del Área --</option>';
+    uniqueSubs.forEach((s, idx) => {
+      const rawNom = s.titular_nombre || '';
+      const esVac = !rawNom || rawNom === 'None' || norm(rawNom) === 'vacante';
+      const dispNom = esVac ? '[Vacante en catálogo / En funciones]' : rawNom;
+      const displayLabel = `${s.titular_cargo} — ${dispNom}`;
+      html += `<option value="sub_jefe_${idx}" data-nombre="${escapeHtml(esVac ? '' : rawNom)}" data-puesto="${escapeHtml(s.titular_cargo)}">${escapeHtml(displayLabel)}</option>`;
+    });
+
+    html += '<option value="__MANUAL__">✏️ + Ingresar otro puesto y nombre manualmente...</option>';
+    selectArea.innerHTML = html;
+
+    if (badgeArea) {
+      badgeArea.className = 'text-[10.5px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-semibold flex items-center gap-1';
+      badgeArea.innerHTML = `<i class="fa-solid fa-user-check text-emerald-600"></i> ${uniqueSubs.length} puestos vinculados al Jefe Inmediato`;
+    }
+
+    syncComboboxFromSelect('selectTitularArea');
+    return true;
+  }
+
+  return false;
+}
+window.actualizarOpcionesTitularAreaPorJefe = actualizarOpcionesTitularAreaPorJefe;
+
 function actualizarTitularesPorArea(areaNombre) {
   if (typeof CATALOGO_ORGANICO_SEGEY === 'undefined' || !areaNombre) return;
 
@@ -3768,6 +4234,13 @@ function handleTitularUnidad1Select(selectElem) {
     const car = opt.dataset.cargo || '';
     const esVac = !nom || nom.toLowerCase().trim() === 'vacante';
     gestionarAlertaVacanteGenerales('titular1', esVac, car, nom);
+    if (u1Nom) {
+      u1Nom.value = esVac ? '' : nom;
+      if (esVac) u1Nom.focus();
+    }
+    if (u1Car) {
+      u1Car.value = car;
+    }
   }
 
   // Actualizar listas desplegables de Testigos omitiendo al Titular seleccionado
@@ -3778,6 +4251,10 @@ function handleTitularUnidad1Select(selectElem) {
 function handleTitularUnidad2Select(selectElem) {
   if (!selectElem) return;
   const val = selectElem.value;
+  if (!val) {
+    gestionarAlertaVacanteGenerales('titular2', false);
+    return;
+  }
   const opt = selectElem.options[selectElem.selectedIndex];
   const u2Nom = document.getElementById('titularUnidad2Nombre');
   const u2Car = document.getElementById('titularUnidad2Cargo');
@@ -3796,6 +4273,21 @@ function handleTitularUnidad2Select(selectElem) {
     const car = opt.dataset.cargo || '';
     const esVac = !nom || nom.toLowerCase().trim() === 'vacante';
     gestionarAlertaVacanteGenerales('titular2', esVac, car, nom);
+    if (u2Nom) {
+      u2Nom.value = esVac ? '' : nom;
+      if (esVac) u2Nom.focus();
+    }
+    if (u2Car) {
+      u2Car.value = car;
+    }
+    if (isJefeInmediato && (nom || car)) {
+      actualizarOpcionesTitularAreaPorJefe(car, nom);
+    }
+    if (esVac) {
+      showToast(`Puesto oficial vacante: ${car}. Especifique el nombre completo de la persona en funciones.`, 'info');
+    } else {
+      showToast(`Jefe Inmediato seleccionado: ${nom}`);
+    }
   }
 
   // Si es Cambio de dependencia jerárquica, sincronizar lista de Titular de Área (2) con la unidad de destino y el selector superior de Apartado I
@@ -3815,6 +4307,10 @@ function handleTitularUnidad2Select(selectElem) {
 function handleTitularAreaSelect(selectElem) {
   if (!selectElem) return;
   const val = selectElem.value;
+  if (!val) {
+    gestionarAlertaVacanteGenerales('area1', false);
+    return;
+  }
   const selectedOption = selectElem.options[selectElem.selectedIndex];
   const aNom = document.getElementById('titularAreaNombre');
   const aCar = document.getElementById('titularAreaCargo');
@@ -3829,6 +4325,18 @@ function handleTitularAreaSelect(selectElem) {
     const pue = selectedOption.dataset.puesto || '';
     const esVac = !nom || nom.toLowerCase().trim() === 'vacante';
     gestionarAlertaVacanteGenerales('area1', esVac, pue, nom);
+    if (aNom) {
+      aNom.value = esVac ? '' : nom;
+      if (esVac) aNom.focus();
+    }
+    if (aCar) {
+      aCar.value = pue;
+    }
+    if (esVac) {
+      showToast(`Puesto oficial vacante: ${pue}. Especifique el nombre completo de la persona en funciones.`, 'info');
+    } else {
+      showToast(`Titular de Área seleccionado: ${nom}`);
+    }
   }
 
   renderDocument(getCurrentFormDataForPreview());
@@ -3902,6 +4410,13 @@ function handleTitularArea2Select(selectElem) {
     const pue = selectedOption.dataset.puesto || '';
     const esVac = !nom || nom.toLowerCase().trim() === 'vacante';
     gestionarAlertaVacanteGenerales('area2', esVac, pue, nom);
+    if (a2Nom) {
+      a2Nom.value = esVac ? '' : nom;
+      if (esVac) a2Nom.focus();
+    }
+    if (a2Car) {
+      a2Car.value = pue;
+    }
   }
 
   renderDocument(getCurrentFormDataForPreview());
@@ -5423,17 +5938,50 @@ function limpiarCamposPorCambioMovimiento(nuevoMovimiento) {
   const uDestCustom = document.getElementById('unidadDestinoCambioDepCustom');
   if (uDestCustom) uDestCustom.value = '';
 
-  // 6. Limpiar campos de Titulares de Unidad 2 y Área 2 (Destino / 5ta firma)
+  // 6. Limpiar campos de Jefe Inmediato / Titular (2) y su combobox
   const t2Nom = document.getElementById('titularUnidad2Nombre');
   if (t2Nom) t2Nom.value = '';
   const t2Car = document.getElementById('titularUnidad2Cargo');
   if (t2Car) t2Car.value = '';
+  const selT2 = document.getElementById('selectTitularUnidad2');
+  if (selT2) {
+    selT2.selectedIndex = 0;
+    selT2.value = '';
+    if (typeof syncComboboxFromSelect === 'function') syncComboboxFromSelect('selectTitularUnidad2');
+  }
+
+  // 7. Limpiar campos de Titular de Área (1) y su combobox
+  const aNom = document.getElementById('titularAreaNombre');
+  if (aNom) aNom.value = '';
+  const aCar = document.getElementById('titularAreaCargo');
+  if (aCar) aCar.value = '';
+  const selArea = document.getElementById('selectTitularArea');
+  if (selArea) {
+    selArea.selectedIndex = 0;
+    selArea.value = '';
+    if (typeof syncComboboxFromSelect === 'function') syncComboboxFromSelect('selectTitularArea');
+  }
+
+  // 8. Limpiar campos de Titulares de Área 2 (Destino / 5ta firma)
   const a2Nom = document.getElementById('titularArea2Nombre');
   if (a2Nom) a2Nom.value = '';
   const a2Car = document.getElementById('titularArea2Cargo');
   if (a2Car) a2Car.value = '';
+  const selArea2 = document.getElementById('selectTitularArea2');
+  if (selArea2) {
+    selArea2.selectedIndex = 0;
+    selArea2.value = '';
+    if (typeof syncComboboxFromSelect === 'function') syncComboboxFromSelect('selectTitularArea2');
+  }
 
-  // 7. Limpiar Apartado III: Justificación y Motivos
+  // 9. Desactivar alertas de puestos vacantes en el formulario
+  if (typeof gestionarAlertaVacanteGenerales === 'function') {
+    gestionarAlertaVacanteGenerales('area1', false);
+    gestionarAlertaVacanteGenerales('titular2', false);
+    gestionarAlertaVacanteGenerales('area2', false);
+  }
+
+  // 10. Limpiar Apartado III: Justificación y Motivos
   const just = document.getElementById('justificacion');
   if (just) just.value = '';
   const selJust = document.getElementById('selectJustificacionPredefinida');
@@ -5913,9 +6461,13 @@ function switchTab(tabId, preserveRecord = false) {
 
   // Si se ingresa a la Vista del Documento sin solicitar un registro histórico específico,
   // compilar y renderizar de inmediato la información actual que se está llenando en el formulario
-  if (tabId === 'tab-preview' && !preserveRecord) {
-    const liveFormData = getCurrentFormDataForPreview();
-    renderDocument(liveFormData);
+  if (tabId === 'tab-preview') {
+    if (!preserveRecord) {
+      const liveFormData = getCurrentFormDataForPreview();
+      renderDocument(liveFormData);
+    } else {
+      actualizarBannerVistaPreviaIncompleta();
+    }
   }
 
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
@@ -5958,6 +6510,20 @@ function handleFormSubmit(event) {
   }
 
   if (isSubmittingForm) return;
+
+  const estatusActual = document.getElementById('estatus')?.value || 'Generada para Firma';
+  const esBorrador = (estatusActual === 'Borrador');
+
+  // Validación institucional de campos obligatorios (requerida para emitir constancia, opcional para borradores preliminares)
+  if (!esBorrador) {
+    const camposVacios = obtenerCamposVaciosFormulario();
+    if (camposVacios.length > 0) {
+      mostrarModalCamposVacios(camposVacios);
+      showToast(`No se puede guardar: Complete los ${camposVacios.length} campos vacíos en el formulario.`, 'error');
+      return;
+    }
+  }
+
   isSubmittingForm = true;
 
   const areaNotificadora = document.getElementById('areaNotificadora').value.trim();
@@ -6063,21 +6629,15 @@ function handleFormSubmit(event) {
   // Control de Estatus y Trazabilidad al Guardar
   if (editingRecordId) {
     if (estatus !== 'Modificación' && estatus !== 'Borrador' && estatus !== 'Firmada y Concluida') {
-      alert(`⚠️ Para guardar modificaciones en una constancia existente (${folio}), es necesario cambiar el "Estatus del Trámite" a "Modificación" en el Apartado IV para mantener la trazabilidad de control.`);
+      estatus = 'Modificación';
       const estSelect = document.getElementById('estatus');
-      if (estSelect) {
-        estSelect.focus();
-        estSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-      isSubmittingForm = false;
-      return;
+      if (estSelect) estSelect.value = 'Modificación';
     }
   } else {
     if (!isAdminLoggedIn() && estatus === 'Modificación') {
-      alert('El estatus "Modificación" es exclusivo para constancias ya emitidas que fueron buscadas por folio. Para un nuevo trámite elija "Generada (Listo para Firmar)" o "Borrador".');
-      document.getElementById('estatus').value = 'Generada para Firma';
-      isSubmittingForm = false;
-      return;
+      estatus = 'Generada para Firma';
+      const estSelect = document.getElementById('estatus');
+      if (estSelect) estSelect.value = 'Generada para Firma';
     }
   }
 
@@ -6367,6 +6927,418 @@ function formatPersonText(nombre, cargo) {
 }
 
 /**
+ * =========================================================================
+ * VALIDACIÓN INSTITUCIONAL DE FORMULARIO COMPLETO PARA GENERACIÓN DE PDF
+ * =========================================================================
+ */
+
+/**
+ * Obtiene la lista detallada de campos obligatorios vacíos o pendientes en el formulario del formato.
+ * @returns {Array<{id: string, seccion: string, nombre: string, detalle: string}>}
+ */
+function obtenerCamposVaciosFormulario() {
+  const camposVacios = [];
+
+  // SECCIÓN 0: REGISTRO Y CONTROL DEL ÁREA NOTIFICADORA
+  const areaNotificadora = (document.getElementById('areaNotificadora')?.value || '').trim();
+  const areaSelect = document.getElementById('areaNotificadoraSelect');
+  if (!areaNotificadora || (areaSelect && areaSelect.value === '__OTRA__' && !document.getElementById('areaNotificadoraCustom')?.value.trim())) {
+    camposVacios.push({
+      id: (areaSelect && areaSelect.value === '__OTRA__') ? 'areaNotificadoraCustom' : 'areaNotificadoraSelect',
+      seccion: 'Sección 0: Área Notificadora',
+      nombre: 'Área que Notifica o Elabora',
+      detalle: 'Seleccione o capture el área o departamento que solicita la constancia.'
+    });
+  }
+
+  const responsableCaptura = (document.getElementById('responsableCaptura')?.value || '').trim();
+  const respSelect = document.getElementById('selectResponsableCaptura');
+  if (!responsableCaptura || (respSelect && respSelect.value === '__MANUAL__' && !document.getElementById('responsableCapturaCustom')?.value.trim())) {
+    camposVacios.push({
+      id: (respSelect && respSelect.value === '__MANUAL__') ? 'responsableCapturaCustom' : 'selectResponsableCaptura',
+      seccion: 'Sección 0: Área Notificadora',
+      nombre: 'Responsable de Captura / Contacto',
+      detalle: 'Seleccione el enlace oficial asignado o capture el nombre completo.'
+    });
+  }
+
+  // APARTADO I: TIPO DE CAMBIO QUE DETERMINA LA UNIDAD ADMINISTRATIVA
+  const tipoMovimientoEl = document.querySelector('input[name="tipoMovimiento"]:checked');
+  const tipoMovimiento = tipoMovimientoEl ? tipoMovimientoEl.value : null;
+
+  if (!tipoMovimiento) {
+    camposVacios.push({
+      id: 'movimiento-alta',
+      seccion: 'Apartado I: Tipo de Cambio',
+      nombre: 'Tipo de Movimiento Solicitado',
+      detalle: 'Seleccione Alta, Baja, Cambio de nombre o Cambio de dependencia jerárquica.'
+    });
+  } else {
+    const ndVal = (document.getElementById('nuevaDenominacion')?.value || '').trim();
+
+    if (tipoMovimiento === 'Alta') {
+      if (!ndVal) {
+        camposVacios.push({
+          id: 'nuevaDenominacion',
+          seccion: 'Apartado I: Tipo de Cambio',
+          nombre: 'Nombre del Área o Adscripción (Alta)',
+          detalle: 'Especifique la denominación oficial del nuevo departamento o puesto a crear.'
+        });
+      }
+    } else if (tipoMovimiento === 'Baja') {
+      if (!ndVal) {
+        camposVacios.push({
+          id: 'selectAreaBaja',
+          seccion: 'Apartado I: Tipo de Cambio',
+          nombre: 'Área o Departamento a dar de Baja',
+          detalle: 'Seleccione del catálogo oficial el área o adscripción a dar de baja.'
+        });
+      }
+    } else if (tipoMovimiento === 'Cambio de nombre') {
+      if (!ndVal) {
+        camposVacios.push({
+          id: 'selectAreaCambioNombre',
+          seccion: 'Apartado I: Tipo de Cambio',
+          nombre: 'Nombre actual del Área o Adscripción',
+          detalle: 'Seleccione el área actual que cambiará de denominación.'
+        });
+      }
+      const nuevoNombre = (document.getElementById('nuevoNombre')?.value || '').trim();
+      if (!nuevoNombre) {
+        camposVacios.push({
+          id: 'nuevoNombre',
+          seccion: 'Apartado I: Tipo de Cambio',
+          nombre: 'Nuevo Nombre o Denominación Propuesta',
+          detalle: 'Especifique con precisión el nuevo nombre autorizado para el área.'
+        });
+      }
+    } else if (tipoMovimiento === 'Cambio de dependencia jerárquica') {
+      if (!ndVal) {
+        camposVacios.push({
+          id: 'selectAreaCambioDep',
+          seccion: 'Apartado I: Tipo de Cambio',
+          nombre: 'Área Oficial a Transferir / Reubicar',
+          detalle: 'Seleccione el área subordinada que cambiará de dependencia.'
+        });
+      }
+      const destSelect = document.getElementById('selectUnidadDestinoCambioDep');
+      if (!destSelect || !destSelect.value || destSelect.value.trim() === '') {
+        camposVacios.push({
+          id: 'selectUnidadDestinoCambioDep',
+          seccion: 'Apartado I: Tipo de Cambio',
+          nombre: 'Dependencia Jerárquica de Destino (Unidad Administrativa)',
+          detalle: 'Seleccione la unidad administrativa oficial a donde se transfiere el área.'
+        });
+      }
+    }
+  }
+
+  // APARTADO II: GENERALES
+  const municipio = (document.getElementById('municipio')?.value || '').trim();
+  if (!municipio) {
+    camposVacios.push({
+      id: 'municipio',
+      seccion: 'Apartado II: Generales',
+      nombre: 'Municipio de Yucatán',
+      detalle: 'Indique el municipio donde se formaliza la constancia (ej. Mérida).'
+    });
+  }
+
+  const fechaActa = (document.getElementById('fechaActa')?.value || '').trim();
+  if (!fechaActa) {
+    camposVacios.push({
+      id: 'fechaActa',
+      seccion: 'Apartado II: Generales',
+      nombre: 'Fecha de Constancia',
+      detalle: 'Capture la fecha oficial de la constancia.'
+    });
+  }
+
+  const horaActa = (document.getElementById('horaActa')?.value || '').trim();
+  if (!horaActa) {
+    camposVacios.push({
+      id: 'horaActa',
+      seccion: 'Apartado II: Generales',
+      nombre: 'Hora y Minutos',
+      detalle: 'Especifique la hora de la constancia (HH:MM).'
+    });
+  }
+
+  const inmueble = (document.getElementById('inmueble')?.value || '').trim();
+  if (!inmueble) {
+    camposVacios.push({
+      id: 'inmueble',
+      seccion: 'Apartado II: Generales',
+      nombre: 'Inmueble que Ocupa',
+      detalle: 'Indique el edificio, sede o domicilio conocido de la unidad.'
+    });
+  }
+
+  // APARTADO II: REPRESENTANTES (FIRMANTES)
+  // 1) Titular de Unidad Administrativa (1)
+  const u1Nom = (document.getElementById('titularUnidad1Nombre')?.value || '').trim();
+  const u1Car = (document.getElementById('titularUnidad1Cargo')?.value || '').trim();
+  if (!u1Nom || u1Nom.toLowerCase() === 'vacante') {
+    camposVacios.push({
+      id: 'titularUnidad1Nombre',
+      seccion: 'Apartado II: Firmantes',
+      nombre: !u1Nom ? 'Titular de Unidad Administrativa (1) - Nombre Completo' : 'Titular de Unidad Administrativa (1) - Nombre en funciones (está como Vacante)',
+      detalle: !u1Nom ? 'Capture el nombre de la persona titular de la unidad administrativa.' : 'No se permite firmar como "Vacante". Ingrese el nombre de la persona en funciones.'
+    });
+  }
+  if (!u1Car) {
+    camposVacios.push({
+      id: 'titularUnidad1Cargo',
+      seccion: 'Apartado II: Firmantes',
+      nombre: 'Titular de Unidad Administrativa (1) - Cargo o Puesto',
+      detalle: 'Especifique el cargo oficial del titular de la unidad.'
+    });
+  }
+
+  // 2) Jefe Inmediato / Titular de Unidad Administrativa (2)
+  const isCambioJerarquico = (tipoMovimiento === 'Cambio de dependencia jerárquica');
+  const u2Nom = (document.getElementById('titularUnidad2Nombre')?.value || '').trim();
+  const u2Car = (document.getElementById('titularUnidad2Cargo')?.value || '').trim();
+
+  if (isCambioJerarquico) {
+    if (!u2Nom || u2Nom.toLowerCase() === 'vacante') {
+      camposVacios.push({
+        id: 'titularUnidad2Nombre',
+        seccion: 'Apartado II: Firmantes',
+        nombre: !u2Nom ? 'Titular de Unidad Administrativa de Destino (2) - Nombre Completo' : 'Titular de Unidad Administrativa de Destino (2) - Nombre en funciones (está como Vacante)',
+        detalle: !u2Nom ? 'Capture el nombre del titular de la unidad de destino.' : 'Ingrese el nombre de la persona en funciones asignada para la firma.'
+      });
+    }
+    if (!u2Car) {
+      camposVacios.push({
+        id: 'titularUnidad2Cargo',
+        seccion: 'Apartado II: Firmantes',
+        nombre: 'Titular de Unidad Administrativa de Destino (2) - Cargo o Puesto',
+        detalle: 'Especifique el cargo del titular de la unidad de destino.'
+      });
+    }
+  } else {
+    if (!u2Nom || u2Nom.toLowerCase() === 'vacante') {
+      camposVacios.push({
+        id: 'titularUnidad2Nombre',
+        seccion: 'Apartado II: Firmantes',
+        nombre: !u2Nom ? 'Jefe Inmediato - Nombre Completo' : 'Jefe Inmediato - Nombre en funciones (está como Vacante)',
+        detalle: !u2Nom ? 'Capture el nombre de la persona designada como jefe inmediato.' : 'Ingrese el nombre de la persona en funciones para la firma del jefe inmediato.'
+      });
+    }
+    if (!u2Car) {
+      camposVacios.push({
+        id: 'titularUnidad2Cargo',
+        seccion: 'Apartado II: Firmantes',
+        nombre: 'Jefe Inmediato - Cargo o Puesto',
+        detalle: 'Especifique el cargo del jefe inmediato de la unidad.'
+      });
+    }
+  }
+
+  // 3) Titular de Área
+  const areaNom = (document.getElementById('titularAreaNombre')?.value || '').trim();
+  const areaCar = (document.getElementById('titularAreaCargo')?.value || '').trim();
+  if (!areaNom || areaNom.toLowerCase() === 'vacante') {
+    camposVacios.push({
+      id: 'titularAreaNombre',
+      seccion: 'Apartado II: Firmantes',
+      nombre: !areaNom ? 'Titular de Área - Nombre Completo' : 'Titular de Área - Nombre en funciones (está como Vacante)',
+      detalle: !areaNom ? 'Capture el nombre de la persona titular del área involucrada.' : 'No se puede firmar como "Vacante". Ingrese el nombre de la persona en funciones.'
+    });
+  }
+  if (!areaCar) {
+    camposVacios.push({
+      id: 'titularAreaCargo',
+      seccion: 'Apartado II: Firmantes',
+      nombre: 'Titular de Área - Cargo o Puesto',
+      detalle: 'Especifique el cargo o puesto del titular del área.'
+    });
+  }
+
+  // 4) Testigo (1)
+  const t1Nom = (document.getElementById('testigo1Nombre')?.value || '').trim();
+  const t1Car = (document.getElementById('testigo1Cargo')?.value || '').trim();
+  if (!t1Nom) {
+    camposVacios.push({
+      id: 'testigo1Nombre',
+      seccion: 'Apartado II: Firmantes',
+      nombre: 'Testigo (1) - Nombre Completo',
+      detalle: 'Capture el nombre completo del primer testigo.'
+    });
+  }
+  if (!t1Car) {
+    camposVacios.push({
+      id: 'testigo1Cargo',
+      seccion: 'Apartado II: Firmantes',
+      nombre: 'Testigo (1) - Cargo o Adscripción',
+      detalle: 'Especifique el cargo o adscripción del primer testigo.'
+    });
+  }
+
+  // 5) Testigo (2) (Exclusivo para Cambio de Dependencia Jerárquica)
+  if (isCambioJerarquico) {
+    const t2Nom = (document.getElementById('testigo2Nombre')?.value || '').trim();
+    const t2Car = (document.getElementById('testigo2Cargo')?.value || '').trim();
+    if (!t2Nom) {
+      camposVacios.push({
+        id: 'testigo2Nombre',
+        seccion: 'Apartado II: Firmantes',
+        nombre: 'Testigo (2) - Nombre Completo',
+        detalle: 'Capture el nombre completo del segundo testigo (requerido para cambio de dependencia).'
+      });
+    }
+    if (!t2Car) {
+      camposVacios.push({
+        id: 'testigo2Cargo',
+        seccion: 'Apartado II: Firmantes',
+        nombre: 'Testigo (2) - Cargo o Adscripción',
+        detalle: 'Especifique el cargo o adscripción del segundo testigo.'
+      });
+    }
+  }
+
+  // APARTADO III: JUSTIFICACIÓN Y MOTIVOS DEL CAMBIO
+  const justificacion = (document.getElementById('justificacion')?.value || '').trim();
+  if (!justificacion) {
+    camposVacios.push({
+      id: 'justificacion',
+      seccion: 'Apartado III: Justificación',
+      nombre: 'Justificación y Motivos del Cambio',
+      detalle: 'Detalle las razones normativas, estructurales o presupuestales que sustentan la modificación.'
+    });
+  }
+
+  return camposVacios;
+}
+
+/**
+ * Muestra el modal informativo con el desglose de campos vacíos.
+ */
+function mostrarModalCamposVacios(camposVacios) {
+  if (!camposVacios || camposVacios.length === 0) return;
+
+  const modal = document.getElementById('modal-campos-vacios');
+  if (!modal) {
+    const listaTxt = camposVacios.map((c, i) => `${i + 1}. [${c.seccion}] ${c.nombre}: ${c.detalle}`).join('\n');
+    alert(`⚠️ DESCARGA DE PDF BLOQUEADA\n\nNo se puede generar ni descargar la constancia oficial porque faltan los siguientes ${camposVacios.length} campo(s) obligatorio(s) en el formulario:\n\n${listaTxt}\n\nPor favor complete los campos requeridos.`);
+    return;
+  }
+
+  const badgeTotal = document.getElementById('badge-total-campos-vacios');
+  if (badgeTotal) {
+    badgeTotal.textContent = `${camposVacios.length} pendiente${camposVacios.length > 1 ? 's' : ''}`;
+  }
+
+  const contenedorLista = document.getElementById('lista-campos-vacios');
+  if (contenedorLista) {
+    contenedorLista.innerHTML = camposVacios.map((c, idx) => `
+      <div onclick="irACampoVacioEspecifico('${c.id}')"
+        class="group p-2.5 rounded-xl border border-rose-200/80 bg-rose-50/60 hover:bg-rose-100 hover:border-rose-300 transition-all cursor-pointer flex items-start gap-2.5 shadow-2xs">
+        <span class="w-5 h-5 rounded-full bg-rose-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5 shadow-2xs">
+          ${idx + 1}
+        </span>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-1.5 flex-wrap mb-0.5">
+            <span class="text-[9.5px] font-bold uppercase tracking-wider bg-white text-rose-800 px-1.5 py-0.5 rounded border border-rose-200">
+              ${c.seccion}
+            </span>
+            <span class="text-xs font-bold text-slate-800 group-hover:text-segey-950 transition">
+              ${c.nombre}
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-600 leading-tight">
+            ${c.detalle}
+          </p>
+        </div>
+        <div class="flex items-center text-xs text-rose-500 group-hover:text-rose-700 transition mt-1 font-semibold gap-1 shrink-0">
+          <span class="hidden sm:inline text-[10px]">Llenar</span>
+          <i class="fa-solid fa-arrow-right text-[11px]"></i>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  modal.classList.remove('hidden');
+}
+
+/**
+ * Cierra el modal de campos vacíos.
+ */
+function cerrarModalCamposVacios() {
+  const modal = document.getElementById('modal-campos-vacios');
+  if (modal) modal.classList.add('hidden');
+}
+
+/**
+ * Cierra el modal y enfoca el primer campo vacío en el formulario.
+ */
+function irACompletarCamposVacios() {
+  cerrarModalCamposVacios();
+  const camposVacios = obtenerCamposVaciosFormulario();
+  if (camposVacios.length > 0) {
+    irACampoVacioEspecifico(camposVacios[0].id);
+  } else {
+    switchTab('tab-form');
+  }
+}
+
+/**
+ * Lleva la pantalla directamente a un campo específico del formulario y lo resalta.
+ */
+function irACampoVacioEspecifico(elementId) {
+  cerrarModalCamposVacios();
+  switchTab('tab-form');
+
+  setTimeout(() => {
+    let el = document.getElementById(elementId);
+    // Si el elemento es un select con combobox buscador oculto, enfocar el input de búsqueda visible
+    if (el && el.tagName === 'SELECT' && el.getAttribute('data-combobox-hidden') === 'true') {
+      const parent = el.closest('.segey-combobox') || el.parentElement;
+      const inputCombobox = parent?.querySelector('input[type="text"]');
+      if (inputCombobox) el = inputCombobox;
+    }
+
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      try { el.focus(); } catch (e) {}
+
+      // Efecto visual de destello para ubicar inmediatamente el campo
+      el.classList.add('ring-4', 'ring-rose-400', 'ring-offset-2', 'transition-all');
+      setTimeout(() => {
+        el.classList.remove('ring-4', 'ring-rose-400', 'ring-offset-2');
+      }, 2500);
+    }
+  }, 200);
+}
+
+/**
+ * Actualiza el banner de alerta en la pestaña "Vista del Documento".
+ */
+function actualizarBannerVistaPreviaIncompleta() {
+  const banner = document.getElementById('banner-preview-incompleto');
+  const texto = document.getElementById('banner-preview-incompleto-texto');
+  if (!banner) return;
+
+  const camposVacios = obtenerCamposVaciosFormulario();
+  if (camposVacios.length > 0) {
+    banner.classList.remove('hidden');
+    if (texto) {
+      texto.innerHTML = `Se detectaron <strong>${camposVacios.length} campo(s) obligatorio(s) vacío(s)</strong> en el formulario. La descarga del PDF oficial está bloqueada hasta completarlos.`;
+    }
+  } else {
+    banner.classList.add('hidden');
+  }
+}
+
+window.obtenerCamposVaciosFormulario = obtenerCamposVaciosFormulario;
+window.mostrarModalCamposVacios = mostrarModalCamposVacios;
+window.cerrarModalCamposVacios = cerrarModalCamposVacios;
+window.irACompletarCamposVacios = irACompletarCamposVacios;
+window.irACampoVacioEspecifico = irACampoVacioEspecifico;
+window.actualizarBannerVistaPreviaIncompleta = actualizarBannerVistaPreviaIncompleta;
+
+/**
  * RENDERIZA EL DOCUMENTO EN BASE AL LAYOUT ACTIVO
  */
 function renderDocument(data) {
@@ -6378,19 +7350,157 @@ function renderDocument(data) {
   const activeTemplate = getActiveLayoutHtml();
   const compiledHtml = compileLayout(activeTemplate, data);
   container.innerHTML = compiledHtml;
+
+  actualizarBannerVistaPreviaIncompleta();
 }
 
 /**
- * GENERA Y DESCARGA DIRECTAMENTE EL PDF CON EL LAYOUT ACTIVO
+ * Asegura que la constancia actual quede persistida en almacenamiento local (localStorage/disco)
+ * y sincronizada en tiempo real con Google Sheets antes de descargar el documento oficial.
  */
+function ensureCurrentDocumentSaved() {
+  const formData = getCurrentFormDataForPreview();
+  let folio = (document.getElementById('folioControl')?.value || '').trim();
+  if (!folio) {
+    folio = generateNextFolio();
+    const fInp = document.getElementById('folioControl');
+    if (fInp) fInp.value = folio;
+  }
+
+  let existingIdx = -1;
+  if (editingRecordId) {
+    existingIdx = records.findIndex(r => r.id === editingRecordId);
+  }
+  if (existingIdx === -1 && folio) {
+    existingIdx = records.findIndex(r => r.folio === folio);
+  }
+
+  const estatusVal = document.getElementById('estatus')?.value || 'Generada para Firma';
+  const finalEstatus = (editingRecordId && estatusVal === 'Generada para Firma') ? 'Modificación' : estatusVal;
+
+  const u1Nom = document.getElementById('titularUnidad1Nombre')?.value.trim() || '';
+  const u1Car = document.getElementById('titularUnidad1Cargo')?.value.trim() || '';
+  let u2Nom = document.getElementById('titularUnidad2Nombre')?.value.trim() || '';
+  let u2Car = document.getElementById('titularUnidad2Cargo')?.value.trim() || '';
+  const areaNom = document.getElementById('titularAreaNombre')?.value.trim() || '';
+  const areaCar = document.getElementById('titularAreaCargo')?.value.trim() || '';
+  const area2Nom = document.getElementById('titularArea2Nombre')?.value.trim() || '';
+  const area2Car = document.getElementById('titularArea2Cargo')?.value.trim() || '';
+  const t1Nom = document.getElementById('testigo1Nombre')?.value.trim() || '';
+  const t1Car = document.getElementById('testigo1Cargo')?.value.trim() || '';
+  const t2Nom = document.getElementById('testigo2Nombre')?.value.trim() || '';
+  const t2Car = document.getElementById('testigo2Cargo')?.value.trim() || '';
+
+  const tipoMovimientoEl = document.querySelector('input[name="tipoMovimiento"]:checked');
+  const tipoMovimiento = tipoMovimientoEl ? tipoMovimientoEl.value : 'Alta';
+
+  const titularUnidad1 = u1Car ? `${u1Nom} - ${u1Car}` : u1Nom;
+  const titularUnidad2 = u2Nom ? (u2Car ? `${u2Nom} - ${u2Car}` : u2Nom) : '';
+  const titularArea = areaCar ? `${areaNom} - ${areaCar}` : areaNom;
+  const titularArea2 = area2Car ? `${area2Nom} - ${area2Car}` : area2Nom;
+  const testigo1 = t1Car ? `${t1Nom} - ${t1Car}` : t1Nom;
+  const testigo2 = t2Car ? `${t2Nom} - ${t2Car}` : t2Nom;
+
+  const isCambioJerarquico = (tipoMovimiento === 'Cambio de dependencia jerárquica');
+  const jefeInmediato = !isCambioJerarquico ? titularUnidad2 : '';
+
+  const ndRaw = (document.getElementById('nuevaDenominacion')?.value.trim() || '').toUpperCase();
+  const nnRaw = (document.getElementById('nuevoNombre')?.value.trim() || '').toUpperCase();
+  let finalNuevaDenominacion = ndRaw;
+  if (tipoMovimiento === 'Cambio de nombre') {
+    finalNuevaDenominacion = (ndRaw && nnRaw) ? `${ndRaw} ➔ ${nnRaw}` : (ndRaw || nnRaw);
+  }
+
+  const recordData = {
+    id: (existingIdx !== -1) ? records[existingIdx].id : (editingRecordId || 'rec_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)),
+    folio: folio,
+    fechaRegistro: (existingIdx !== -1 && records[existingIdx].fechaRegistro) ? records[existingIdx].fechaRegistro : new Date().toISOString(),
+    areaNotificadora: document.getElementById('areaNotificadora')?.value.trim() || '',
+    responsableCaptura: document.getElementById('responsableCaptura')?.value.trim() || '',
+    municipio: document.getElementById('municipio')?.value.trim() || 'Mérida',
+    fechaActa: document.getElementById('fechaActa')?.value || new Date().toISOString().split('T')[0],
+    fechaConstancia: document.getElementById('fechaActa')?.value || new Date().toISOString().split('T')[0],
+    dia: formData.dia,
+    mes: formData.mes,
+    anio: formData.anio,
+    anioCompleto: formData.anioCompleto,
+    horaActa: document.getElementById('horaActa')?.value || '10:00',
+    horas: formData.horas,
+    minutos: formData.minutos,
+    inmueble: formatearInmueble(document.getElementById('inmueble')?.value.trim()) || 'el Edificio Central de la Secretaría de Educación',
+    tipoMovimiento: tipoMovimiento,
+    esCambioDependenciaJerarquica: isCambioJerarquico,
+    noEsCambioDependenciaJerarquica: !isCambioJerarquico,
+    esCambioNombre: (tipoMovimiento === 'Cambio de nombre'),
+    noEsCambioNombre: (tipoMovimiento !== 'Cambio de nombre'),
+    nombreActual: (tipoMovimiento === 'Cambio de nombre') ? ndRaw : '',
+    nuevoNombre: (tipoMovimiento === 'Cambio de nombre') ? nnRaw : '',
+    nuevaDenominacion: finalNuevaDenominacion,
+    justificacion: (document.getElementById('justificacion')?.value.trim() || '').toUpperCase(),
+    titularUnidad1Nombre: u1Nom,
+    titularUnidad1Cargo: u1Car,
+    titularUnidad1: titularUnidad1,
+    titularUnidad2Nombre: u2Nom,
+    titularUnidad2Cargo: u2Car,
+    titularUnidad2: titularUnidad2,
+    jefeInmediato: jefeInmediato,
+    titularAreaNombre: areaNom,
+    titularAreaCargo: areaCar,
+    titularArea: titularArea,
+    titularArea2Nombre: area2Nom,
+    titularArea2Cargo: area2Car,
+    titularArea2: titularArea2,
+    testigo1Nombre: t1Nom,
+    testigo1Cargo: t1Car,
+    testigo1: testigo1,
+    testigo2Nombre: t2Nom,
+    testigo2Cargo: t2Car,
+    testigo2: testigo2,
+    estatus: finalEstatus,
+    observaciones: document.getElementById('observaciones')?.value.trim() || ''
+  };
+
+  if (existingIdx !== -1) {
+    records[existingIdx] = { ...records[existingIdx], ...recordData };
+  } else {
+    records.unshift(recordData);
+  }
+
+  currentRenderedRecord = recordData;
+  saveRecordsToStorage();
+  updateStats();
+  renderTable();
+  populateAreaFilter();
+
+  sendToGoogleSheetsWebhook(recordData);
+  return recordData;
+}
+
 /**
  * GENERA Y DESCARGA EL PDF OFICIAL
  * Primero intenta con el motor oficial de Word en el servidor local (PDF nativo 100% idéntico).
  * Si el servidor no está corriendo, genera inmediatamente con html2pdf.js en el navegador.
  */
-async function downloadCurrentDocumentPDF() {
+async function downloadCurrentDocumentPDF(skipValidation = false) {
   const element = document.getElementById('print-sheet');
   if (!element || !currentRenderedRecord) return;
+
+  // 0. BLOQUEO SI HAY CAMPOS VACÍOS EN EL FORMULARIO
+  if (!skipValidation) {
+    const camposVacios = obtenerCamposVaciosFormulario();
+    if (camposVacios.length > 0) {
+      mostrarModalCamposVacios(camposVacios);
+      showToast(`Descarga bloqueada: Complete los ${camposVacios.length} campos vacíos en el formulario.`, 'error');
+      return;
+    }
+  }
+
+  // Persistir automáticamente el registro localmente y en Google Sheets
+  try {
+    ensureCurrentDocumentSaved();
+  } catch (errSave) {
+    console.warn('Advertencia al persistir constancia previa a la descarga:', errSave);
+  }
 
   const btn = document.getElementById('btn-download-pdf');
   const originalBtnHtml = btn ? btn.innerHTML : '';
@@ -6404,49 +7514,61 @@ async function downloadCurrentDocumentPDF() {
 
   showToast(`Generando PDF oficial (${folio})...`, 'info');
 
-  // 1. Intentar con el servidor local Word COM (tiempo límite de 4 segundos)
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
-    const res = await fetch('/api/generate-word-pdf', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(currentRenderedRecord),
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-
-    if (res.ok) {
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-      showToast(`¡PDF oficial generado exitosamente!`, 'success');
-      if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = originalBtnHtml;
-      }
-      return;
+    // 1. Intentar con el servidor local Word COM (probando ruta relativa y localhost:8000)
+    const candidateEndpoints = ['/api/generate-word-pdf'];
+    if (window.location.protocol === 'file:' || (window.location.port !== '8000' && window.location.protocol === 'http:')) {
+      candidateEndpoints.push('http://127.0.0.1:8000/api/generate-word-pdf');
+      candidateEndpoints.push('http://localhost:8000/api/generate-word-pdf');
     }
-  } catch (e) {
-    console.warn('El servidor Word no respondió a tiempo o no está disponible. Usando generador alternativo:', e);
-  }
 
-  // 2. Generación de respaldo en navegador mediante html2pdf.js centrado y sin recortes
-  showToast('Generando PDF en navegador...', 'warning');
-  generateClientSidePDF(element, filename);
-  if (btn) {
-    btn.disabled = false;
-    btn.innerHTML = originalBtnHtml;
+    for (const endpoint of candidateEndpoints) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(currentRenderedRecord),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          const blob = await res.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(url);
+          showToast(`¡Constancia PDF oficial generada en 1 hoja (Word Oficial)!`, 'success');
+          if (!editingRecordId) {
+            const nextFol = generateNextFolio();
+            const folInp = document.getElementById('folioControl');
+            if (folInp) folInp.value = nextFol;
+          }
+          return;
+        }
+      } catch (e) {
+        console.warn(`Intento Word COM con ${endpoint} no disponible:`, e.message || e);
+      }
+    }
+
+    // 2. Generación de respaldo en navegador mediante html2pdf.js centrado y sin recortes
+    showToast('Generando PDF alternativo en navegador...', 'info');
+    await generateClientSidePDF(element, filename);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalBtnHtml;
+    }
   }
 }
 
-function generateClientSidePDF(element, filename) {
+async function generateClientSidePDF(element, filename) {
   if (typeof html2pdf === 'undefined') {
     alert('La librería generadora de PDF aún se está cargando. Por favor espere un momento.');
     return;
@@ -6456,8 +7578,17 @@ function generateClientSidePDF(element, filename) {
   const prevScrollX = window.scrollX;
   window.scrollTo(0, 0);
 
+  // Ocultar explícitamente el pie estático del HTML para evitar que salga a mitad del documento o con paginación fija
+  const staticFooters = element.querySelectorAll('.official-footer, .official-footer-table');
+  staticFooters.forEach(el => { el.style.setProperty('display', 'none', 'important'); });
+
+  // Agregar clase temporal para optimizar altura, márgenes y evitar saltos erróneos
+  element.classList.add('generating-pdf');
+
+  // Dimensiones estándar Carta (Letter): 215.9mm x 279.4mm
+  // Márgenes: Arriba: 6mm, Izquierda/Derecha: 8mm, Abajo: 12mm (reserva limpia para pie de página)
   const opt = {
-    margin: [6, 8, 6, 8],
+    margin: [6, 8, 12, 8],
     filename: filename,
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: {
@@ -6473,53 +7604,169 @@ function generateClientSidePDF(element, filename) {
       format: 'letter',
       orientation: 'portrait'
     },
-    pagebreak: { mode: ['avoid-all', 'css'] }
+    pagebreak: { mode: [] }
   };
 
-  html2pdf().set(opt).from(element).save().then(() => {
-    window.scrollTo(prevScrollX, prevScrollY);
-    showToast(`¡Documento ${filename} descargado!`, 'success');
-  }).catch(err => {
-    window.scrollTo(prevScrollX, prevScrollY);
+  try {
+    const worker = html2pdf().from(element).set(opt);
+    await worker.toCanvas();
+
+    // Detección precisa de la última fila con contenido real para evitar páginas sobrantes en blanco
+    if (worker.prop && worker.prop.canvas) {
+      const canvas = worker.prop.canvas;
+      const ratio = (worker.prop.pageSize && worker.prop.pageSize.inner) ? worker.prop.pageSize.inner.ratio : ((279.4 - 24) / (215.9 - 20));
+      const pageHeightInPx = Math.floor(canvas.width * ratio);
+
+      let lastContentY = 0;
+      try {
+        const ctx = canvas.getContext('2d');
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imgData.data;
+        const w = canvas.width;
+        const h = canvas.height;
+
+        outerLoop:
+        for (let y = h - 1; y >= 0; y -= 2) {
+          const rowOffset = y * w * 4;
+          for (let x = 0; x < w; x += 4) {
+            const idx = rowOffset + x * 4;
+            // Si el pixel no es blanco puro (contiene tinta de texto, línea o firma)
+            if (data[idx] < 240 || data[idx + 1] < 240 || data[idx + 2] < 240) {
+              lastContentY = y;
+              break outerLoop;
+            }
+          }
+        }
+      } catch (eScan) {
+        lastContentY = canvas.height;
+      }
+
+      if (lastContentY > 0) {
+        // Cantidad exacta de páginas necesarias para abarcar el contenido útil
+        const pagesNeeded = Math.ceil((lastContentY + 15) / pageHeightInPx);
+        const targetHeight = pagesNeeded * pageHeightInPx;
+
+        // Si el canvas original tiene espacio en blanco sobrante que crea una página adicional innecesaria
+        if (canvas.height > targetHeight && pagesNeeded >= 1) {
+          const croppedCanvas = document.createElement('canvas');
+          croppedCanvas.width = canvas.width;
+          croppedCanvas.height = targetHeight;
+          const ctx = croppedCanvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, targetHeight);
+          ctx.drawImage(canvas, 0, 0);
+          worker.prop.canvas = croppedCanvas;
+        }
+      }
+    }
+
+    // =========================================================================
+    // INSERCIÓN DE PIE DE PÁGINA OFICIAL EN TODAS Y CADA UNA DE LAS HOJAS
+    // =========================================================================
+    await worker.toPdf().get('pdf').then(function(pdf) {
+      const totalPages = pdf.internal.getNumberOfPages();
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const marginX = 8; // mm (alineado con los márgenes del documento)
+      const lineY = pageHeight - 9.5; // 9.5mm arriba del borde inferior
+      const textY = pageHeight - 5.5; // 5.5mm arriba del borde inferior
+
+      for (let p = 1; p <= totalPages; p++) {
+        pdf.setPage(p);
+
+        // 1. Franja de protección con fondo blanco limpio al pie de la página
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(0, pageHeight - 11.5, pageWidth, 11.5, 'F');
+
+        // 2. Línea divisoria gris oficial (#cbd5e1)
+        pdf.setDrawColor(203, 213, 225);
+        pdf.setLineWidth(0.25);
+        pdf.line(marginX, lineY, pageWidth - marginX, lineY);
+
+        // 3. Código oficial del formato institucional a la izquierda
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(8);
+        pdf.setTextColor(71, 85, 105); // #475569
+        pdf.text('F-PR-EAO-03  R01', marginX, textY);
+
+        // 4. Paginación continua y dinámica a la derecha (ej. Página 1 de 2, Página 2 de 2, etc.)
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`Página ${p} de ${totalPages}`, pageWidth - marginX, textY, { align: 'right' });
+      }
+    });
+
+    await worker.save();
+    showToast(`¡Documento ${filename} descargado con éxito!`, 'success');
+  } catch (err) {
     console.error('Error al generar el PDF con html2pdf:', err);
     showToast('Inconveniente al generar el PDF.', 'error');
-  });
+  } finally {
+    element.classList.remove('generating-pdf');
+    staticFooters.forEach(el => { el.style.removeProperty('display'); });
+    window.scrollTo(prevScrollX, prevScrollY);
+  }
 }
 
 /**
  * DESCARGA DIRECTA DEL ARCHIVO WORD (.DOCX) RELLENO
  */
-async function downloadCurrentDocumentDOCX() {
+async function downloadCurrentDocumentDOCX(skipValidation = false) {
   if (!currentRenderedRecord) {
     showToast('Seleccione un registro o llene el formulario primero.', 'warning');
     return;
   }
+
+  // 0. BLOQUEO SI HAY CAMPOS VACÍOS EN EL FORMULARIO
+  if (!skipValidation) {
+    const camposVacios = obtenerCamposVaciosFormulario();
+    if (camposVacios.length > 0) {
+      mostrarModalCamposVacios(camposVacios);
+      showToast(`Descarga bloqueada: Complete los ${camposVacios.length} campos vacíos en el formulario.`, 'error');
+      return;
+    }
+  }
+
+  // Persistir automáticamente el registro localmente y en Google Sheets
+  try {
+    ensureCurrentDocumentSaved();
+  } catch (errSave) {
+    console.warn('Advertencia al persistir constancia previa a descarga Word:', errSave);
+  }
+
   const folio = (currentRenderedRecord.folio || 'DIMC').replace(/[/\?%*:|"<>]/g, '_');
   const filename = `Constancia_Cambios_${folio}.docx`;
 
   showToast(`Generando archivo Word (.docx) oficial...`, 'info');
 
-  try {
-    const res = await fetch('/api/generate-docx', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(currentRenderedRecord)
-    });
-    if (res.ok) {
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-      showToast(`¡Archivo Word "${filename}" descargado con éxito!`, 'success');
-      return;
+  const candidateEndpoints = ['/api/generate-docx'];
+  if (window.location.protocol === 'file:' || (window.location.port !== '8000' && window.location.protocol === 'http:')) {
+    candidateEndpoints.push('http://127.0.0.1:8000/api/generate-docx');
+    candidateEndpoints.push('http://localhost:8000/api/generate-docx');
+  }
+
+  for (const endpoint of candidateEndpoints) {
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(currentRenderedRecord)
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        showToast(`¡Archivo Word "${filename}" descargado con éxito!`, 'success');
+        return;
+      }
+    } catch (e) {
+      console.warn(`Intento DOCX con ${endpoint} no disponible:`, e.message || e);
     }
-  } catch (e) {
-    console.error('Error al conectar con servidor para docx:', e);
   }
   showToast('Para descargar el formato Word (.docx), ejecute el servidor local con: python server.py', 'warning');
 }
@@ -6532,9 +7779,9 @@ function downloadPDFForRecord(id) {
   if (!record) return;
 
   renderDocument(record);
-  switchTab('tab-preview');
+  switchTab('tab-preview', true);
   setTimeout(() => {
-    downloadCurrentDocumentPDF();
+    downloadCurrentDocumentPDF(true);
   }, 350);
 }
 
@@ -6546,7 +7793,7 @@ function downloadDOCXForRecord(id) {
   if (!record) return;
 
   currentRenderedRecord = record;
-  downloadCurrentDocumentDOCX();
+  downloadCurrentDocumentDOCX(true);
 }
 
 /**
@@ -7151,6 +8398,15 @@ function editRecord(id, allowCapturista = false) {
   }
 
   switchTab('tab-form');
+  if (typeof syncComboboxFromSelect === 'function') {
+    syncComboboxFromSelect('selectTitularUnidad2');
+    syncComboboxFromSelect('selectTitularArea');
+    syncComboboxFromSelect('selectAreaBaja');
+    syncComboboxFromSelect('selectAreaCambioNombre');
+    syncComboboxFromSelect('selectAreaCambioDep');
+    syncComboboxFromSelect('selectUnidadDestinoCambioDep');
+  }
+
   updateEstatusPermissions(isSuperAdmin());
   showToast(`Editando constancia ${record.folio}. La opción 'Modificación' ya está disponible en el Apartado IV.`);
 }
@@ -7907,8 +9163,8 @@ function openBuscarFolioModal() {
     setTimeout(() => {
       if (input) input.focus();
     }, 100);
-    // Sincronizar en segundo plano si el usuario tiene permisos de consulta
-    if (typeof syncRecordsFromGoogleSheets === 'function' && canAccessBitacora()) {
+    // Sincronizar siempre en segundo plano para que todos los usuarios tengan los últimos folios
+    if (typeof syncRecordsFromGoogleSheets === 'function') {
       syncRecordsFromGoogleSheets(false).then(() => {
         if (!input || !input.value) {
           mostrarResultadosBusquedaFolio(records.slice(0, 5), true);
@@ -7923,7 +9179,7 @@ function closeBuscarFolioModal() {
   if (modal) modal.classList.add('hidden');
 }
 
-function ejecutarBusquedaFolio() {
+async function ejecutarBusquedaFolio() {
   const input = document.getElementById('input-buscar-folio');
   if (!input) return;
   const q = input.value.trim().toLowerCase();
@@ -7932,7 +9188,7 @@ function ejecutarBusquedaFolio() {
     return;
   }
 
-  const matches = records.filter(r => {
+  let matches = records.filter(r => {
     const fol = (r.folio || '').toLowerCase();
     const area = (r.areaNotificadora || '').toLowerCase();
     const resp = (r.responsableCaptura || '').toLowerCase();
@@ -7941,7 +9197,36 @@ function ejecutarBusquedaFolio() {
     return fol.includes(q) || area.includes(q) || resp.includes(q) || denom.includes(q) || est.includes(q);
   });
 
-  mostrarResultadosBusquedaFolio(matches, false);
+  if (matches.length > 0) {
+    mostrarResultadosBusquedaFolio(matches, false);
+    return;
+  }
+
+  // Si no se encontró en la memoria local, buscar de inmediato en Google Sheets
+  const container = document.getElementById('resultados-busqueda-folio');
+  if (container) {
+    container.innerHTML = `
+      <div class="p-6 text-center text-slate-500 text-xs">
+        <i class="fa-solid fa-spinner fa-spin text-2xl text-segey-700 mb-2 block"></i>
+        Buscando folio en la Bitácora Central de Google Sheets...
+      </div>
+    `;
+  }
+
+  try {
+    await syncRecordsFromGoogleSheets(false);
+    matches = records.filter(r => {
+      const fol = (r.folio || '').toLowerCase();
+      const area = (r.areaNotificadora || '').toLowerCase();
+      const resp = (r.responsableCaptura || '').toLowerCase();
+      const denom = (r.nuevaDenominacion || '').toLowerCase();
+      const est = (r.estatus || '').toLowerCase();
+      return fol.includes(q) || area.includes(q) || resp.includes(q) || denom.includes(q) || est.includes(q);
+    });
+    mostrarResultadosBusquedaFolio(matches, false);
+  } catch (err) {
+    mostrarResultadosBusquedaFolio([], false);
+  }
 }
 
 function mostrarResultadosBusquedaFolio(items, isRecent = false) {
@@ -8136,16 +9421,8 @@ let isSyncingGSheets = false;
 async function syncRecordsFromGoogleSheets(forceToast = false) {
   if (isSyncingGSheets) return;
 
-  // Solo perfiles autorizados (Super Administradores y Auditoría) pueden descargar la bitácora
-  const hasAccess = canAccessBitacora();
-  const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || (hasAccess ? BITACORA_API_TOKEN : '');
-
-  if (!hasAccess && !token) {
-    if (forceToast) {
-      showToast('Debe iniciar sesión como Administrador o Auditoría para consultar la bitácora remota.', 'warning');
-    }
-    return;
-  }
+  // Acceso institucional universal para sincronización de bitácora y folios
+  const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || BITACORA_API_TOKEN;
 
   const webhook = localStorage.getItem(WEBHOOK_KEY) || DEFAULT_WEBHOOK_URL;
   if (!webhook) {
@@ -8168,6 +9445,7 @@ async function syncRecordsFromGoogleSheets(forceToast = false) {
 
       result.records.forEach(remote => {
         if (!remote.folio) return;
+        if (remote.folio.includes('_TEST')) return;
         const localIdx = records.findIndex(r => r.folio === remote.folio);
         if (localIdx === -1) {
           records.push({
@@ -8190,6 +9468,15 @@ async function syncRecordsFromGoogleSheets(forceToast = false) {
       updateStats();
       renderTable();
       updateRegistrySidebarBadges();
+
+      // Si el folio actual en el formulario ya existe en los registros remotos sincronizados,
+      // avanzar automáticamente al siguiente folio libre para evitar colisiones
+      const folioInput = document.getElementById('folioControl');
+      if (folioInput && !editingRecordId) {
+        if (!folioInput.value || records.some(r => r.folio === folioInput.value)) {
+          folioInput.value = generateNextFolio();
+        }
+      }
 
       if (forceToast) {
         showToast(`Sincronización completada: ${agregados} nuevos folios, ${actualizados} actualizados.`);
@@ -8475,15 +9762,14 @@ window.checkAndSyncIfCatalogChanged = checkAndSyncIfCatalogChanged;
 // Iniciar verificación y sincronización automática de fondo al cargar la página
 if (typeof window !== 'undefined') {
   setTimeout(() => {
-    if (canAccessBitacora()) {
-      syncRecordsFromGoogleSheets(false);
-    }
+    syncRecordsFromGoogleSheets(false);
     checkAndSyncIfCatalogChanged(false);
     initDraftAutosave();
 
     // Verificación periódica cada 3 minutos en segundo plano
     setInterval(() => {
       checkAndSyncIfCatalogChanged(false);
+      syncRecordsFromGoogleSheets(false);
     }, 180000);
 
     // Verificación automática al regresar a la pestaña activa del navegador
