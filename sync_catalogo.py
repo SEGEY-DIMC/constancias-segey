@@ -84,7 +84,7 @@ UNIDADES_BASE_DEF = [
     {
         "id": "subsec_basica",
         "grupo": "Subsecretaría de Educación Básica",
-        "unidad": "Subsecretaría de Educación Básica (Oficina Central)",
+        "unidad": "Subsecretaría de Educación Básica",
         "titular_nombre": "Mtro. Jaime Enrique Vázquez Barceló",
         "titular_cargo": "Subsecretario de Educación Básica",
         "filtro_jefe": ["Mtro. Jaime Enrique Vázquez Barceló"],
@@ -174,7 +174,7 @@ UNIDADES_BASE_DEF = [
     {
         "id": "subsec_media_superior",
         "grupo": "Subsecretaría de Educación Media Superior",
-        "unidad": "Subsecretaría de Educación Media Superior (Oficina Central)",
+        "unidad": "Subsecretaría de Educación Media Superior",
         "titular_nombre": "Lic. Miguel Ángel Pech Estrella",
         "titular_cargo": "Subsecretario de Educación Media Superior",
         "filtro_jefe": ["Lic. Miguel Ángel Pech Estrella"],
@@ -204,7 +204,7 @@ UNIDADES_BASE_DEF = [
     {
         "id": "subsec_superior",
         "grupo": "Subsecretaría de Educación Superior",
-        "unidad": "Subsecretaría de Educación Superior (Oficina Central)",
+        "unidad": "Subsecretaría de Educación Superior",
         "titular_nombre": "Mtro. Everth de Jesús Dzib Peraza",
         "titular_cargo": "Subsecretario de Educación Superior",
         "filtro_jefe": ["Mtro. Everth de Jesús Dzib Peraza"],
@@ -418,8 +418,9 @@ def sync(excel_path=EXCEL_PATH, download_from_drive=True):
             # Col 2: ID, Col 3: Unidad, Col 4: Titular, Col 5: Cargo, Col 6: Grupo
             u_id = str(row[1] or '').strip()
             if not u_id: continue
+            u_nom = str(row[2] or '').replace(' (Oficina Central)', '').strip()
             titulares_by_id[u_id] = {
-                "unidad": str(row[2] or '').strip(),
+                "unidad": u_nom,
                 "nombre": str(row[3] or '').strip(),
                 "cargo": str(row[4] or '').strip(),
                 "grupo": str(row[5] or '').strip() if len(row) > 5 else ''
@@ -730,15 +731,21 @@ if (typeof window !== 'undefined') {{
                     seen_anc.add(anc_nom)
                     rows_by_ancestor_nom[anc_nom].append(r)
 
-    all_areas_set = set(responsables_map.keys())
+    all_areas_set = set()
+    for k in responsables_map.keys():
+        cleaned_k = k.replace(' (Oficina Central)', '').strip()
+        all_areas_set.add(cleaned_k)
     for u in catalog:
-        all_areas_set.add(u["unidad"])
+        cleaned_u = u["unidad"].replace(' (Oficina Central)', '').strip()
+        all_areas_set.add(cleaned_u)
     for r in rows:
         p = str(r.get('Puesto') or '').strip()
         if any(kw in p.lower() for kw in ['jefe de departamento', 'director', 'subdirector', 'coordinador general', 'coordinador estatal', 'jefatura del despacho']):
             all_areas_set.add(puesto_to_area_name(p))
 
     all_areas_set.add('Despacho del Secretario')
+    # Eliminar cualquier residuo que contenga Oficina Central
+    all_areas_set = {a for a in all_areas_set if '(Oficina Central)' not in a}
     all_areas = sorted(list(all_areas_set))
     mapa_subordinadas = {}
 
