@@ -14,6 +14,70 @@ const LAYOUTS_STORAGE_KEY = 'segey_custom_layouts_v1';
 const ACTIVE_LAYOUT_ID_KEY = 'segey_active_layout_id';
 const ADMIN_AUTH_KEY = 'segey_admin_auth_v1';
 const AREAS_STORAGE_KEY = 'segey_areas_notificadoras_v1';
+const CATALOG_REMOTE_VERSION_KEY = 'segey_catalog_remote_version_v1';
+const DYNAMIC_SUBORDINADAS_KEY = 'segey_mapa_subordinadas_custom_v1';
+
+// Memoria dinámica para áreas subordinadas añadidas o sincronizadas
+let MAPA_AREAS_SUBORDINADAS_DINAMICO = {};
+try {
+  const cachedSub = localStorage.getItem(DYNAMIC_SUBORDINADAS_KEY);
+  if (cachedSub) {
+    MAPA_AREAS_SUBORDINADAS_DINAMICO = JSON.parse(cachedSub);
+  }
+} catch (e) {}
+
+/**
+ * Función que convierte puestos a nombres de área/departamento en el cliente
+ */
+function clientPuestoToAreaName(puesto) {
+  if (!puesto) return '';
+  let p = String(puesto).trim();
+  const repls = [
+    [/^(?:Jefe|Jefa) de Departamento de\s+/i, 'Departamento de '],
+    [/^(?:Jefe|Jefa) de Departamento\s+/i, 'Departamento de '],
+    [/^(?:Director|Directora) de\s+/i, 'Dirección de '],
+    [/^(?:Director|Directora)\s+/i, 'Dirección '],
+    [/^(?:Subdirector|Subdirectora) de\s+/i, 'Subdirección de '],
+    [/^(?:Subdirector|Subdirectora)\s+/i, 'Subdirección '],
+    [/^(?:Subjefe|Subjefa) de\s+/i, 'Subjefatura de '],
+    [/^(?:Subjefe|Subjefa)\s+/i, 'Subjefatura '],
+    [/^(?:Jefe|Jefa) de Oficina de\s+/i, 'Oficina de '],
+    [/^(?:Responsable|Encargado|Encargada) de Área de\s+/i, 'Área de '],
+    [/^(?:Responsable|Encargado|Encargada) de\s+/i, 'Área de '],
+    [/^(?:Coordinador|Coordinadora) General de\s+/i, 'Coordinación General de '],
+    [/^(?:Coordinador|Coordinadora) Estatal de\s+/i, 'Coordinación Estatal de '],
+    [/^(?:Coordinador|Coordinadora) de\s+/i, 'Coordinación de ']
+  ];
+  for (let i = 0; i < repls.length; i++) {
+    const [rx, rep] = repls[i];
+    if (rx.test(p)) {
+      return p.replace(rx, rep);
+    }
+  }
+  return p;
+}
+
+/**
+ * Integra dinámicamente un área nueva al mapa de subordinadas en memoria y en localStorage
+ */
+function registrarAreaSubordinadaDinamica(areaPadre, subArea) {
+  if (!areaPadre) return;
+  areaPadre = areaPadre.trim();
+  subArea = subArea ? subArea.trim() : areaPadre;
+
+  if (!MAPA_AREAS_SUBORDINADAS_DINAMICO[areaPadre]) {
+    const base = (typeof MAPA_AREAS_SUBORDINADAS !== 'undefined' && MAPA_AREAS_SUBORDINADAS[areaPadre]) ?
+                 [...MAPA_AREAS_SUBORDINADAS[areaPadre]] : [areaPadre];
+    MAPA_AREAS_SUBORDINADAS_DINAMICO[areaPadre] = base;
+  }
+  if (!MAPA_AREAS_SUBORDINADAS_DINAMICO[areaPadre].includes(subArea)) {
+    MAPA_AREAS_SUBORDINADAS_DINAMICO[areaPadre].push(subArea);
+    MAPA_AREAS_SUBORDINADAS_DINAMICO[areaPadre].sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+    try {
+      localStorage.setItem(DYNAMIC_SUBORDINADAS_KEY, JSON.stringify(MAPA_AREAS_SUBORDINADAS_DINAMICO));
+    } catch (e) {}
+  }
+}
 
 function getGoogleScriptWebhookUrl() {
   return localStorage.getItem(WEBHOOK_KEY) || DEFAULT_WEBHOOK_URL;
@@ -2071,10 +2135,7 @@ const ENLACE_DIRECTO_POR_AREA = {
   'Departamento de Registro y Certificación': 'Tec. Mattia de Jesús Tun Peña',
   'Departamento de Sistemas de Gestión de Nómina': 'C.P. Manuel Jesús Heredia Ceballos',
   'Departamento de Telebachillerato Comunitario del Estado de Yucatán y Bachillerato Intercultural': 'Mtro. Alberto Solís Cámara',
-  'Despacho del Secretario': [
-    'Ing. Gladys Gahona Cámara',
-    'L.E. Rosalinda Villanueva Hau'
-  ],
+  'Despacho del Secretario': ['Ing. Gladys Gahona Cámara', 'L.E. Rosalinda Villanueva Hau'],
   'Dirección Jurídica': 'Lic. Alonso Hernández Núñez',
   'Dirección de Administración y Finanzas': 'Lic. Yazmin Eugenia Cob Caballero',
   'Dirección de Desarrollo Educativo': 'Mtra. Ligia del Socorro Sánchez Castañeda',
@@ -2093,14 +2154,8 @@ const ENLACE_DIRECTO_POR_AREA = {
   'Dirección de Servicios Educativos de Media Superior': 'C.P. Miguel Edgardo Argáez Quijano',
   'Dirección de Servicios Regionales': 'Ing. Luis Gabriel Canul Mukul',
   'Enlace Estatal con la Unidad del Sistema para la Carrera de las Maestras y los Maestros (USICAMM)': 'C.P. Katia Isabel Manzanilla Mena',
-  'Jefatura del Despacho': [
-    'Ing. Gladys Gahona Cámara',
-    'L.E. Rosalinda Villanueva Hau'
-  ],
-  'Secretario Particular': [
-    'Ing. Gladys Gahona Cámara',
-    'L.E. Rosalinda Villanueva Hau'
-  ],
+  'Jefatura del Despacho': ['Ing. Gladys Gahona Cámara', 'L.E. Rosalinda Villanueva Hau'],
+  'Secretario Particular': ['Ing. Gladys Gahona Cámara', 'L.E. Rosalinda Villanueva Hau'],
   'Subdirección de Organización y Administración de Personal': 'L.C.C. Mirna Arleny Canché Moo',
   'Subsecretaría de Educación Básica': 'Mtra. Carla Guadalupe Sanchez Colli',
   'Subsecretaría de Educación Media Superior': 'C.P. Miguel Edgardo Argáez Quijano',
@@ -2324,7 +2379,12 @@ function getAreasVinculadasPorUnidad(areaNombre) {
 
   if (!areaNombre || areaNombre === '__OTRA__') return [];
 
-  // 1. Buscar en el MAPA_AREAS_SUBORDINADAS oficial
+  // 1. Verificar si hay registros dinámicos sincronizados en memoria o localStorage
+  if (MAPA_AREAS_SUBORDINADAS_DINAMICO && MAPA_AREAS_SUBORDINADAS_DINAMICO[areaNombre] && MAPA_AREAS_SUBORDINADAS_DINAMICO[areaNombre].length > 0) {
+    return [...MAPA_AREAS_SUBORDINADAS_DINAMICO[areaNombre]];
+  }
+
+  // 2. Buscar en el MAPA_AREAS_SUBORDINADAS oficial pre-compilado (0 segundos)
   if (typeof MAPA_AREAS_SUBORDINADAS !== 'undefined' && MAPA_AREAS_SUBORDINADAS) {
     if (MAPA_AREAS_SUBORDINADAS[areaNombre] && MAPA_AREAS_SUBORDINADAS[areaNombre].length > 0) {
       return [...MAPA_AREAS_SUBORDINADAS[areaNombre]];
@@ -2342,6 +2402,27 @@ function getAreasVinculadasPorUnidad(areaNombre) {
     });
     if (keyContain && MAPA_AREAS_SUBORDINADAS[keyContain] && MAPA_AREAS_SUBORDINADAS[keyContain].length > 0) {
       return [...MAPA_AREAS_SUBORDINADAS[keyContain]];
+    }
+  }
+
+  // 3. Fallback inteligente: buscar en CATALOGO_ORGANICO_SEGEY para áreas o unidades nuevas
+  if (typeof CATALOGO_ORGANICO_SEGEY !== 'undefined' && Array.isArray(CATALOGO_ORGANICO_SEGEY)) {
+    const org = CATALOGO_ORGANICO_SEGEY.find(u => u.unidad === areaNombre) ||
+                CATALOGO_ORGANICO_SEGEY.find(u => normalizeText(u.unidad) === normalizeText(areaNombre));
+    if (org && Array.isArray(org.subordinados) && org.subordinados.length > 0) {
+      const dynamicSet = new Set([areaNombre]);
+      org.subordinados.forEach(s => {
+        if (s.puesto && s.puesto !== 'None') {
+          const a = clientPuestoToAreaName(s.puesto);
+          if (a && a !== areaNombre && a.length > 4) {
+            dynamicSet.add(a);
+          }
+        }
+      });
+      const res = Array.from(dynamicSet).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+      registrarAreaSubordinadaDinamica(areaNombre, areaNombre);
+      res.forEach(item => registrarAreaSubordinadaDinamica(areaNombre, item));
+      return res;
     }
   }
 
@@ -8109,6 +8190,21 @@ function applyRemoteCatalogo(catalogoData) {
         if (newCargo) unidad.titular.cargo = newCargo;
         anyModified = true;
       }
+    } else if (!unidad && item.area && item.titular) {
+      // Registrar nueva unidad en CATALOGO_ORGANICO_SEGEY dinámicamente
+      const newU = {
+        id: item.id || ('u_' + Date.now()),
+        grupo: item.grupo || 'Unidades Administrativas',
+        unidad: item.area,
+        titular: {
+          nombre: String(item.titular).trim(),
+          cargo: item.cargo ? String(item.cargo).trim() : 'Titular'
+        },
+        subordinados: []
+      };
+      CATALOGO_ORGANICO_SEGEY.push(newU);
+      registrarAreaSubordinadaDinamica(item.area, item.area);
+      anyModified = true;
     }
   });
 
@@ -8259,16 +8355,99 @@ async function sincronizarCatalogoDesdeGoogleSheets() {
 }
 window.sincronizarCatalogoDesdeGoogleSheets = sincronizarCatalogoDesdeGoogleSheets;
 
-// Iniciar sincronización de fondo al cargar la página
+let isCheckingCatalogChanges = false;
+
+/**
+ * Verificador automático e inteligente de cambios en Google Sheets
+ * Se ejecuta en segundo plano sin ralentizar la carga inicial (0 segundos).
+ * Si detecta que el catálogo remoto fue modificado en Google Drive, actualiza
+ * silenciosamente los datos en memoria y en localStorage, notificando al usuario.
+ */
+async function checkAndSyncIfCatalogChanged(force = false) {
+  if (isCheckingCatalogChanges) return;
+  isCheckingCatalogChanges = true;
+
+  try {
+    const webhook = getGoogleScriptWebhookUrl();
+    if (!webhook) return;
+
+    // 1. Consultar token de versión liviano (~100 bytes)
+    let remoteVersion = null;
+    try {
+      const vUrl = `${webhook}?action=checkCatalogVersion&t=${Date.now()}`;
+      const vResp = await fetch(vUrl);
+      if (vResp.ok) {
+        const vData = await vResp.json();
+        if (vData && vData.status === 'success' && vData.versionToken) {
+          remoteVersion = String(vData.versionToken);
+        }
+      }
+    } catch (eV) {
+      // Si la acción checkCatalogVersion aún no está en Apps Script, continúa de forma resiliente
+    }
+
+    const localVersion = localStorage.getItem(CATALOG_REMOTE_VERSION_KEY);
+
+    // Si ya coincide la versión y no es forzado, no hay cambios: salir de inmediato (0 ms)
+    if (!force && remoteVersion && localVersion && remoteVersion === localVersion) {
+      return;
+    }
+
+    // 2. Si hay un cambio detectado (o primer arranque), sincronizar de fondo
+    console.log('[AUTO-SYNC] Verificando y sincronizando cambios del catálogo institucional desde Google Sheets...');
+    
+    // Si corre en localhost con server.py, intentar también la sincronización y descarga local
+    try {
+      fetch('/api/sync-excel', { method: 'POST', cache: 'no-store' }).catch(() => {});
+    } catch (eLocal) {}
+
+    // Sincronizar titulares y responsables
+    await syncCatalogoFromGoogleSheets(false);
+    await syncResponsablesFromGoogleSheets(false);
+
+    // Guardar versión sincronizada
+    if (remoteVersion) {
+      localStorage.setItem(CATALOG_REMOTE_VERSION_KEY, remoteVersion);
+    } else {
+      localStorage.setItem(CATALOG_REMOTE_VERSION_KEY, 'synced_' + Date.now());
+    }
+
+    // Notificar al usuario sólo si realmente hubo un cambio posterior al primer inicio
+    if (localVersion && remoteVersion && localVersion !== remoteVersion) {
+      showToast('✨ Catálogo institucional actualizado automáticamente desde Google Sheets.', 'info');
+    }
+  } catch (errSync) {
+    console.warn('[AUTO-SYNC] Error verificando cambios en catálogo:', errSync);
+  } finally {
+    isCheckingCatalogChanges = false;
+  }
+}
+window.checkAndSyncIfCatalogChanged = checkAndSyncIfCatalogChanged;
+
+// Iniciar verificación y sincronización automática de fondo al cargar la página
 if (typeof window !== 'undefined') {
   setTimeout(() => {
     if (canAccessBitacora()) {
       syncRecordsFromGoogleSheets(false);
     }
-    syncCatalogoFromGoogleSheets(false);
-    syncResponsablesFromGoogleSheets(false);
+    checkAndSyncIfCatalogChanged(false);
     initDraftAutosave();
-  }, 1000);
+
+    // Verificación periódica cada 3 minutos en segundo plano
+    setInterval(() => {
+      checkAndSyncIfCatalogChanged(false);
+    }, 180000);
+
+    // Verificación automática al regresar a la pestaña activa del navegador
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        checkAndSyncIfCatalogChanged(false);
+      }
+    });
+    window.addEventListener('focus', () => {
+      checkAndSyncIfCatalogChanged(false);
+    });
+  }, 1200);
 }
 
 
