@@ -1802,22 +1802,22 @@ function updateEstatusPermissions(isAdmin) {
  */
 function initAreasNotificadoras() {
   const AREAS_VERSION_KEY = 'segey_areas_catalog_version';
-  const CURRENT_CATALOG_VERSION = '2026_11_areas_59_oficiales_v4';
+  const CURRENT_CATALOG_VERSION = '2026_11_areas_59_oficiales_v5';
 
   const savedVersion = localStorage.getItem(AREAS_VERSION_KEY);
   const saved = localStorage.getItem(AREAS_STORAGE_KEY);
 
   if (saved && savedVersion === CURRENT_CATALOG_VERSION) {
     try {
-      predefinedAreas = JSON.parse(saved).filter(a => !a.includes('(Oficina Central)'));
+      predefinedAreas = JSON.parse(saved).filter(a => DEFAULT_AREAS_NOTIFICADORAS.includes(a));
     } catch (e) {
       console.error('Error al cargar áreas predefinidas:', e);
       predefinedAreas = [];
     }
   }
 
-  // Si no hay áreas o la versión es anterior, cargar el catálogo completo oficial ordenado alfabéticamente
-  if (!Array.isArray(predefinedAreas) || predefinedAreas.length === 0 || savedVersion !== CURRENT_CATALOG_VERSION) {
+  // Si no hay áreas o la versión es anterior, cargar el catálogo oficial estricto de 59 áreas
+  if (!Array.isArray(predefinedAreas) || predefinedAreas.length !== DEFAULT_AREAS_NOTIFICADORAS.length || savedVersion !== CURRENT_CATALOG_VERSION) {
     predefinedAreas = [...DEFAULT_AREAS_NOTIFICADORAS];
     saveAreasToStorage();
     localStorage.setItem(AREAS_VERSION_KEY, CURRENT_CATALOG_VERSION);
@@ -2140,14 +2140,14 @@ const ENLACE_DIRECTO_POR_AREA = {
   'Dirección de Administración y Finanzas': 'Lic. Yazmin Eugenia Cob Caballero',
   'Dirección de Desarrollo Educativo': 'Mtra. Ligia del Socorro Sánchez Castañeda',
   'Dirección de Desarrollo Educativo y Proyectos Estratégicos': 'Mtra. Ligia Margarita Cícero Galán',
-  'Dirección de Educación Artística': 'Tec. Maria de Lourdes Méndez Villafaña',
-  'Dirección de Educación Especial': 'Lic. José Ernesto Barragán Polanco',
-  'Dirección de Educación Física': 'Lic. José Guillermo Rosado Alcocer',
-  'Dirección de Educación Indígena': 'Lic. Reyna Bertha de Jesús Teh López',
-  'Dirección de Educación Inicial': 'LAE. Ricardo Francisco de María Carrillo',
-  'Dirección de Educación Preescolar': 'M.F. Adelina Monserrat Hernández Santos',
-  'Dirección de Educación Primaria': 'Lic. Julia Beatriz Villanueva Ruiz',
-  'Dirección de Educación Secundaria': 'Lic. Rubén Alejandro Gutiérrez Adrián',
+  'Dirección de Educación Artística': 'Mtra. Carla Guadalupe Sanchez Colli',
+  'Dirección de Educación Especial': 'Mtra. Carla Guadalupe Sanchez Colli',
+  'Dirección de Educación Física': 'Mtra. Carla Guadalupe Sanchez Colli',
+  'Dirección de Educación Indígena': 'Mtra. Carla Guadalupe Sanchez Colli',
+  'Dirección de Educación Inicial': 'Mtra. Carla Guadalupe Sanchez Colli',
+  'Dirección de Educación Preescolar': 'Mtra. Carla Guadalupe Sanchez Colli',
+  'Dirección de Educación Primaria': 'Mtra. Carla Guadalupe Sanchez Colli',
+  'Dirección de Educación Secundaria': 'Mtra. Carla Guadalupe Sanchez Colli',
   'Dirección de Fortalecimiento de Educación Superior': 'Lic. Leobardo Medina Xix',
   'Dirección de Planeación': 'Mtro. Julio Jesús Varela Manzanero',
   'Dirección de Servicio Profesional': 'Lic. Leobardo Medina Xix',
@@ -2156,7 +2156,7 @@ const ENLACE_DIRECTO_POR_AREA = {
   'Enlace Estatal con la Unidad del Sistema para la Carrera de las Maestras y los Maestros (USICAMM)': 'C.P. Katia Isabel Manzanilla Mena',
   'Jefatura del Despacho': ['Ing. Gladys Gahona Cámara', 'L.E. Rosalinda Villanueva Hau'],
   'Secretario Particular': ['Ing. Gladys Gahona Cámara', 'L.E. Rosalinda Villanueva Hau'],
-  'Subdirección de Organización y Administración de Personal': 'L.C.C. Mirna Arleny Canché Moo',
+  'Subdirección de Organización y Administración de Personal': 'C.P. Koty Georgina Victoria Delgado',
   'Subsecretaría de Educación Básica': 'Mtra. Carla Guadalupe Sanchez Colli',
   'Subsecretaría de Educación Media Superior': 'C.P. Miguel Edgardo Argáez Quijano',
   'Subsecretaría de Educación Superior': 'Lic. Leobardo Medina Xix',
@@ -8290,11 +8290,8 @@ async function syncResponsablesFromGoogleSheets(forceToast = false) {
           }
         });
 
-        // Asegurar que predefinedAreas contenga estrictamente las 59 áreas oficiales sin duplicados ni variantes
-        const cleanKeys = keys.filter(a => !a.includes('(Oficina Central)'));
-        predefinedAreas = Array.from(new Set([...DEFAULT_AREAS_NOTIFICADORAS, ...cleanKeys]))
-          .filter(a => !a.includes('(Oficina Central)'))
-          .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+        // Asegurar que predefinedAreas contenga estrictamente las 59 áreas oficiales registradas
+        predefinedAreas = [...DEFAULT_AREAS_NOTIFICADORAS].sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
 
         saveResponsablesCatalog(currentCat);
         saveAreasToStorage();
