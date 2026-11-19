@@ -1,9 +1,10 @@
 // =========================================================================
 // MAPA OFICIAL DE ÁREAS VINCULADAS Y SUBORDINADAS POR ÁREA NOTIFICADORA
 // Generado automáticamente a partir de Catalogo_Funcionarios_y_Puestos.xlsx
+// Fecha de actualización: 2026-11-18 19:42:24
 // =========================================================================
 
-var MAPA_AREAS_SUBORDINADAS = {
+const MAPA_AREAS_SUBORDINADAS = {
   "Casa de la Historia de la Educación de Yucatán": [
     "Casa de la Historia de la Educación de Yucatán"
   ],
@@ -169,14 +170,7 @@ var MAPA_AREAS_SUBORDINADAS = {
     "Departamento de Administración y Procedimientos"
   ],
   "Departamento de Administrativo": [
-    "Departamento de Administrativo",
-    "Área de Asuntos Administrativos y Constitucionales",
-    "Área de Asuntos Familiares, Civiles y Mercantiles",
-    "Área de Asuntos Penales",
-    "Área de Atención Ciudadana",
-    "Área de Evaluación y Seguimiento",
-    "Área de Gestión",
-    "Área de Planeación"
+    "Departamento de Administrativo"
   ],
   "Departamento de Adquisiciones": [
     "Departamento de Adquisiciones",
@@ -398,12 +392,7 @@ var MAPA_AREAS_SUBORDINADAS = {
     "Área de Presupuesto Federal"
   ],
   "Departamento de Programación y Supervisión de Obra": [
-    "Departamento de Programación y Supervisión de Obra",
-    "Subjefatura de Programación de Obras",
-    "Área de Atención a Solicitudes Internas",
-    "Área de Dictamen Técnico",
-    "Área de Proyectos",
-    "Área de Validaciones de Infraestructura"
+    "Departamento de Programación y Supervisión de Obra"
   ],
   "Departamento de Recursos Financieros": [
     "Departamento de Recursos Financieros",
@@ -562,6 +551,9 @@ var MAPA_AREAS_SUBORDINADAS = {
   ],
   "Departamento de para la Promoción y Reconocimiento Docente": [
     "Departamento de para la Promoción y Reconocimiento Docente"
+  ],
+  "Despacho del Secretario": [
+    "Despacho del Secretario"
   ],
   "Dirección Jurídica": [
     "Dirección Jurídica"
@@ -989,6 +981,9 @@ var MAPA_AREAS_SUBORDINADAS = {
     "Departamento de Gestión Educativa",
     "Director del Centro de Evaluación Educativa del Estado de Yucatán"
   ],
+  "Enlace Estatal ante la Unidad del Sistema para la Carrera de las Maestras y los Maestros (USICAMM)": [
+    "Enlace Estatal ante la Unidad del Sistema para la Carrera de las Maestras y los Maestros (USICAMM)"
+  ],
   "Enlace Estatal con la Unidad del Sistema para la Carrera de las Maestras y los Maestros (USICAMM)": [
     "Enlace Estatal con la Unidad del Sistema para la Carrera de las Maestras y los Maestros (USICAMM)"
   ],
@@ -1070,14 +1065,22 @@ var MAPA_AREAS_SUBORDINADAS = {
     "Subdirector Jurídico"
   ],
   "Subsecretaría de Educación Básica": [
-    "Responsable de Área Administrativa",
     "Subsecretaría de Educación Básica"
+  ],
+  "Subsecretaría de Educación Básica (Oficina Central)": [
+    "Subsecretaría de Educación Básica (Oficina Central)"
   ],
   "Subsecretaría de Educación Media Superior": [
     "Subsecretaría de Educación Media Superior"
   ],
+  "Subsecretaría de Educación Media Superior (Oficina Central)": [
+    "Subsecretaría de Educación Media Superior (Oficina Central)"
+  ],
   "Subsecretaría de Educación Superior": [
     "Subsecretaría de Educación Superior"
+  ],
+  "Subsecretaría de Educación Superior (Oficina Central)": [
+    "Subsecretaría de Educación Superior (Oficina Central)"
   ],
   "Universidad Virtual del Estado de Yucatán": [
     "Coordinación de Área de Ambiente Virtual de Aprendizaje",
