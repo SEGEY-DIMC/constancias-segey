@@ -15,7 +15,7 @@ const ACTIVE_LAYOUT_ID_KEY = 'segey_active_layout_id';
 const ADMIN_AUTH_KEY = 'segey_admin_auth_v1';
 const AREAS_STORAGE_KEY = 'segey_areas_notificadoras_v1';
 const CATALOG_REMOTE_VERSION_KEY = 'segey_catalog_remote_version_v1';
-const DYNAMIC_SUBORDINADAS_KEY = 'segey_mapa_subordinadas_custom_v1';
+const DYNAMIC_SUBORDINADAS_KEY = 'segey_mapa_subordinadas_custom_v2';
 
 // Memoria dinámica para áreas subordinadas añadidas o sincronizadas
 let MAPA_AREAS_SUBORDINADAS_DINAMICO = {};
@@ -33,6 +33,10 @@ function clientPuestoToAreaName(puesto) {
   if (!puesto) return '';
   let p = String(puesto).trim();
   const repls = [
+    [/^(?:Subsecretario|Subsecretaria) de\s+/i, 'Subsecretaría de '],
+    [/^(?:Director|Directora) Jurídic[oa]/i, 'Dirección Jurídica'],
+    [/^(?:Jefe|Jefa) del Despacho/i, 'Jefatura del Despacho'],
+    [/^Secretari[oa] Particular/i, 'Secretaría Particular'],
     [/^(?:Jefe|Jefa) de Departamento de\s+/i, 'Departamento de '],
     [/^(?:Jefe|Jefa) de Departamento\s+/i, 'Departamento de '],
     [/^(?:Director|Directora) de\s+/i, 'Dirección de '],
@@ -2379,55 +2383,52 @@ function getAreasVinculadasPorUnidad(areaNombre) {
 
   if (!areaNombre || areaNombre === '__OTRA__') return [];
 
-  // 1. Verificar si hay registros dinámicos sincronizados en memoria o localStorage
-  if (MAPA_AREAS_SUBORDINADAS_DINAMICO && MAPA_AREAS_SUBORDINADAS_DINAMICO[areaNombre] && MAPA_AREAS_SUBORDINADAS_DINAMICO[areaNombre].length > 0) {
-    return [...MAPA_AREAS_SUBORDINADAS_DINAMICO[areaNombre]];
-  }
+  const subSet = new Set([areaNombre]);
 
-  // 2. Buscar en el MAPA_AREAS_SUBORDINADAS oficial pre-compilado (0 segundos)
+  // 1. Buscar en el MAPA_AREAS_SUBORDINADAS oficial pre-compilado (0 segundos)
   if (typeof MAPA_AREAS_SUBORDINADAS !== 'undefined' && MAPA_AREAS_SUBORDINADAS) {
     if (MAPA_AREAS_SUBORDINADAS[areaNombre] && MAPA_AREAS_SUBORDINADAS[areaNombre].length > 0) {
-      return [...MAPA_AREAS_SUBORDINADAS[areaNombre]];
-    }
-
-    const norm = normalizeText(areaNombre);
-    const key = Object.keys(MAPA_AREAS_SUBORDINADAS).find(k => normalizeText(k) === norm);
-    if (key && MAPA_AREAS_SUBORDINADAS[key] && MAPA_AREAS_SUBORDINADAS[key].length > 0) {
-      return [...MAPA_AREAS_SUBORDINADAS[key]];
-    }
-
-    const keyContain = Object.keys(MAPA_AREAS_SUBORDINADAS).find(k => {
-      const kn = normalizeText(k);
-      return kn.includes(norm) || norm.includes(kn);
-    });
-    if (keyContain && MAPA_AREAS_SUBORDINADAS[keyContain] && MAPA_AREAS_SUBORDINADAS[keyContain].length > 0) {
-      return [...MAPA_AREAS_SUBORDINADAS[keyContain]];
+      MAPA_AREAS_SUBORDINADAS[areaNombre].forEach(a => subSet.add(a));
+    } else {
+      const norm = normalizeText(areaNombre);
+      const key = Object.keys(MAPA_AREAS_SUBORDINADAS).find(k => normalizeText(k) === norm);
+      if (key && MAPA_AREAS_SUBORDINADAS[key] && MAPA_AREAS_SUBORDINADAS[key].length > 0) {
+        MAPA_AREAS_SUBORDINADAS[key].forEach(a => subSet.add(a));
+      } else {
+        const keyContain = Object.keys(MAPA_AREAS_SUBORDINADAS).find(k => {
+          const kn = normalizeText(k);
+          return kn.includes(norm) || norm.includes(kn);
+        });
+        if (keyContain && MAPA_AREAS_SUBORDINADAS[keyContain] && MAPA_AREAS_SUBORDINADAS[keyContain].length > 0) {
+          MAPA_AREAS_SUBORDINADAS[keyContain].forEach(a => subSet.add(a));
+        }
+      }
     }
   }
 
-  // 3. Fallback inteligente: buscar en CATALOGO_ORGANICO_SEGEY para áreas o unidades nuevas
-  if (typeof CATALOGO_ORGANICO_SEGEY !== 'undefined' && Array.isArray(CATALOGO_ORGANICO_SEGEY)) {
+  // 2. Combinar con registros dinámicos sincronizados en memoria o localStorage
+  if (MAPA_AREAS_SUBORDINADAS_DINAMICO && MAPA_AREAS_SUBORDINADAS_DINAMICO[areaNombre] && MAPA_AREAS_SUBORDINADAS_DINAMICO[areaNombre].length > 0) {
+    MAPA_AREAS_SUBORDINADAS_DINAMICO[areaNombre].forEach(a => subSet.add(a));
+  }
+
+  // 3. Fallback inteligente si solo tiene el área misma: buscar en CATALOGO_ORGANICO_SEGEY para áreas o unidades nuevas
+  if (subSet.size <= 1 && typeof CATALOGO_ORGANICO_SEGEY !== 'undefined' && Array.isArray(CATALOGO_ORGANICO_SEGEY)) {
     const org = CATALOGO_ORGANICO_SEGEY.find(u => u.unidad === areaNombre) ||
                 CATALOGO_ORGANICO_SEGEY.find(u => normalizeText(u.unidad) === normalizeText(areaNombre));
     if (org && Array.isArray(org.subordinados) && org.subordinados.length > 0) {
-      const dynamicSet = new Set([areaNombre]);
       org.subordinados.forEach(s => {
         if (s.puesto && s.puesto !== 'None') {
           const a = clientPuestoToAreaName(s.puesto);
           if (a && a !== areaNombre && a.length > 4) {
-            dynamicSet.add(a);
+            subSet.add(a);
           }
         }
       });
-      const res = Array.from(dynamicSet).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
-      registrarAreaSubordinadaDinamica(areaNombre, areaNombre);
-      res.forEach(item => registrarAreaSubordinadaDinamica(areaNombre, item));
-      return res;
+      subSet.forEach(item => registrarAreaSubordinadaDinamica(areaNombre, item));
     }
   }
 
-  // Fallback: incluir al menos el área misma
-  return [areaNombre];
+  return Array.from(subSet).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
 }
 
 /**
