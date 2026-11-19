@@ -1,7 +1,7 @@
 // =========================================================================
 // MAPA OFICIAL DE ÁREAS VINCULADAS Y SUBORDINADAS POR ÁREA NOTIFICADORA
 // Generado automáticamente a partir de Catalogo_Funcionarios_y_Puestos.xlsx
-// Fecha de actualización: 2026-11-18 19:42:24
+// Fecha de actualización: 2026-11-19 11:23:01
 // =========================================================================
 
 const MAPA_AREAS_SUBORDINADAS = {
@@ -1067,20 +1067,11 @@ const MAPA_AREAS_SUBORDINADAS = {
   "Subsecretaría de Educación Básica": [
     "Subsecretaría de Educación Básica"
   ],
-  "Subsecretaría de Educación Básica (Oficina Central)": [
-    "Subsecretaría de Educación Básica (Oficina Central)"
-  ],
   "Subsecretaría de Educación Media Superior": [
     "Subsecretaría de Educación Media Superior"
   ],
-  "Subsecretaría de Educación Media Superior (Oficina Central)": [
-    "Subsecretaría de Educación Media Superior (Oficina Central)"
-  ],
   "Subsecretaría de Educación Superior": [
     "Subsecretaría de Educación Superior"
-  ],
-  "Subsecretaría de Educación Superior (Oficina Central)": [
-    "Subsecretaría de Educación Superior (Oficina Central)"
   ],
   "Universidad Virtual del Estado de Yucatán": [
     "Coordinación de Área de Ambiente Virtual de Aprendizaje",
