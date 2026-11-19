@@ -78,29 +78,25 @@ def get_word():
     return _word_app
 
 def convert_docx_to_pdf_word(docx_path, pdf_path):
-    """Convierte un documento .docx a PDF usando Microsoft Word COM nativo"""
-    global _word_app
-    word = get_word()
-    if word is None:
-        raise RuntimeError("Microsoft Word no está disponible en este equipo.")
-
+    """Convierte un documento .docx a PDF usando Microsoft Word COM nativo de forma aislada por hilo"""
+    import pythoncom
+    import win32com.client
+    pythoncom.CoInitialize()
+    word = None
     try:
+        word = win32com.client.DispatchEx('Word.Application')
+        word.Visible = False
+        word.DisplayAlerts = 0
         doc = word.Documents.Open(os.path.abspath(docx_path))
-        # wdFormatPDF = 17
         doc.SaveAs(os.path.abspath(pdf_path), FileFormat=17)
-        doc.Close()
-    except Exception as e:
-        # Reintentar con instancia limpia si se perdió la conexión COM
-        try:
-            try: word.Quit()
-            except: pass
-            _word_app = None
-            word = get_word()
-            doc = word.Documents.Open(os.path.abspath(docx_path))
-            doc.SaveAs(os.path.abspath(pdf_path), FileFormat=17)
-            doc.Close()
-        except Exception as e2:
-            raise RuntimeError(f"Error al convertir documento con Word: {e2}")
+        doc.Close(False)
+    finally:
+        if word is not None:
+            try:
+                word.Quit()
+            except Exception:
+                pass
+        pythoncom.CoUninitialize()
 
 def parse_json_body(body):
     for enc in ['utf-8', 'latin-1', 'cp1252']:
@@ -124,7 +120,8 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header('Expires', '0')
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+        self.send_header('Access-Control-Expose-Headers', 'Content-Disposition')
         super().end_headers()
 
     def do_OPTIONS(self):
