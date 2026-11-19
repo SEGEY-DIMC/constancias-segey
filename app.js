@@ -1176,6 +1176,8 @@ function compileLayout(templateStr, data) {
   const etiquetaCompareciente2 = isJefeInmediato ? 'Jefe Inmediato: ' : '2) ';
 
   const vars = {
+    logoYucatan: (typeof window !== 'undefined' && window.LOGO_YUCATAN_B64) ? window.LOGO_YUCATAN_B64 : 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
+    logoSegey: (typeof window !== 'undefined' && window.LOGO_SEGEY_B64) ? window.LOGO_SEGEY_B64 : 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
     etiquetaTestigos: esCambioDependenciaJerarquica ? 'Testigos' : 'Testigo',
     etiquetaEnlaces: esCambioDependenciaJerarquica ? 'Testigos' : 'Testigo',
     etiquetaTitular2: etiquetaTitular2,
@@ -2125,11 +2127,11 @@ const ENLACE_DIRECTO_POR_AREA = {
   'Departamento de Adquisiciones': 'Lic. Blanca Esther Perera Romero',
   'Departamento de Control Patrimonial': 'Mtra. Lucely Guadalupe Azcorra Dzib',
   'Departamento de Distribución de Libros de Texto y Mobiliario': 'Br. Felipe Humberto Ceballos Pech',
-  'Departamento de Estadística': 'Mtra. Diany Reyna Góngora Franco',
-  'Departamento de Estudios y Proyectos': 'Lic. Gessely Guadalupe Pat Pacheco',
+  'Departamento de Estadística': 'Mtro. Julio Jesús Varela Manzanero',
+  'Departamento de Estudios y Proyectos': 'Mtro. Julio Jesús Varela Manzanero',
   'Departamento de Gestión de Información, Capacitación y Ética': 'M.E. Adriana del Socorro Durán Lizama',
   'Departamento de Innovación y Mejora Continua': 'Lic. Yazmin Eugenia Cob Caballero',
-  'Departamento de Planeación, Evaluación y Seguimiento': 'Mtra. María Luisa Guillermo García',
+  'Departamento de Planeación, Evaluación y Seguimiento': 'Mtro. Julio Jesús Varela Manzanero',
   'Departamento de Preparatoria Abierta': 'Mtra. Didia Marisol Mendoza Arzápalo',
   'Departamento de Preparatorias Estatales y Particulares Incorporadas': 'Mtra. Ana Elisa Hernández Navarro',
   'Departamento de Presupuestos': 'C.P. Jorge Antonio Uc Camas',
@@ -5101,7 +5103,7 @@ function initFormDefaults() {
 
   // Vincular eventos de Tipo de Movimiento con detección de cambios y advertencia
   const currentCheckedRadio = document.querySelector('input[name="tipoMovimiento"]:checked');
-  currentTipoMovimiento = currentCheckedRadio ? currentCheckedRadio.value : 'Alta';
+  currentTipoMovimiento = currentCheckedRadio ? currentCheckedRadio.value : '';
 
   document.querySelectorAll('input[name="tipoMovimiento"]').forEach(radio => {
     radio.removeEventListener('change', handleTipoMovimientoChange);
@@ -5109,7 +5111,7 @@ function initFormDefaults() {
       const nuevoVal = radio.value;
       if (nuevoVal === currentTipoMovimiento) return;
 
-      if (hayInformacionMovimientoLlenada()) {
+      if (currentTipoMovimiento && hayInformacionMovimientoLlenada()) {
         // Revertir temporalmente el radio al valor previo mientras el usuario confirma
         const prevRadio = document.querySelector(`input[name="tipoMovimiento"][value="${currentTipoMovimiento}"]`);
         if (prevRadio) prevRadio.checked = true;
@@ -5117,7 +5119,7 @@ function initFormDefaults() {
         pendingTipoMovimiento = nuevoVal;
         mostrarModalCambioMovimiento(nuevoVal);
       } else {
-        // Si no hay datos capturados, cambiar limpiamente y ajustar formato
+        // Si no hay datos capturados o venía de ningún movimiento seleccionado, cambiar limpiamente y ajustar formato
         currentTipoMovimiento = nuevoVal;
         limpiarCamposPorCambioMovimiento(nuevoVal);
         handleTipoMovimientoChange();
@@ -5452,9 +5454,92 @@ window.limpiarCamposPorCambioMovimiento = limpiarCamposPorCambioMovimiento;
  */
 function handleTipoMovimientoChange() {
   const selectedRadio = document.querySelector('input[name="tipoMovimiento"]:checked');
-  if (!selectedRadio) return;
+  const ndInputElem = document.getElementById('nuevaDenominacion');
+  const nnInputElem = document.getElementById('nuevoNombre');
+  const containerAreaBaja = document.getElementById('containerSelectAreaBaja');
+  const containerAreaCambio = document.getElementById('containerSelectAreaCambioNombre');
+  const containerAreaCambioDep = document.getElementById('containerSelectAreaCambioDep');
+  const containerUnidadDestino = document.getElementById('containerSelectUnidadDestinoCambioDep');
+  const containerNuevoNombre = document.getElementById('containerNuevoNombre');
+  const lblNuevaDenom = document.getElementById('lblNuevaDenominacion');
+  const selBaja = document.getElementById('selectAreaBaja');
+  const selCambio = document.getElementById('selectAreaCambioNombre');
+  const selDep = document.getElementById('selectAreaCambioDep');
+  const selDestino = document.getElementById('selectUnidadDestinoCambioDep');
+  const respInputFinal = document.getElementById('responsableCaptura');
+  const respValFinal = respInputFinal ? respInputFinal.value.trim() : '';
+
+  // Si no hay ninguna opción seleccionada (Alta, Baja, Cambio de nombre o Cambio de dependencia jerárquica)
+  if (!selectedRadio) {
+    currentTipoMovimiento = '';
+
+    // 1. Inhabilitar y bloquear el cuadro de texto principal
+    if (ndInputElem) {
+      ndInputElem.disabled = true;
+      ndInputElem.value = '';
+      ndInputElem.placeholder = 'PRIMERO SELECCIONE UN TIPO DE MOVIMIENTO ARRIBA (ALTA, BAJA, CAMBIO DE NOMBRE O CAMBIO DE DEPENDENCIA JERÁRQUICA)...';
+      ndInputElem.className = 'w-full text-sm rounded-lg border-slate-200 border p-3 focus:outline-none uppercase bg-slate-100 text-slate-400 cursor-not-allowed select-none transition-all';
+    }
+
+    // 2. Inhabilitar y ocultar las listas dependientes
+    if (containerAreaBaja) containerAreaBaja.classList.add('hidden');
+    if (selBaja) selBaja.disabled = true;
+
+    if (containerAreaCambio) containerAreaCambio.classList.add('hidden');
+    if (selCambio) selCambio.disabled = true;
+
+    if (containerAreaCambioDep) containerAreaCambioDep.classList.add('hidden');
+    if (selDep) selDep.disabled = true;
+
+    if (containerUnidadDestino) containerUnidadDestino.classList.add('hidden');
+    if (selDestino) selDestino.disabled = true;
+
+    if (containerNuevoNombre) containerNuevoNombre.classList.add('hidden');
+    if (nnInputElem) {
+      nnInputElem.disabled = true;
+      nnInputElem.value = '';
+    }
+
+    // 3. Inhabilitar comboboxes asociados si existen
+    if (typeof setComboboxDisabled === 'function') {
+      setComboboxDisabled('selectAreaBaja', true);
+      setComboboxDisabled('selectAreaCambioNombre', true);
+      setComboboxDisabled('selectAreaCambioDep', true);
+      setComboboxDisabled('selectUnidadDestinoCambioDep', true);
+    }
+
+    if (lblNuevaDenom) {
+      lblNuevaDenom.innerHTML = 'Nombre del Área o Adscripción <span class="text-xs text-amber-700 font-semibold"><i class="fa-solid fa-hand-pointer mr-1"></i>(Seleccione un movimiento arriba para habilitar)</span>';
+    }
+
+    renderDocument(getCurrentFormDataForPreview());
+    return;
+  }
+
+  // Si SÍ hay una opción seleccionada: Habilitar el cuadro de texto principal
+  if (ndInputElem) {
+    ndInputElem.disabled = false;
+    ndInputElem.className = 'w-full text-sm rounded-lg border-slate-300 border p-3 focus:ring-2 focus:ring-segey-700 focus:outline-none uppercase bg-white text-slate-900 transition-all';
+  }
+
   const val = selectedRadio.value;
   currentTipoMovimiento = val;
+
+  // Habilitar los selects
+  if (selBaja) selBaja.disabled = false;
+  if (selCambio) selCambio.disabled = false;
+  if (selDep) selDep.disabled = false;
+  if (selDestino) selDestino.disabled = false;
+  if (nnInputElem) nnInputElem.disabled = false;
+
+  if (typeof setComboboxDisabled === 'function') {
+    if (val === 'Baja') setComboboxDisabled('selectAreaBaja', false);
+    if (val === 'Cambio de nombre') setComboboxDisabled('selectAreaCambioNombre', false);
+    if (val === 'Cambio de dependencia jerárquica') {
+      setComboboxDisabled('selectAreaCambioDep', false);
+      setComboboxDisabled('selectUnidadDestinoCambioDep', false);
+    }
+  }
 
   const containerT2 = document.getElementById('containerTitularUnidad2');
   const lblT2 = document.getElementById('lblTitularUnidad2');
@@ -5500,9 +5585,7 @@ function handleTipoMovimientoChange() {
       if (test2Car) test2Car.required = true;
       if (lblTestigo1) lblTestigo1.innerHTML = '<i class="fa-solid fa-users text-segey-700"></i> Testigo (1) <span class="text-red-500">*</span>';
       if (badgeTestigo1) {
-        const respInput = document.getElementById('responsableCaptura');
-        const respVal = respInput ? respInput.value.trim() : '';
-        if (respVal) {
+        if (respValFinal) {
           badgeTestigo1.className = 'text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-semibold border border-emerald-200';
           badgeTestigo1.innerHTML = '<i class="fa-solid fa-lock text-emerald-600 mr-1"></i>Vinculado a Responsable (Bloqueado)';
         } else {
@@ -5532,9 +5615,7 @@ function handleTipoMovimientoChange() {
       }
       if (lblTestigo1) lblTestigo1.innerHTML = '<i class="fa-solid fa-users text-segey-700"></i> Testigo (1) <span class="text-red-500">*</span>';
       if (badgeTestigo1) {
-        const respInput = document.getElementById('responsableCaptura');
-        const respVal = respInput ? respInput.value.trim() : '';
-        if (respVal) {
+        if (respValFinal) {
           badgeTestigo1.className = 'text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-semibold border border-emerald-200';
           badgeTestigo1.innerHTML = '<i class="fa-solid fa-lock text-emerald-600 mr-1"></i>Vinculado a Responsable (Bloqueado)';
         } else {
@@ -5648,12 +5729,10 @@ function handleTipoMovimientoChange() {
     : (custNotifActual ? custNotifActual.value : '');
 
   // 3. Control de Selector de Áreas vinculadas para "Baja" y "Cambio de nombre"
-  const containerAreaBaja = document.getElementById('containerSelectAreaBaja');
   if (val === 'Baja') {
     if (containerAreaBaja) {
       containerAreaBaja.classList.remove('hidden');
       poblarSelectAreaBaja(currentNotifArea);
-      const selBaja = document.getElementById('selectAreaBaja');
       if (selBaja && selBaja.value && selBaja.value !== '__OTRA__') {
         vincularJefeInmediatoConArea(selBaja.value);
         vincularTitularAreaConBaja(selBaja.value);
@@ -5665,19 +5744,10 @@ function handleTipoMovimientoChange() {
     }
   }
 
-  const containerAreaCambio = document.getElementById('containerSelectAreaCambioNombre');
-  const containerNuevoNombre = document.getElementById('containerNuevoNombre');
-  const containerAreaCambioDep = document.getElementById('containerSelectAreaCambioDep');
-  const containerUnidadDestino = document.getElementById('containerSelectUnidadDestinoCambioDep');
-  const lblNuevaDenom = document.getElementById('lblNuevaDenominacion');
-  const ndInputElem = document.getElementById('nuevaDenominacion');
-  const nnInputElem = document.getElementById('nuevoNombre');
-
   if (val === 'Cambio de nombre') {
     if (containerAreaCambio) {
       containerAreaCambio.classList.remove('hidden');
       poblarSelectAreaCambioNombre(currentNotifArea);
-      const selCambio = document.getElementById('selectAreaCambioNombre');
       if (selCambio && selCambio.value && selCambio.value !== '__OTRA__') {
         vincularJefeInmediatoConArea(selCambio.value);
       }
@@ -5711,7 +5781,6 @@ function handleTipoMovimientoChange() {
     if (containerAreaCambioDep) {
       containerAreaCambioDep.classList.remove('hidden');
       poblarSelectAreaCambioDep(currentNotifArea);
-      const selDep = document.getElementById('selectAreaCambioDep');
       if (selDep && selDep.value && selDep.value !== '__OTRA__') {
         vincularTitularAreaConBaja(selDep.value);
       }
@@ -5753,10 +5822,8 @@ function handleTipoMovimientoChange() {
   poblarSelectTestigos();
 
   // Re-asegurar bloqueo de Testigo 1 con Responsable de Captura
-  const respInput = document.getElementById('responsableCaptura');
-  const respVal = respInput ? respInput.value.trim() : '';
-  if (respVal) {
-    sincronizarTestigo1ConResponsable(respVal);
+  if (respValFinal) {
+    sincronizarTestigo1ConResponsable(respValFinal);
   }
 
   renderDocument(getCurrentFormDataForPreview());
@@ -6337,10 +6404,10 @@ async function downloadCurrentDocumentPDF() {
 
   showToast(`Generando PDF oficial (${folio})...`, 'info');
 
-  // 1. Intentar con el servidor local Word COM (tiempo límite de 60 segundos)
+  // 1. Intentar con el servidor local Word COM (tiempo límite de 4 segundos)
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000);
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
     const res = await fetch('/api/generate-word-pdf', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -6371,7 +6438,7 @@ async function downloadCurrentDocumentPDF() {
   }
 
   // 2. Generación de respaldo en navegador mediante html2pdf.js centrado y sin recortes
-  showToast('Generando PDF alternativo en navegador...', 'warning');
+  showToast('Generando PDF en navegador...', 'warning');
   generateClientSidePDF(element, filename);
   if (btn) {
     btn.disabled = false;
@@ -6385,16 +6452,9 @@ function generateClientSidePDF(element, filename) {
     return;
   }
 
-  // Clonar el elemento en un contenedor temporal fijo sin desfasamientos horizontales de margen
-  const clone = element.cloneNode(true);
-  clone.style.position = 'fixed';
-  clone.style.top = '0';
-  clone.style.left = '0';
-  clone.style.margin = '0';
-  clone.style.width = '780px';
-  clone.style.zIndex = '-9999';
-  clone.style.background = '#ffffff';
-  document.body.appendChild(clone);
+  const prevScrollY = window.scrollY;
+  const prevScrollX = window.scrollX;
+  window.scrollTo(0, 0);
 
   const opt = {
     margin: [6, 8, 6, 8],
@@ -6404,10 +6464,9 @@ function generateClientSidePDF(element, filename) {
       scale: 2,
       useCORS: true,
       letterRendering: true,
-      scrollX: 0,
+      backgroundColor: '#ffffff',
       scrollY: 0,
-      x: 0,
-      y: 0
+      scrollX: 0
     },
     jsPDF: {
       unit: 'mm',
@@ -6417,11 +6476,11 @@ function generateClientSidePDF(element, filename) {
     pagebreak: { mode: ['avoid-all', 'css'] }
   };
 
-  html2pdf().set(opt).from(clone).save().then(() => {
-    try { document.body.removeChild(clone); } catch (e) {}
+  html2pdf().set(opt).from(element).save().then(() => {
+    window.scrollTo(prevScrollX, prevScrollY);
     showToast(`¡Documento ${filename} descargado!`, 'success');
   }).catch(err => {
-    try { document.body.removeChild(clone); } catch (e) {}
+    window.scrollTo(prevScrollX, prevScrollY);
     console.error('Error al generar el PDF con html2pdf:', err);
     showToast('Inconveniente al generar el PDF.', 'error');
   });
@@ -7359,7 +7418,7 @@ function closeDetailsModal() {
 
 function resetForm() {
   editingRecordId = null;
-  currentTipoMovimiento = 'Alta';
+  currentTipoMovimiento = '';
   pendingTipoMovimiento = null;
   try { localStorage.removeItem(AUTOSAVE_DRAFT_KEY); } catch(e){}
   const editingBanner = document.getElementById('editing-folio-banner');
