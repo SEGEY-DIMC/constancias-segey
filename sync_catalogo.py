@@ -375,22 +375,63 @@ def download_from_google_drive(target_path=EXCEL_PATH):
 def puesto_to_area_name(puesto):
     p = str(puesto or '').strip()
     replacements = [
+        ('Subsecretario de ', 'Subsecretaría de '),
+        ('Subsecretaria de ', 'Subsecretaría de '),
+        ('Director Jurídico', 'Dirección Jurídica'),
+        ('Directora Jurídica', 'Dirección Jurídica'),
+        ('Jefe del Despacho', 'Jefatura del Despacho'),
+        ('Jefa del Despacho', 'Jefatura del Despacho'),
+        ('Secretario de Educación', 'Despacho del Secretario'),
+        ('Secretario Particular', 'Secretaría Particular'),
+        ('Secretaria Particular', 'Secretaría Particular'),
         ('Jefe de Departamento de ', 'Departamento de '),
         ('Jefe de Departamento ', 'Departamento de '),
         ('Jefa de Departamento de ', 'Departamento de '),
         ('Jefa de Departamento ', 'Departamento de '),
+        ('Director de la ', 'Dirección de la '),
+        ('Directora de la ', 'Dirección de la '),
+        ('Director del ', 'Dirección del '),
+        ('Directora del ', 'Dirección del '),
         ('Director de ', 'Dirección de '),
         ('Directora de ', 'Dirección de '),
+        ('Subdirector de la ', 'Subdirección de la '),
+        ('Subdirectora de la ', 'Subdirección de la '),
+        ('Subdirector del ', 'Subdirección del '),
+        ('Subdirectora del ', 'Subdirección del '),
         ('Subdirector de ', 'Subdirección de '),
         ('Subdirectora de ', 'Subdirección de '),
+        ('Subjefe de la ', 'Subjefatura de la '),
+        ('Subjefa de la ', 'Subjefatura de la '),
+        ('Subjefe del ', 'Subjefatura del '),
+        ('Subjefa del ', 'Subjefatura del '),
         ('Subjefe de ', 'Subjefatura de '),
         ('Subjefa de ', 'Subjefatura de '),
+        ('Subjefe ', 'Subjefatura '),
+        ('Subjefa ', 'Subjefatura '),
         ('Jefe de Oficina de ', 'Oficina de '),
         ('Jefa de Oficina de ', 'Oficina de '),
+        ('Jefe de Oficina ', 'Oficina '),
+        ('Jefa de Oficina ', 'Oficina '),
+        ('Jefe del ', 'Jefatura del '),
+        ('Jefa del ', 'Jefatura del '),
+        ('Jefe de la ', 'Jefatura de la '),
+        ('Jefa de la ', 'Jefatura de la '),
         ('Responsable de Área de ', 'Área de '),
+        ('Responsable de Área ', 'Área '),
         ('Encargado de Área de ', 'Área de '),
+        ('Encargado de Área ', 'Área '),
         ('Coordinador General de ', 'Coordinación General de '),
         ('Coordinadora General de ', 'Coordinación General de '),
+        ('Coordinador Estatal de ', 'Coordinación Estatal de '),
+        ('Coordinadora Estatal de ', 'Coordinación Estatal de '),
+        ('Coordinador Estatal ', 'Coordinación Estatal '),
+        ('Coordinadora Estatal ', 'Coordinación Estatal '),
+        ('Coordinador de la ', 'Coordinación de la '),
+        ('Coordinadora de la ', 'Coordinación de la '),
+        ('Coordinador del ', 'Coordinación del '),
+        ('Coordinadora del ', 'Coordinación del '),
+        ('Coordinador para la ', 'Coordinación para la '),
+        ('Coordinadora para la ', 'Coordinación para la '),
         ('Coordinador de ', 'Coordinación de '),
         ('Coordinadora de ', 'Coordinación de ')
     ]
@@ -749,19 +790,43 @@ if (typeof window !== 'undefined') {{
     all_areas = sorted(list(all_areas_set))
     mapa_subordinadas = {}
 
+    # Mapeo rápido de unidades de catálogo a nombre del titular
+    catalog_titulares = {}
+    for u in catalog:
+        unid = str(u.get("unidad") or '').replace(' (Oficina Central)', '').strip().lower()
+        tnom = str(u.get("titular_nombre") or '').strip().lower()
+        if unid and tnom:
+            catalog_titulares[unid] = tnom
+
     for area in all_areas:
         matched = []
-        for r in rows:
-            p = str(r.get('Puesto') or '').strip()
-            p_area = puesto_to_area_name(p)
-            if area.lower() == p_area.lower() or area.lower() == p.lower():
-                matched.append(r)
+        # 1. Búsqueda por titular oficial si el área es una unidad del catálogo
+        area_clean = area.replace(' (Oficina Central)', '').strip().lower()
+        if area_clean in catalog_titulares:
+            t_nom = catalog_titulares[area_clean]
+            for r in rows:
+                fn = str(r.get('Nombre del Funcionario (Gr-Nom-Ap)') or '').strip().lower()
+                if fn == t_nom:
+                    matched.append(r)
+                    break
+
+        # 2. Búsqueda por Puesto exacto o normalizado
+        if not matched:
+            for r in rows:
+                p = str(r.get('Puesto') or '').strip()
+                p_area = puesto_to_area_name(p)
+                if area.lower() == p_area.lower() or area.lower() == p.lower():
+                    matched.append(r)
+                    break
+
+        # 3. Búsqueda por coincidencia parcial si aún no se encuentra
         if not matched:
             for r in rows:
                 p = str(r.get('Puesto') or '').strip()
                 p_area = puesto_to_area_name(p)
                 if area.lower() in p_area.lower() or p_area.lower() in area.lower():
                     matched.append(r)
+                    break
 
         sub_areas = set([area])
         if matched:
