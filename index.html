@@ -394,11 +394,11 @@
               </div>
 
               <!-- Primer cuadro de texto: Nombre del Área o Nombre Actual si es Cambio de Nombre -->
-              <textarea id="nuevaDenominacion" rows="2" required
-                placeholder="ESPECIFIQUE CON PRECISIÓN EL NOMBRE DEL ÁREA, CLAVE O ADSCRIPCIÓN DETERMINADA..."
+              <textarea id="nuevaDenominacion" rows="2" required disabled
+                placeholder="PRIMERO SELECCIONE UN TIPO DE MOVIMIENTO ARRIBA (ALTA, BAJA, CAMBIO DE NOMBRE O CAMBIO DE DEPENDENCIA JERÁRQUICA)..."
                 style="text-transform: uppercase;"
                 oninput="this.value = this.value.toUpperCase();"
-                class="w-full text-sm rounded-lg border-slate-300 border p-3 focus:ring-2 focus:ring-segey-700 focus:outline-none uppercase"></textarea>
+                class="w-full text-sm rounded-lg border-slate-200 border p-3 focus:outline-none uppercase bg-slate-100 text-slate-400 cursor-not-allowed select-none transition-all"></textarea>
 
               <!-- Menú desplegable de Unidad Administrativa de Destino (exclusivo para 'Cambio de dependencia jerárquica') -->
               <div id="containerSelectUnidadDestinoCambioDep" class="hidden mt-3 p-3.5 rounded-xl bg-purple-50/60 border border-purple-200 space-y-1.5 transition-all">
@@ -2490,9 +2490,9 @@
   </div>
 
   <!-- Scripts -->
-  <script src="assets/catalogo_organico.js?v=2.5.9"></script>
-  <script src="assets/mapa_jefes_inmediatos.js?v=2.5.9"></script>
-  <script src="assets/mapa_areas_subordinadas.js?v=2.5.9"></script>
-  <script src="app.js?v=2.5.9"></script>
+  <script src="assets/catalogo_organico.js?v=2.6.3"></script>
+  <script src="assets/mapa_jefes_inmediatos.js?v=2.6.3"></script>
+  <script src="assets/mapa_areas_subordinadas.js?v=2.6.3"></script>
+  <script src="app.js?v=2.6.3"></script>
 </body>
 </html>
