@@ -1,7 +1,7 @@
 // =========================================================================
 // MAPA OFICIAL DE JERARQUÍA DE JEFES INMEDIATOS - SEGEY
 // Generado automáticamente a partir de Catalogo_Funcionarios_y_Puestos.xlsx
-// Fecha de actualización: 2026-11-19 13:02:34
+// Fecha de actualización: 2026-11-19 15:32:59
 // =========================================================================
 
 const MAPA_JERARQUIA_JEFES = [
@@ -40650,6 +40650,28 @@ function buscarJefeInmediatoPorArea(areaSeleccionada, areaNotificadora = '') {
 
   const nSel = normalize(areaSeleccionada);
   if (!nSel) return null;
+
+  // Regla Oficial de Consolidación de Mando: Rama Centro de Actualización del Magisterio (CAM)
+  // Para los puestos y áreas adscritos al CAM y Formadoras, el Jefe Inmediato facultado para autorizar constancias
+  // es el Lic. José Miguel Rodríguez Sosa (Jefe de Depto. de Instituciones Formadoras de Docentes y Actualización del Magisterio)
+  const esRamaCAM = nSel.includes('cam') || nSel.includes('actualizacion del magisterio') || nSel.includes('formadoras') || nSel.includes('coordinacion de area academica') || nSel.includes('coordinacion de area de difusion') || nSel.includes('coordinacion de area de investigacion');
+  const esElMismoJefe = nSel.includes('jose miguel rodriguez sosa') || nSel.includes('departamento de instituciones formadoras');
+  if (esRamaCAM && !esElMismoJefe) {
+    let tNom = '';
+    for (let i = 0; i < MAPA_JERARQUIA_JEFES.length; i++) {
+      const node = MAPA_JERARQUIA_JEFES[i];
+      if (node.norm_aliases.includes(nSel)) {
+        tNom = node.titular_nombre || '';
+        break;
+      }
+    }
+    return {
+      jefe_nombre: "Lic. José Miguel Rodríguez Sosa",
+      jefe_cargo: "Jefe de Departamento de Instituciones Formadoras de Docentes y Actualización del Magisterio",
+      titular_nombre: tNom,
+      titular_cargo: areaSeleccionada
+    };
+  }
 
   // 1. Buscar coincidencias exactas o parciales en los alias del área/puesto
   const exactCandidates = [];
