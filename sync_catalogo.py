@@ -399,7 +399,7 @@ def puesto_to_area_name(puesto):
             return p.replace(orig, rep, 1)
     return p
 
-def sync(excel_path=EXCEL_PATH, download_from_drive=False):
+def sync(excel_path=EXCEL_PATH, download_from_drive=True):
     if download_from_drive:
         download_from_google_drive(excel_path)
 
