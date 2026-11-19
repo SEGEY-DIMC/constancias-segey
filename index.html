@@ -50,7 +50,7 @@
   <!-- Librería para generar y descargar PDF directamente -->
   <script src="assets/logos_base64.js"></script>
   <script src="html2pdf.bundle.min.js"></script>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=2.7.4">
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen font-sans flex flex-col">
 
@@ -848,13 +848,38 @@
         </div>
 
         <div class="flex items-center gap-2.5 w-full sm:w-auto">
-          <button onclick="handleBackFromPreview()" class="flex-1 sm:flex-none px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 transition flex items-center justify-center gap-1.5">
+          <button onclick="handleBackFromPreview()" class="flex-1 sm:flex-none px-3.5 py-2.5 text-xs font-semibold rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 transition flex items-center justify-center gap-1.5" title="Regresar a la captura">
             <i class="fa-solid fa-arrow-left"></i> <span id="lbl-btn-back-from-preview">Volver</span>
+          </button>
+          <button id="btn-print-browser" onclick="window.print()" class="hidden sm:flex px-3 py-2.5 text-xs font-semibold rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 shadow-xs transition items-center justify-center gap-1.5" title="Imprimir directamente o guardar como PDF vectorial con el navegador">
+            <i class="fa-solid fa-print"></i> <span>Imprimir</span>
           </button>
           <button id="btn-download-pdf" onclick="downloadCurrentDocumentPDF()" class="flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold rounded-lg bg-red-700 hover:bg-red-800 text-white shadow transition flex items-center justify-center gap-2">
             <i class="fa-solid fa-file-pdf"></i> Descargar PDF Oficial
           </button>
+        </div>
+      </div>
 
+      <!-- Alerta visual de Formulario Incompleto en Vista Previa -->
+      <div id="banner-preview-incompleto" class="hidden mb-6 bg-rose-50 border border-rose-300 text-rose-950 p-4 rounded-xl text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+        <div class="flex items-start sm:items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-rose-200 text-rose-800 flex items-center justify-center shrink-0 font-bold">
+            <i class="fa-solid fa-triangle-exclamation text-sm"></i>
+          </div>
+          <div>
+            <span class="font-bold text-rose-900 block sm:inline">Formulario incompleto:</span>
+            <span id="banner-preview-incompleto-texto" class="text-rose-800">
+              Hay campos obligatorios vacíos en el formulario. La descarga del PDF oficial está bloqueada hasta completarlos.
+            </span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 self-end sm:self-auto shrink-0">
+          <button type="button" onclick="mostrarModalCamposVacios(obtenerCamposVaciosFormulario())" class="px-3 py-1.5 bg-white border border-rose-300 hover:bg-rose-100 text-rose-800 font-bold rounded-lg transition text-xs shadow-2xs flex items-center gap-1.5">
+            <i class="fa-solid fa-list-check"></i> Ver campos vacíos
+          </button>
+          <button type="button" onclick="irACompletarCamposVacios()" class="px-3 py-1.5 bg-rose-700 hover:bg-rose-800 text-white font-bold rounded-lg transition text-xs shadow-xs flex items-center gap-1.5">
+            <i class="fa-solid fa-pen-to-square"></i> Completar formulario
+          </button>
         </div>
       </div>
 
@@ -910,20 +935,22 @@
               <div class="font-bold text-[11pt] mb-1 uppercase tracking-wide text-slate-900 text-left">I. TIPO DE CAMBIO QUE DETERMINA LA UNIDAD ADMINISTRATIVA</div>
               <div class="pl-3 space-y-1 text-[11pt] text-left">
                 <p>Se determinó la modificación conforme a lo siguiente:</p>
-                <div class="flex flex-wrap gap-4 items-center my-1 text-[10.5pt]">
-                  <span class="font-bold">• Tipo de movimiento:</span>
-                  <span class="inline-flex items-center gap-1.5">
-                    <span id="chk-alta" class="font-mono font-bold">[ &nbsp; ]</span> Alta
-                  </span>
-                  <span class="inline-flex items-center gap-1.5">
-                    <span id="chk-baja" class="font-mono font-bold">[ &nbsp; ]</span> Baja
-                  </span>
-                  <span class="inline-flex items-center gap-1.5">
-                    <span id="chk-nombre" class="font-mono font-bold">[ &nbsp; ]</span> Cambio de nombre
-                  </span>
-                  <span class="inline-flex items-center gap-1.5">
-                    <span id="chk-jerarquica" class="font-mono font-bold">[ &nbsp; ]</span> Cambio de dependencia jerárquica
-                  </span>
+                <div class="grid grid-cols-12 gap-1 items-center my-0.5 text-[10pt]">
+                  <div class="col-span-12 sm:col-span-3 font-bold">• Tipo de movimiento:</div>
+                  <div class="col-span-12 sm:col-span-9 flex flex-wrap gap-x-4 gap-y-1 items-center">
+                    <span style="white-space: nowrap; display: inline-block;">
+                      <span id="chk-alta" class="font-mono font-bold" style="white-space: pre;">[ &nbsp; ]</span>&nbsp;Alta
+                    </span>
+                    <span style="white-space: nowrap; display: inline-block;">
+                      <span id="chk-baja" class="font-mono font-bold" style="white-space: pre;">[ &nbsp; ]</span>&nbsp;Baja
+                    </span>
+                    <span style="white-space: nowrap; display: inline-block;">
+                      <span id="chk-nombre" class="font-mono font-bold" style="white-space: pre;">[ &nbsp; ]</span>&nbsp;Cambio de nombre
+                    </span>
+                    <span style="white-space: nowrap; display: inline-block;">
+                      <span id="chk-jerarquica" class="font-mono font-bold" style="white-space: pre;">[ &nbsp; ]</span>&nbsp;Cambio de dependencia jerárquica
+                    </span>
+                  </div>
                 </div>
                 <div>
                   <span class="font-bold">• Nombre del área o adscripción:</span>
@@ -1868,6 +1895,52 @@
     </div>
   </div>
 
+  <!-- MODAL DE ADVERTENCIA: CAMPOS VACÍOS EN EL FORMULARIO (BLOQUEO DE DESCARGA PDF) -->
+  <div id="modal-campos-vacios" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-slate-100 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col">
+      <div class="flex items-start gap-3 pb-3 border-b border-slate-100 shrink-0">
+        <div class="w-11 h-11 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0 shadow-xs">
+          <i class="fa-solid fa-file-circle-xmark text-xl"></i>
+        </div>
+        <div class="flex-1">
+          <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+            Descarga de PDF Bloqueada
+            <span id="badge-total-campos-vacios" class="text-[11px] bg-rose-100 text-rose-700 font-bold px-2 py-0.5 rounded-full border border-rose-200">
+              0 pendientes
+            </span>
+          </h3>
+          <p class="text-xs text-slate-600 mt-0.5">
+            Por favor complete los campos obligatorios del formato institucional:
+          </p>
+        </div>
+        <button type="button" onclick="cerrarModalCamposVacios()" class="text-slate-400 hover:text-slate-700 text-lg transition" title="Cerrar">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Lista con scroll de los campos vacíos detectados -->
+      <div class="overflow-y-auto max-h-64 pr-1 space-y-2 custom-scrollbar" id="lista-campos-vacios">
+        <!-- Generado dinámicamente -->
+      </div>
+
+      <div class="bg-amber-50 border border-amber-200 text-amber-900 p-3 rounded-xl text-xs flex items-start gap-2.5 shrink-0">
+        <i class="fa-solid fa-circle-exclamation text-amber-600 mt-0.5 shrink-0"></i>
+        <div class="leading-relaxed">
+          El formato oficial de la SEGEY no permite emitir constancias incompletas con firmas o datos vacíos. Complete la información requerida para habilitar la descarga del PDF.
+        </div>
+      </div>
+
+      <div class="pt-2 flex items-center justify-end gap-2.5 shrink-0 border-t border-slate-100">
+        <button type="button" onclick="cerrarModalCamposVacios()" class="px-4 py-2 text-xs font-semibold rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 transition">
+          Cerrar
+        </button>
+        <button type="button" onclick="irACompletarCamposVacios()" class="px-4 py-2 text-xs font-bold rounded-lg bg-segey-800 hover:bg-segey-900 text-white shadow-xs transition flex items-center gap-1.5">
+          <i class="fa-solid fa-pen-to-square"></i> Completar Campos en el Formulario
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL DE INACTIVACIÓN DE CONSTANCIA CON MOTIVO OBLIGATORIO -->
   <div id="modal-inactivar" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
@@ -2490,9 +2563,9 @@
   </div>
 
   <!-- Scripts -->
-  <script src="assets/catalogo_organico.js?v=2.6.3"></script>
-  <script src="assets/mapa_jefes_inmediatos.js?v=2.6.3"></script>
-  <script src="assets/mapa_areas_subordinadas.js?v=2.6.3"></script>
-  <script src="app.js?v=2.6.3"></script>
+  <script src="assets/catalogo_organico.js?v=2.7.0"></script>
+  <script src="assets/mapa_jefes_inmediatos.js?v=2.7.0"></script>
+  <script src="assets/mapa_areas_subordinadas.js?v=2.7.0"></script>
+  <script src="app.js?v=2.7.4"></script>
 </body>
 </html>
