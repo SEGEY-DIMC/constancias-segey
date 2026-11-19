@@ -1,7 +1,7 @@
 // =========================================================================
 // MAPA OFICIAL DE JERARQUÍA DE JEFES INMEDIATOS - SEGEY
 // Generado automáticamente a partir de Catalogo_Funcionarios_y_Puestos.xlsx
-// Fecha de actualización: 2026-11-18 19:42:21
+// Fecha de actualización: 2026-11-19 11:22:57
 // =========================================================================
 
 const MAPA_JERARQUIA_JEFES = [
