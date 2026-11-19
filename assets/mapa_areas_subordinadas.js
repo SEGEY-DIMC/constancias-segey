@@ -1,7 +1,7 @@
 // =========================================================================
 // MAPA OFICIAL DE ÁREAS VINCULADAS Y SUBORDINADAS POR ÁREA NOTIFICADORA
 // Generado automáticamente a partir de Catalogo_Funcionarios_y_Puestos.xlsx
-// Fecha de actualización: 2026-11-19 11:23:01
+// Fecha de actualización: 2026-11-19 11:46:12
 // =========================================================================
 
 const MAPA_AREAS_SUBORDINADAS = {
