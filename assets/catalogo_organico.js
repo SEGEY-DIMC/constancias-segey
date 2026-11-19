@@ -1,5 +1,5 @@
 // Catálogo oficial generado automáticamente a partir de Catalogo_Funcionarios_y_Puestos.xlsx
-// Fecha de actualización: 2026-11-18 19:42:20
+// Fecha de actualización: 2026-11-19 11:22:56
 const CATALOGO_ORGANICO_SEGEY = [
   {
     "id": "despacho_secretario",
@@ -8236,7 +8236,7 @@ const CATALOGO_ORGANICO_SEGEY = [
   {
     "id": "subsec_basica",
     "grupo": "Subsecretaría de Educación Básica",
-    "unidad": "Subsecretaría de Educación Básica (Oficina Central)",
+    "unidad": "Subsecretaría de Educación Básica",
     "titular": {
       "nombre": "Mtro. Jaime Enrique Vázquez Barceló",
       "cargo": "Subsecretario de Educación Básica"
@@ -11968,7 +11968,7 @@ const CATALOGO_ORGANICO_SEGEY = [
   {
     "id": "subsec_media_superior",
     "grupo": "Subsecretaría de Educación Media Superior",
-    "unidad": "Subsecretaría de Educación Media Superior (Oficina Central)",
+    "unidad": "Subsecretaría de Educación Media Superior",
     "titular": {
       "nombre": "Lic. Miguel Ángel Pech Estrella",
       "cargo": "Subsecretario de Educación Media Superior"
@@ -12708,7 +12708,7 @@ const CATALOGO_ORGANICO_SEGEY = [
   {
     "id": "subsec_superior",
     "grupo": "Subsecretaría de Educación Superior",
-    "unidad": "Subsecretaría de Educación Superior (Oficina Central)",
+    "unidad": "Subsecretaría de Educación Superior",
     "titular": {
       "nombre": "Mtro. Everth de Jesús Dzib Peraza",
       "cargo": "Subsecretario de Educación Superior"
