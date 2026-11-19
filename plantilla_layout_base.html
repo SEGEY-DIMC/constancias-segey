@@ -60,20 +60,22 @@
       <div class="font-bold text-[11pt] mb-1 uppercase tracking-wide text-slate-900 text-left">I. TIPO DE CAMBIO QUE DETERMINA LA UNIDAD ADMINISTRATIVA</div>
       <div class="pl-3 space-y-1 text-[11pt] text-left">
         <p>Se determinó la modificación conforme a lo siguiente:</p>
-        <div class="flex flex-wrap gap-4 items-center my-1 text-[10.5pt]">
-          <span class="font-bold">• Tipo de movimiento:</span>
-          <span class="inline-flex items-center gap-1.5">
-            <span class="font-mono font-bold">{{chkAlta}}</span> Alta
-          </span>
-          <span class="inline-flex items-center gap-1.5">
-            <span class="font-mono font-bold">{{chkBaja}}</span> Baja
-          </span>
-          <span class="inline-flex items-center gap-1.5">
-            <span class="font-mono font-bold">{{chkNombre}}</span> Cambio de nombre
-          </span>
-          <span class="inline-flex items-center gap-1.5">
-            <span class="font-mono font-bold">{{chkJerarquica}}</span> Cambio de dependencia jerárquica
-          </span>
+        <div class="grid grid-cols-12 gap-1 items-center my-0.5 text-[10pt]">
+          <div class="col-span-12 sm:col-span-3 font-bold">• Tipo de movimiento:</div>
+          <div class="col-span-12 sm:col-span-9 flex flex-wrap gap-x-4 gap-y-1 items-center">
+            <span style="white-space: nowrap; display: inline-block;">
+              <span class="font-mono font-bold" style="white-space: pre;">{{chkAlta}}</span>&nbsp;Alta
+            </span>
+            <span style="white-space: nowrap; display: inline-block;">
+              <span class="font-mono font-bold" style="white-space: pre;">{{chkBaja}}</span>&nbsp;Baja
+            </span>
+            <span style="white-space: nowrap; display: inline-block;">
+              <span class="font-mono font-bold" style="white-space: pre;">{{chkNombre}}</span>&nbsp;Cambio de nombre
+            </span>
+            <span style="white-space: nowrap; display: inline-block;">
+              <span class="font-mono font-bold" style="white-space: pre;">{{chkJerarquica}}</span>&nbsp;Cambio de dependencia jerárquica
+            </span>
+          </div>
         </div>
         <div>
           <span class="font-bold">• Nombre del área o adscripción:</span>
