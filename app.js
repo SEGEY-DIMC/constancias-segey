@@ -1802,21 +1802,21 @@ function updateEstatusPermissions(isAdmin) {
  */
 function initAreasNotificadoras() {
   const AREAS_VERSION_KEY = 'segey_areas_catalog_version';
-  const CURRENT_CATALOG_VERSION = '2026_11_enlaces_58_sorted';
+  const CURRENT_CATALOG_VERSION = '2026_11_areas_59_oficiales_v4';
 
   const savedVersion = localStorage.getItem(AREAS_VERSION_KEY);
   const saved = localStorage.getItem(AREAS_STORAGE_KEY);
 
   if (saved && savedVersion === CURRENT_CATALOG_VERSION) {
     try {
-      predefinedAreas = JSON.parse(saved);
+      predefinedAreas = JSON.parse(saved).filter(a => !a.includes('(Oficina Central)'));
     } catch (e) {
       console.error('Error al cargar áreas predefinidas:', e);
       predefinedAreas = [];
     }
   }
 
-  // Si no hay áreas o la versión es anterior, cargar el catálogo completo ordenado alfabéticamente
+  // Si no hay áreas o la versión es anterior, cargar el catálogo completo oficial ordenado alfabéticamente
   if (!Array.isArray(predefinedAreas) || predefinedAreas.length === 0 || savedVersion !== CURRENT_CATALOG_VERSION) {
     predefinedAreas = [...DEFAULT_AREAS_NOTIFICADORAS];
     saveAreasToStorage();
@@ -8251,18 +8251,6 @@ async function syncCatalogoFromGoogleSheets(forceToast = false) {
       localStorage.setItem(REMOTE_CATALOG_KEY, JSON.stringify(result.catalogo));
       applyRemoteCatalogo(result.catalogo);
 
-      let updatedAreas = false;
-      result.catalogo.forEach(item => {
-        if (item.area && !predefinedAreas.includes(item.area)) {
-          predefinedAreas.push(item.area);
-          updatedAreas = true;
-        }
-      });
-      if (updatedAreas) {
-        predefinedAreas.sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
-        localStorage.setItem(AREAS_STORAGE_KEY, JSON.stringify(predefinedAreas));
-      }
-      populateAreaSelect();
       if (typeof initSelectTitularUnidad2 === 'function') {
         initSelectTitularUnidad2();
       }
@@ -8290,6 +8278,7 @@ async function syncResponsablesFromGoogleSheets(forceToast = false) {
         const currentCat = getResponsablesCatalog();
         let changed = false;
         keys.forEach(area => {
+          if (area.includes('(Oficina Central)')) return;
           const val = result.responsables[area];
           if (val) {
             let parsedVal = val;
@@ -8297,25 +8286,27 @@ async function syncResponsablesFromGoogleSheets(forceToast = false) {
               parsedVal = val.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean);
             }
             currentCat[area] = parsedVal;
-            if (!predefinedAreas.includes(area)) {
-              predefinedAreas.push(area);
-            }
             changed = true;
           }
         });
-        if (changed) {
-          saveResponsablesCatalog(currentCat);
-          predefinedAreas.sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
-          saveAreasToStorage();
-          populateAreaSelect();
-          if (typeof renderAdminResponsablesList === 'function') {
-            renderAdminResponsablesList();
-          }
-          const currentArea = document.getElementById('areaNotificadoraSelect');
-          if (currentArea && currentArea.value && currentArea.value !== '__OTRA__') {
-            actualizarTitularesPorArea(currentArea.value);
-          }
+
+        // Asegurar que predefinedAreas contenga estrictamente las 59 áreas oficiales sin duplicados ni variantes
+        const cleanKeys = keys.filter(a => !a.includes('(Oficina Central)'));
+        predefinedAreas = Array.from(new Set([...DEFAULT_AREAS_NOTIFICADORAS, ...cleanKeys]))
+          .filter(a => !a.includes('(Oficina Central)'))
+          .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+
+        saveResponsablesCatalog(currentCat);
+        saveAreasToStorage();
+        populateAreaSelect();
+        if (typeof renderAdminResponsablesList === 'function') {
+          renderAdminResponsablesList();
         }
+        const currentArea = document.getElementById('areaNotificadoraSelect');
+        if (currentArea && currentArea.value && currentArea.value !== '__OTRA__') {
+          actualizarTitularesPorArea(currentArea.value);
+        }
+
         if (forceToast) {
           showToast(`Responsables de captura sincronizados (${keys.length} áreas).`);
         }
