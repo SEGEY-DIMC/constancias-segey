@@ -31,10 +31,6 @@
   "Departamento de Registro y Certificación": "Tec. Mattia de Jesús Tun Peña",
   "Departamento de Sistemas de Gestión de Nómina": "C.P. Manuel Jesús Heredia Ceballos",
   "Departamento de Telebachillerato Comunitario del Estado de Yucatán y Bachillerato Intercultural": "Mtro. Alberto Solís Cámara",
-  "Despacho del Secretario": [
-    "Ing. Gladys Gahona Cámara",
-    "L.E. Rosalinda Villanueva Hau"
-  ],
   "Dirección Jurídica": "Lic. Alonso Hernández Núñez",
   "Dirección de Administración y Finanzas": "Lic. Yazmin Eugenia Cob Caballero",
   "Dirección de Desarrollo Educativo": "Mtra. Ligia del Socorro Sánchez Castañeda",
@@ -66,5 +62,9 @@
   "Subsecretaría de Educación Media Superior": "C.P. Miguel Edgardo Argáez Quijano",
   "Subsecretaría de Educación Superior": "Lic. Leobardo Medina Xix",
   "Universidad Virtual del Estado de Yucatán": "Mtro. José David Encalada Avilés",
-  "Área de Prestaciones Sociales": "Lic. Miguel Ángel Cob Uitz"
+  "Área de Prestaciones Sociales": "Lic. Miguel Ángel Cob Uitz",
+  "Despacho del Secretario": [
+    "Ing. Gladys Gahona Cámara",
+    "L.E. Rosalinda Villanueva Hau"
+  ]
 }
