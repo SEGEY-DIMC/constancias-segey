@@ -84,7 +84,7 @@ UNIDADES_BASE_DEF = [
     {
         "id": "subsec_basica",
         "grupo": "Subsecretaría de Educación Básica",
-        "unidad": "Subsecretaría de Educación Básica",
+        "unidad": "Subsecretaría de Educación Básica (Oficina Central)",
         "titular_nombre": "Mtro. Jaime Enrique Vázquez Barceló",
         "titular_cargo": "Subsecretario de Educación Básica",
         "filtro_jefe": ["Mtro. Jaime Enrique Vázquez Barceló"],
@@ -174,7 +174,7 @@ UNIDADES_BASE_DEF = [
     {
         "id": "subsec_media_superior",
         "grupo": "Subsecretaría de Educación Media Superior",
-        "unidad": "Subsecretaría de Educación Media Superior",
+        "unidad": "Subsecretaría de Educación Media Superior (Oficina Central)",
         "titular_nombre": "Lic. Miguel Ángel Pech Estrella",
         "titular_cargo": "Subsecretario de Educación Media Superior",
         "filtro_jefe": ["Lic. Miguel Ángel Pech Estrella"],
@@ -204,7 +204,7 @@ UNIDADES_BASE_DEF = [
     {
         "id": "subsec_superior",
         "grupo": "Subsecretaría de Educación Superior",
-        "unidad": "Subsecretaría de Educación Superior",
+        "unidad": "Subsecretaría de Educación Superior (Oficina Central)",
         "titular_nombre": "Mtro. Everth de Jesús Dzib Peraza",
         "titular_cargo": "Subsecretario de Educación Superior",
         "filtro_jefe": ["Mtro. Everth de Jesús Dzib Peraza"],
@@ -356,94 +356,7 @@ def parse_nivel(s):
         return m.group(1).strip(), m.group(2).strip()
     return s, ''
 
-def download_from_google_drive(target_path=EXCEL_PATH):
-    url = 'https://docs.google.com/spreadsheets/d/1mhJMtK_3-S1YzBzqkEq5C-nzumCba5_KHWRPmH_uZRA/export?format=xlsx'
-    try:
-        import urllib.request
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
-        with urllib.request.urlopen(req, timeout=20) as resp:
-            content = resp.read()
-            if len(content) > 10000:
-                with open(target_path, 'wb') as f:
-                    f.write(content)
-                print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Catálogo descargado con éxito desde Google Drive ({len(content)} bytes).")
-                return True
-    except Exception as e:
-        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Aviso: no se pudo descargar directo de Drive ({e}). Se usará archivo local.")
-    return False
-
-def puesto_to_area_name(puesto):
-    p = str(puesto or '').strip()
-    replacements = [
-        ('Subsecretario de ', 'Subsecretaría de '),
-        ('Subsecretaria de ', 'Subsecretaría de '),
-        ('Director Jurídico', 'Dirección Jurídica'),
-        ('Directora Jurídica', 'Dirección Jurídica'),
-        ('Jefe del Despacho', 'Jefatura del Despacho'),
-        ('Jefa del Despacho', 'Jefatura del Despacho'),
-        ('Secretario de Educación', 'Despacho del Secretario'),
-        ('Secretario Particular', 'Secretaría Particular'),
-        ('Secretaria Particular', 'Secretaría Particular'),
-        ('Jefe de Departamento de ', 'Departamento de '),
-        ('Jefe de Departamento ', 'Departamento de '),
-        ('Jefa de Departamento de ', 'Departamento de '),
-        ('Jefa de Departamento ', 'Departamento de '),
-        ('Director de la ', 'Dirección de la '),
-        ('Directora de la ', 'Dirección de la '),
-        ('Director del ', 'Dirección del '),
-        ('Directora del ', 'Dirección del '),
-        ('Director de ', 'Dirección de '),
-        ('Directora de ', 'Dirección de '),
-        ('Subdirector de la ', 'Subdirección de la '),
-        ('Subdirectora de la ', 'Subdirección de la '),
-        ('Subdirector del ', 'Subdirección del '),
-        ('Subdirectora del ', 'Subdirección del '),
-        ('Subdirector de ', 'Subdirección de '),
-        ('Subdirectora de ', 'Subdirección de '),
-        ('Subjefe de la ', 'Subjefatura de la '),
-        ('Subjefa de la ', 'Subjefatura de la '),
-        ('Subjefe del ', 'Subjefatura del '),
-        ('Subjefa del ', 'Subjefatura del '),
-        ('Subjefe de ', 'Subjefatura de '),
-        ('Subjefa de ', 'Subjefatura de '),
-        ('Subjefe ', 'Subjefatura '),
-        ('Subjefa ', 'Subjefatura '),
-        ('Jefe de Oficina de ', 'Oficina de '),
-        ('Jefa de Oficina de ', 'Oficina de '),
-        ('Jefe de Oficina ', 'Oficina '),
-        ('Jefa de Oficina ', 'Oficina '),
-        ('Jefe del ', 'Jefatura del '),
-        ('Jefa del ', 'Jefatura del '),
-        ('Jefe de la ', 'Jefatura de la '),
-        ('Jefa de la ', 'Jefatura de la '),
-        ('Responsable de Área de ', 'Área de '),
-        ('Responsable de Área ', 'Área '),
-        ('Encargado de Área de ', 'Área de '),
-        ('Encargado de Área ', 'Área '),
-        ('Coordinador General de ', 'Coordinación General de '),
-        ('Coordinadora General de ', 'Coordinación General de '),
-        ('Coordinador Estatal de ', 'Coordinación Estatal de '),
-        ('Coordinadora Estatal de ', 'Coordinación Estatal de '),
-        ('Coordinador Estatal ', 'Coordinación Estatal '),
-        ('Coordinadora Estatal ', 'Coordinación Estatal '),
-        ('Coordinador de la ', 'Coordinación de la '),
-        ('Coordinadora de la ', 'Coordinación de la '),
-        ('Coordinador del ', 'Coordinación del '),
-        ('Coordinadora del ', 'Coordinación del '),
-        ('Coordinador para la ', 'Coordinación para la '),
-        ('Coordinadora para la ', 'Coordinación para la '),
-        ('Coordinador de ', 'Coordinación de '),
-        ('Coordinadora de ', 'Coordinación de ')
-    ]
-    for orig, rep in replacements:
-        if p.startswith(orig):
-            return p.replace(orig, rep, 1)
-    return p
-
-def sync(excel_path=EXCEL_PATH, download_from_drive=True):
-    if download_from_drive:
-        download_from_google_drive(excel_path)
-
+def sync(excel_path=EXCEL_PATH):
     if not os.path.exists(excel_path):
         return {"status": "error", "message": f"El archivo Excel no fue encontrado en: {excel_path}"}
 
@@ -459,15 +372,14 @@ def sync(excel_path=EXCEL_PATH, download_from_drive=True):
             # Col 2: ID, Col 3: Unidad, Col 4: Titular, Col 5: Cargo, Col 6: Grupo
             u_id = str(row[1] or '').strip()
             if not u_id: continue
-            u_nom = str(row[2] or '').replace(' (Oficina Central)', '').strip()
             titulares_by_id[u_id] = {
-                "unidad": u_nom,
+                "unidad": str(row[2] or '').strip(),
                 "nombre": str(row[3] or '').strip(),
                 "cargo": str(row[4] or '').strip(),
                 "grupo": str(row[5] or '').strip() if len(row) > 5 else ''
             }
 
-    # 2. Procesar Responsables de Captura (con soporte multi-enlace)
+    # 2. Procesar Responsables de Captura
     responsables_map = {}
     if "Responsables_de_Captura" in wb.sheetnames:
         ws_resp = wb["Responsables_de_Captura"]
@@ -475,18 +387,9 @@ def sync(excel_path=EXCEL_PATH, download_from_drive=True):
             if not row or not any(row): continue
             # Col 2: Área, Col 3: Responsable
             area = str(row[1] or '').strip()
-            raw_resp = str(row[2] or '').strip()
-            if area and raw_resp:
-                parts = [p.strip() for p in re.split(r'[,;\n]+', raw_resp) if p.strip()]
-                if not parts: continue
-                if area not in responsables_map:
-                    responsables_map[area] = parts if len(parts) > 1 else parts[0]
-                else:
-                    curr = responsables_map[area] if isinstance(responsables_map[area], list) else [responsables_map[area]]
-                    for p in parts:
-                        if p not in curr:
-                            curr.append(p)
-                    responsables_map[area] = curr if len(curr) > 1 else curr[0]
+            resp = str(row[2] or '').strip()
+            if area and resp:
+                responsables_map[area] = resp
 
     # 3. Procesar Reporte de Funcionarios
     rows = []
@@ -756,105 +659,7 @@ if (typeof window !== 'undefined') {{
         except Exception as e:
             pass
 
-    # 5. Construir y Guardar Mapa de Áreas Subordinadas (mapa_areas_subordinadas.js)
-    from collections import defaultdict
-
-    rows_by_ancestor_nom = defaultdict(list)
-    for r in rows:
-        nom_propio = str(r.get('Nombre del Funcionario (Gr-Nom-Ap)') or '').strip().lower()
-        seen_anc = set()
-        for lvl in range(1, 11):
-            k = f'Jefe_Nivel_{lvl:02d}'
-            val = str(r.get(k) or '').strip()
-            if val and val != 'None':
-                anc_nom = val.split('-')[0].strip().lower()
-                if anc_nom and anc_nom != nom_propio and anc_nom not in seen_anc:
-                    seen_anc.add(anc_nom)
-                    rows_by_ancestor_nom[anc_nom].append(r)
-
-    all_areas_set = set()
-    for k in responsables_map.keys():
-        cleaned_k = k.replace(' (Oficina Central)', '').strip()
-        all_areas_set.add(cleaned_k)
-    for u in catalog:
-        cleaned_u = u["unidad"].replace(' (Oficina Central)', '').strip()
-        all_areas_set.add(cleaned_u)
-    for r in rows:
-        p = str(r.get('Puesto') or '').strip()
-        if any(kw in p.lower() for kw in ['jefe de departamento', 'director', 'subdirector', 'coordinador general', 'coordinador estatal', 'jefatura del despacho']):
-            all_areas_set.add(puesto_to_area_name(p))
-
-    all_areas_set.add('Despacho del Secretario')
-    # Eliminar cualquier residuo que contenga Oficina Central
-    all_areas_set = {a for a in all_areas_set if '(Oficina Central)' not in a}
-    all_areas = sorted(list(all_areas_set))
-    mapa_subordinadas = {}
-
-    # Mapeo rápido de unidades de catálogo a nombre del titular
-    catalog_titulares = {}
-    for u in catalog:
-        unid = str(u.get("unidad") or '').replace(' (Oficina Central)', '').strip().lower()
-        tnom = str(u.get("titular_nombre") or '').strip().lower()
-        if unid and tnom:
-            catalog_titulares[unid] = tnom
-
-    for area in all_areas:
-        matched = []
-        # 1. Búsqueda por titular oficial si el área es una unidad del catálogo
-        area_clean = area.replace(' (Oficina Central)', '').strip().lower()
-        if area_clean in catalog_titulares:
-            t_nom = catalog_titulares[area_clean]
-            for r in rows:
-                fn = str(r.get('Nombre del Funcionario (Gr-Nom-Ap)') or '').strip().lower()
-                if fn == t_nom:
-                    matched.append(r)
-                    break
-
-        # 2. Búsqueda por Puesto exacto o normalizado
-        if not matched:
-            for r in rows:
-                p = str(r.get('Puesto') or '').strip()
-                p_area = puesto_to_area_name(p)
-                if area.lower() == p_area.lower() or area.lower() == p.lower():
-                    matched.append(r)
-                    break
-
-        # 3. Búsqueda por coincidencia parcial si aún no se encuentra
-        if not matched:
-            for r in rows:
-                p = str(r.get('Puesto') or '').strip()
-                p_area = puesto_to_area_name(p)
-                if area.lower() in p_area.lower() or p_area.lower() in area.lower():
-                    matched.append(r)
-                    break
-
-        sub_areas = set([area])
-        if matched:
-            top = matched[0]
-            top_nom = str(top.get('Nombre del Funcionario (Gr-Nom-Ap)') or '').strip().lower()
-            child_rows = rows_by_ancestor_nom.get(top_nom, [])
-            for cr in child_rows:
-                p2 = str(cr.get('Puesto') or '').strip()
-                if any(kw in p2.lower() for kw in ['jefe', 'subjefe', 'coordinad', 'responsable de área', 'encargado de área', 'director', 'subdirector']):
-                    a_name = puesto_to_area_name(p2)
-                    if a_name != area and len(a_name) > 4:
-                        sub_areas.add(a_name)
-
-        mapa_subordinadas[area] = sorted(list(sub_areas))
-
-    sub_js_content = f"// =========================================================================\n// MAPA OFICIAL DE ÁREAS VINCULADAS Y SUBORDINADAS POR ÁREA NOTIFICADORA\n// Generado automáticamente a partir de Catalogo_Funcionarios_y_Puestos.xlsx\n// Fecha de actualización: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n// =========================================================================\n\nconst MAPA_AREAS_SUBORDINADAS = {json.dumps(mapa_subordinadas, ensure_ascii=False, indent=2)};\n\nif (typeof window !== 'undefined') {{\n  window.MAPA_AREAS_SUBORDINADAS = MAPA_AREAS_SUBORDINADAS;\n}}\n"
-    target_sub_js = os.path.join(BASE_DIR, 'assets', 'mapa_areas_subordinadas.js')
-    with open(target_sub_js, 'w', encoding='utf-8') as f:
-        f.write(sub_js_content)
-
-    if os.path.exists(SCRATCH_DIR):
-        try:
-            with open(os.path.join(SCRATCH_DIR, 'assets', 'mapa_areas_subordinadas.js'), 'w', encoding='utf-8') as f:
-                f.write(sub_js_content)
-        except Exception:
-            pass
-
-    # 6. Guardar responsables_enlace.json
+    # 5. Guardar responsables_enlace.json
     resp_json_path = os.path.join(BASE_DIR, 'assets', 'responsables_enlace.json')
     with open(resp_json_path, 'w', encoding='utf-8') as f:
         json.dump(responsables_map, f, ensure_ascii=False, indent=2)
@@ -869,13 +674,8 @@ if (typeof window !== 'undefined') {{
             formatted_entries = []
             for a, r in sorted(responsables_map.items()):
                 safe_a = a.replace("'", "\\'")
-                if isinstance(r, list):
-                    escaped_items = [str(item).replace("'", "\\'") for item in r]
-                    items_str = ", ".join(f"'{it}'" for it in escaped_items)
-                    formatted_entries.append(f"  '{safe_a}': [{items_str}]")
-                else:
-                    safe_r = str(r).replace("'", "\\'")
-                    formatted_entries.append(f"  '{safe_a}': '{safe_r}'")
+                safe_r = r.replace("'", "\\'")
+                formatted_entries.append(f"  '{safe_a}': '{safe_r}'")
             new_block = "const ENLACE_DIRECTO_POR_AREA = {\n" + ",\n".join(formatted_entries) + "\n};"
 
             app_content_updated = re.sub(
@@ -899,7 +699,6 @@ if (typeof window !== 'undefined') {{
         "unidades_actualizadas": len(catalog),
         "funcionarios_totales": len(rows),
         "nodos_jefes_jerarquia": len(nodes_list),
-        "mapa_subordinadas_areas": len(mapa_subordinadas),
         "responsables_enlace": len(responsables_map),
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "responsables": responsables_map
