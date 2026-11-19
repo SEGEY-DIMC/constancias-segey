@@ -1,5 +1,5 @@
 // Catálogo oficial generado automáticamente a partir de Catalogo_Funcionarios_y_Puestos.xlsx
-// Fecha de actualización: 2026-11-17 17:08:06
+// Fecha de actualización: 2026-11-18 19:42:20
 const CATALOGO_ORGANICO_SEGEY = [
   {
     "id": "despacho_secretario",
