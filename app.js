@@ -1761,6 +1761,19 @@ function initAreasNotificadoras() {
 
   populateAreaSelect();
   renderAdminAreasList();
+
+  // Aplicar catálogo remoto guardado en caché si existe
+  try {
+    const cachedCat = localStorage.getItem(REMOTE_CATALOG_KEY);
+    if (cachedCat) {
+      const parsedCat = JSON.parse(cachedCat);
+      if (Array.isArray(parsedCat) && parsedCat.length > 0) {
+        applyRemoteCatalogo(parsedCat);
+      }
+    }
+  } catch (eCat) {
+    console.warn('Error al aplicar catálogo remoto en caché:', eCat);
+  }
 }
 
 function saveAreasToStorage() {
@@ -8063,8 +8076,72 @@ async function syncRecordsFromGoogleSheets(forceToast = false) {
 /**
  * =========================================================================
  * SINCRONIZACIÓN DE CATÁLOGO DINÁMICO DESDE GOOGLE SHEETS
+ * Consulta directamente desde la hoja maestra Catalogo_Funcionarios_y_Puestos
  * =========================================================================
  */
+
+/**
+ * Aplica los titulares y cargos del Catálogo Remoto a CATALOGO_ORGANICO_SEGEY
+ * para que cualquier cambio realizado en la hoja maestra Catalogo_Funcionarios_y_Puestos
+ * se refleje de inmediato en los campos de Titular 1, Titular 2 / Jefe Inmediato y firmas.
+ */
+function applyRemoteCatalogo(catalogoData) {
+  if (!Array.isArray(catalogoData) || catalogoData.length === 0) return;
+  if (typeof CATALOGO_ORGANICO_SEGEY === 'undefined' || !Array.isArray(CATALOGO_ORGANICO_SEGEY)) return;
+
+  let anyModified = false;
+  catalogoData.forEach(item => {
+    if (!item.area && !item.id) return;
+    let unidad = null;
+    if (item.id) {
+      unidad = CATALOGO_ORGANICO_SEGEY.find(u => u.id === item.id);
+    }
+    if (!unidad && item.area) {
+      unidad = CATALOGO_ORGANICO_SEGEY.find(u => u.unidad === item.area) ||
+               CATALOGO_ORGANICO_SEGEY.find(u => item.area.toLowerCase().includes(u.unidad.toLowerCase()) || u.unidad.toLowerCase().includes(item.area.toLowerCase()));
+    }
+    if (unidad && item.titular) {
+      unidad.titular = unidad.titular || {};
+      const newNombre = String(item.titular).trim();
+      const newCargo = item.cargo ? String(item.cargo).trim() : unidad.titular.cargo;
+      if (unidad.titular.nombre !== newNombre || (newCargo && unidad.titular.cargo !== newCargo)) {
+        unidad.titular.nombre = newNombre;
+        if (newCargo) unidad.titular.cargo = newCargo;
+        anyModified = true;
+      }
+    }
+  });
+
+  if (anyModified) {
+    if (typeof initSelectTitularUnidad2 === 'function') {
+      initSelectTitularUnidad2();
+    }
+    const areaSel = document.getElementById('areaNotificadoraSelect');
+    if (areaSel && areaSel.value && areaSel.value !== '__OTRA__') {
+      actualizarTitularesPorArea(areaSel.value);
+    }
+  }
+}
+window.applyRemoteCatalogo = applyRemoteCatalogo;
+
+async function buscarFuncionarioRemoto(query) {
+  if (!query || String(query).trim().length < 3) return [];
+  const webhook = localStorage.getItem(WEBHOOK_KEY) || DEFAULT_WEBHOOK_URL;
+  if (!webhook) return [];
+  try {
+    const url = `${webhook}?action=buscarFuncionario&q=${encodeURIComponent(String(query).trim())}&t=${Date.now()}`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+    if (data && data.status === 'success' && Array.isArray(data.results)) {
+      return data.results;
+    }
+  } catch (err) {
+    console.warn('Error buscando funcionario remoto en Google Sheets:', err);
+  }
+  return [];
+}
+window.buscarFuncionarioRemoto = buscarFuncionarioRemoto;
+
 async function syncCatalogoFromGoogleSheets(forceToast = false) {
   const webhook = localStorage.getItem(WEBHOOK_KEY) || DEFAULT_WEBHOOK_URL;
   if (!webhook) return;
@@ -8076,6 +8153,8 @@ async function syncCatalogoFromGoogleSheets(forceToast = false) {
 
     if (result && result.status === 'success' && Array.isArray(result.catalogo) && result.catalogo.length > 0) {
       localStorage.setItem(REMOTE_CATALOG_KEY, JSON.stringify(result.catalogo));
+      applyRemoteCatalogo(result.catalogo);
+
       let updatedAreas = false;
       result.catalogo.forEach(item => {
         if (item.area && !predefinedAreas.includes(item.area)) {
@@ -8092,7 +8171,7 @@ async function syncCatalogoFromGoogleSheets(forceToast = false) {
         initSelectTitularUnidad2();
       }
       if (forceToast) {
-        showToast(`Catálogo de funcionarios actualizado desde Google Sheets (${result.catalogo.length} registros).`);
+        showToast(`Catálogo de titulares sincronizado desde Google Sheets (${result.catalogo.length} unidades).`);
       }
     }
   } catch (e) {
