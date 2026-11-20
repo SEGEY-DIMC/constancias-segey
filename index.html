@@ -50,7 +50,7 @@
   <!-- Librería para generar y descargar PDF directamente -->
   <script src="assets/logos_base64.js"></script>
   <script src="html2pdf.bundle.min.js"></script>
-  <link rel="stylesheet" href="styles.css?v=2.9.3">
+  <link rel="stylesheet" href="styles.css?v=2.9.4">
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen font-sans flex flex-col">
 
@@ -1569,9 +1569,14 @@
               </p>
             </div>
           </div>
-          <button onclick="restoreDefaultJustificaciones()" title="Restablecer motivos predeterminados de la SEGEY" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white border border-white/15 transition flex items-center gap-1.5 self-start sm:self-auto">
-            <i class="fa-solid fa-arrow-rotate-left"></i> Restablecer Oficiales
-          </button>
+          <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+            <button onclick="syncJustificacionesFromGoogleSheets(true)" title="Sincronizar motivos desde la hoja de Google Sheets en tiempo real" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-purple-600 hover:bg-purple-500 text-white border border-purple-400/40 transition flex items-center gap-1.5 shadow-xs">
+              <i class="fa-solid fa-cloud-arrow-down" id="icon-sync-justificaciones"></i> Sincronizar con Google Sheets
+            </button>
+            <button onclick="restoreDefaultJustificaciones()" title="Restablecer motivos predeterminados de la SEGEY" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white border border-white/15 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-arrow-rotate-left"></i> Restablecer Oficiales
+            </button>
+          </div>
         </div>
 
         <!-- Pestañas por Categoría (Tipo de Movimiento) -->
@@ -2573,6 +2578,6 @@
   <script src="assets/catalogo_organico.js?v=2.7.0"></script>
   <script src="assets/mapa_jefes_inmediatos.js?v=2.7.0"></script>
   <script src="assets/mapa_areas_subordinadas.js?v=2.7.0"></script>
-  <script src="app.js?v=2.9.3"></script>
+  <script src="app.js?v=2.9.4"></script>
 </body>
 </html>
