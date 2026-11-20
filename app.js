@@ -7398,18 +7398,26 @@ function actualizarBannerVistaPreviaIncompleta() {
   const texto = document.getElementById('banner-preview-incompleto-texto');
   if (!banner) return;
 
-  // Si el registro actualmente visualizado ya está guardado en la bitácora institucional,
-  // el documento es oficial y válido: no mostrar advertencias ni bloquear descarga.
-  if (currentRenderedRecord && records && records.some(r => r.id === currentRenderedRecord.id || (r.folio && r.folio === currentRenderedRecord.folio))) {
+  // 1. Si estamos en modo de edición activa de una constancia, cualquier campo borrado o vacío debe alertarse
+  const isEditing = Boolean(editingRecordId);
+
+  // 2. Si se trata de una consulta histórica desde la bitácora (NO en modo edición activa),
+  // y el registro ya está guardado institucionalmente, no mostrar advertencias.
+  if (!isEditing && currentRenderedRecord && records && records.some(r => r.id === currentRenderedRecord.id || (r.folio && r.folio === currentRenderedRecord.folio))) {
     banner.classList.add('hidden');
     return;
   }
 
+  // 3. Si es un nuevo registro o está en modo edición activa, verificar los campos del formulario
   const camposVacios = obtenerCamposVaciosFormulario();
   if (camposVacios.length > 0) {
     banner.classList.remove('hidden');
     if (texto) {
-      texto.innerHTML = `Se detectaron <strong>${camposVacios.length} campo(s) obligatorio(s) vacío(s)</strong> en el formulario. La descarga del PDF oficial está bloqueada hasta completarlos.`;
+      if (isEditing) {
+        texto.innerHTML = `Constancia en edición: Se detectaron <strong>${camposVacios.length} campo(s) obligatorio(s) vacío(s)</strong>. Complete y guarde las modificaciones antes de descargar el PDF.`;
+      } else {
+        texto.innerHTML = `Se detectaron <strong>${camposVacios.length} campo(s) obligatorio(s) vacío(s)</strong> en el formulario. La descarga del PDF oficial está bloqueada hasta completarlos.`;
+      }
     }
   } else {
     banner.classList.add('hidden');
@@ -7572,8 +7580,9 @@ async function downloadCurrentDocumentPDF(skipValidation = false) {
 
   // 0. BLOQUEO SI HAY CAMPOS VACÍOS EN EL FORMULARIO
   if (!skipValidation) {
-    const isSavedRecord = currentRenderedRecord && records && records.some(r => r.id === currentRenderedRecord.id || (r.folio && r.folio === currentRenderedRecord.folio));
-    if (!isSavedRecord) {
+    const isEditing = Boolean(editingRecordId);
+    const isReadOnlyHistorical = !isEditing && currentRenderedRecord && records && records.some(r => r.id === currentRenderedRecord.id || (r.folio && r.folio === currentRenderedRecord.folio));
+    if (!isReadOnlyHistorical) {
       const camposVacios = obtenerCamposVaciosFormulario();
       if (camposVacios.length > 0) {
         mostrarModalCamposVacios(camposVacios);
@@ -7805,8 +7814,9 @@ async function downloadCurrentDocumentDOCX(skipValidation = false) {
 
   // 0. BLOQUEO SI HAY CAMPOS VACÍOS EN EL FORMULARIO
   if (!skipValidation) {
-    const isSavedRecord = currentRenderedRecord && records && records.some(r => r.id === currentRenderedRecord.id || (r.folio && r.folio === currentRenderedRecord.folio));
-    if (!isSavedRecord) {
+    const isEditing = Boolean(editingRecordId);
+    const isReadOnlyHistorical = !isEditing && currentRenderedRecord && records && records.some(r => r.id === currentRenderedRecord.id || (r.folio && r.folio === currentRenderedRecord.folio));
+    if (!isReadOnlyHistorical) {
       const camposVacios = obtenerCamposVaciosFormulario();
       if (camposVacios.length > 0) {
         mostrarModalCamposVacios(camposVacios);
