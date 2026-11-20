@@ -7672,6 +7672,8 @@ async function generateClientSidePDF(element, filename) {
 
   // Agregar clase temporal para optimizar altura, márgenes y evitar saltos erróneos
   element.classList.add('generating-pdf');
+  const innerSheets = element.querySelectorAll('.official-sheet');
+  innerSheets.forEach(s => s.classList.add('generating-pdf'));
 
   // Dimensiones estándar Carta (Letter): 215.9mm x 279.4mm
   // Márgenes: Arriba: 6mm, Izquierda/Derecha: 10mm, Abajo: 10mm (reserva limpia para pie de página)
@@ -7683,10 +7685,7 @@ async function generateClientSidePDF(element, filename) {
       scale: 2,
       useCORS: true,
       letterRendering: true,
-      backgroundColor: '#ffffff',
-      scrollY: 0,
-      scrollX: 0,
-      windowWidth: 1280
+      backgroundColor: '#ffffff'
     },
     jsPDF: {
       unit: 'mm',
@@ -7787,6 +7786,9 @@ async function generateClientSidePDF(element, filename) {
     showToast('Inconveniente al generar el PDF.', 'error');
   } finally {
     element.classList.remove('generating-pdf');
+    if (typeof innerSheets !== 'undefined' && innerSheets) {
+      innerSheets.forEach(s => s.classList.remove('generating-pdf'));
+    }
     staticFooters.forEach(el => { el.style.removeProperty('display'); });
     window.scrollTo(prevScrollX, prevScrollY);
   }
