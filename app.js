@@ -514,7 +514,7 @@ const DEFAULT_LAYOUT_HTML = `
 </div>
 
 <!-- Folio discreto en esquina superior derecha -->
-<div class="text-right text-[11px] text-slate-500 font-mono mb-3">
+<div class="text-right text-[11px] text-slate-500 font-mono mb-3 pr-1">
   <span>Folio: <strong>{{folio}}</strong></span>
 </div>
 
@@ -7908,11 +7908,11 @@ async function generateClientSidePDF(element, filename) {
   innerSheets.forEach(s => s.classList.add('generating-pdf'));
 
   // Dimensiones estándar Carta (Letter): 215.9mm x 279.4mm
-  // Márgenes: Arriba: 6mm, Izquierda: 8mm, Abajo: 10mm, Derecha: 8mm
-  // El margen de 8mm en jsPDF compensa el desfase de 2mm interno de renderizado y el padding de seguridad,
-  // garantizando un centrado simétrico exacto de 10.0mm a ambos lados y eliminando cualquier truncamiento de texto.
+  // Márgenes estándar institucionales amplios: Arriba: 8mm, Izquierda: 11mm, Abajo: 10mm, Derecha: 11mm
+  // Sumado al buffer interno de 16px en el canvas (4.2mm), produce un margen lateral total de 15.2mm (1.5 cm)
+  // perfectamente simétrico a ambos lados y con holgura absoluta para que ninguna letra del costado derecho se corte.
   const opt = {
-    margin: [6, 8, 10, 8],
+    margin: [8, 11, 10, 11],
     filename: filename,
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: {
@@ -7991,7 +7991,7 @@ async function generateClientSidePDF(element, filename) {
       const totalPages = pdf.internal.getNumberOfPages();
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const marginX = 10; // mm (alineado con los 10mm de margen del documento)
+      const marginX = 15; // mm (alineado con los 15mm de margen lateral del documento)
       const textY = pageHeight - 5.5; // 5.5mm arriba del borde inferior
 
       for (let p = 1; p <= totalPages; p++) {
