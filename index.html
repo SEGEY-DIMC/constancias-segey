@@ -50,7 +50,7 @@
   <!-- Librería para generar y descargar PDF directamente -->
   <script src="assets/logos_base64.js"></script>
   <script src="html2pdf.bundle.min.js"></script>
-  <link rel="stylesheet" href="styles.css?v=2.9.5">
+  <link rel="stylesheet" href="styles.css?v=2.9.6">
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen font-sans flex flex-col">
 
@@ -765,11 +765,11 @@
               </div>
 
               <div class="relative space-y-1">
-                <textarea id="justificacion" rows="4" required maxlength="350"
-                  placeholder="SE HACE CONSTAR LOS SIGUIENTES MOVIMIENTOS DE CARÁCTER ADMINISTRATIVO..."
+                <textarea id="justificacion" rows="4" required maxlength="350" disabled
+                  placeholder="🔒 Seleccione primero una opción del menú superior (o elija 'Otros') para escribir la justificación..."
                   style="text-transform: uppercase;"
                   oninput="this.value = this.value.toUpperCase(); if (window.updateJustificacionCharCounter) window.updateJustificacionCharCounter();"
-                  class="w-full text-sm rounded-lg border-slate-300 border p-3 focus:ring-2 focus:ring-segey-700 focus:outline-none leading-relaxed uppercase transition-colors"></textarea>
+                  class="w-full text-sm rounded-lg border-slate-300 border p-3 focus:ring-2 focus:ring-segey-700 focus:outline-none leading-relaxed uppercase transition-colors bg-slate-100 cursor-not-allowed text-slate-400 border-dashed"></textarea>
                 <div class="flex items-center justify-between text-[11px] px-1 text-slate-500">
                   <span id="hint-justificacion-chars" class="flex items-center gap-1 text-slate-500">
                     <i class="fa-solid fa-align-left text-slate-400"></i> Límite establecido: máximo 350 caracteres
@@ -2578,6 +2578,6 @@
   <script src="assets/catalogo_organico.js?v=2.7.0"></script>
   <script src="assets/mapa_jefes_inmediatos.js?v=2.7.0"></script>
   <script src="assets/mapa_areas_subordinadas.js?v=2.7.0"></script>
-  <script src="app.js?v=2.9.5"></script>
+  <script src="app.js?v=2.9.6"></script>
 </body>
 </html>
