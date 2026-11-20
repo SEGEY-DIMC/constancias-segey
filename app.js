@@ -2542,9 +2542,25 @@ function initSelectTitularUnidad2() {
   const selectT2 = document.getElementById('selectTitularUnidad2');
   if (!selectT2) return;
 
+  // Si el tipo de movimiento actual es Alta, Baja o Cambio de nombre, el selector (2)
+  // corresponde a "Jefe Inmediato" y NO a "Dependencia de Destino".
+  const selectedMov = document.querySelector('input[name="tipoMovimiento"]:checked');
+  const tipoMov = selectedMov ? selectedMov.value : '';
+  if (tipoMov === 'Alta' || tipoMov === 'Baja' || tipoMov === 'Cambio de nombre') {
+    if (typeof poblarSelectJefeInmediato === 'function') {
+      poblarSelectJefeInmediato();
+    }
+    return;
+  }
+
   if (typeof CATALOGO_ORGANICO_SEGEY === 'undefined' || !Array.isArray(CATALOGO_ORGANICO_SEGEY)) {
     return;
   }
+
+  // Preservar selección o valores actuales
+  const prevVal = selectT2.value;
+  const currentNom = (document.getElementById('titularUnidad2Nombre')?.value || '').trim();
+  const currentCar = (document.getElementById('titularUnidad2Cargo')?.value || '').trim();
 
   const grupos = {};
   CATALOGO_ORGANICO_SEGEY.forEach(u => {
@@ -2565,6 +2581,31 @@ function initSelectTitularUnidad2() {
 
   html += '<option value="__MANUAL__">✏️ Ingresar otro nombre y cargo manualmente...</option>';
   selectT2.innerHTML = html;
+
+  // Restaurar selección previa si aún existe o coincide por nombre/cargo
+  if (prevVal && selectT2.querySelector(`option[value="${CSS.escape(prevVal)}"]`)) {
+    selectT2.value = prevVal;
+  } else if (currentNom || currentCar) {
+    const norm = (s) => (s || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    for (let i = 1; i < selectT2.options.length; i++) {
+      const opt = selectT2.options[i];
+      if (opt.value === '__MANUAL__') continue;
+      const optNom = norm(opt.dataset?.nombre);
+      const optCar = norm(opt.dataset?.cargo);
+      if (currentNom && optNom && (optNom === norm(currentNom) || optNom.includes(norm(currentNom)) || norm(currentNom).includes(optNom))) {
+        selectT2.selectedIndex = i;
+        break;
+      }
+      if (currentCar && optCar && (optCar === norm(currentCar) || optCar.includes(norm(currentCar)))) {
+        selectT2.selectedIndex = i;
+        break;
+      }
+    }
+  }
+
+  if (typeof syncComboboxFromSelect === 'function') {
+    syncComboboxFromSelect('selectTitularUnidad2');
+  }
 }
 
 /**
@@ -2671,6 +2712,13 @@ function poblarSelectJefeInmediato(areaNombre) {
     }
   }
 
+  // Preservar valores y opción actualmente seleccionada
+  const prevVal = selectT2.value;
+  const currentNom = (document.getElementById('titularUnidad2Nombre')?.value || '').trim();
+  const currentCar = (document.getElementById('titularUnidad2Cargo')?.value || '').trim();
+  const prevSelectedOpt = selectT2.selectedIndex > 0 ? selectT2.options[selectT2.selectedIndex] : null;
+  const prevText = prevSelectedOpt ? prevSelectedOpt.textContent.trim() : '';
+
   let unidadId = areaNombre ? AREA_TO_UNIDAD_MAP[areaNombre] : null;
   let unidad = null;
   if (unidadId) {
@@ -2712,6 +2760,50 @@ function poblarSelectJefeInmediato(areaNombre) {
 
   html += '<option value="__MANUAL__">✏️ Ingresar otro nombre y cargo manualmente...</option>';
   selectT2.innerHTML = html;
+
+  // Restaurar y proteger la selección previa si ya existía información del Jefe Inmediato
+  if (currentNom || currentCar) {
+    const norm = (s) => (s || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    let matchIdx = -1;
+    for (let i = 1; i < selectT2.options.length; i++) {
+      const opt = selectT2.options[i];
+      if (opt.value === '__MANUAL__') continue;
+      const optNom = norm(opt.dataset?.nombre);
+      const optCar = norm(opt.dataset?.cargo);
+      const optText = norm(opt.textContent);
+      if (currentNom && optNom && (optNom === norm(currentNom) || optText.includes(norm(currentNom)))) {
+        matchIdx = i;
+        break;
+      }
+      if (currentCar && optCar && (optCar === norm(currentCar) || optCar.includes(norm(currentCar)))) {
+        matchIdx = i;
+        break;
+      }
+    }
+
+    if (matchIdx !== -1) {
+      selectT2.selectedIndex = matchIdx;
+    } else {
+      // Si era un jefe vinculado dinámicamente o capturado, reinsertarlo para conservar la integridad visual
+      const newOpt = document.createElement('option');
+      newOpt.value = (prevVal && prevVal.startsWith('jefe_vinculado_')) ? prevVal : `jefe_vinculado_${Date.now()}`;
+      newOpt.textContent = prevText || (currentCar && currentNom ? `${currentCar} — ${currentNom}` : (currentNom || currentCar));
+      newOpt.setAttribute('data-nombre', currentNom);
+      newOpt.setAttribute('data-cargo', currentCar);
+      if (selectT2.options.length > 1) {
+        selectT2.insertBefore(newOpt, selectT2.options[1]);
+      } else {
+        selectT2.appendChild(newOpt);
+      }
+      selectT2.selectedIndex = 1;
+    }
+  } else if (prevVal && selectT2.querySelector(`option[value="${CSS.escape(prevVal)}"]`)) {
+    selectT2.value = prevVal;
+  }
+
+  if (typeof syncComboboxFromSelect === 'function') {
+    syncComboboxFromSelect('selectTitularUnidad2');
+  }
 }
 
 /**
@@ -3679,11 +3771,36 @@ function actualizarOpcionesTitularAreaPorJefe(jefeCargo, jefeNombre, areaTarget 
     });
 
     html += '<option value="__MANUAL__">✏️ + Ingresar otro puesto y nombre manualmente...</option>';
+
+    // Preservar la selección previa de Titular de Área si existe
+    const curAreaNom = (document.getElementById('titularAreaNombre')?.value || '').trim();
+    const curAreaCar = (document.getElementById('titularAreaCargo')?.value || '').trim();
+    const prevAreaVal = selectArea.value;
+
     selectArea.innerHTML = html;
 
     if (badgeArea) {
       badgeArea.className = 'text-[10.5px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-semibold flex items-center gap-1';
       badgeArea.innerHTML = `<i class="fa-solid fa-user-check text-emerald-600"></i> ${uniqueSubs.length} puestos vinculados al Jefe Inmediato`;
+    }
+
+    if (curAreaNom || curAreaCar) {
+      for (let i = 1; i < selectArea.options.length; i++) {
+        const opt = selectArea.options[i];
+        if (opt.value === '__MANUAL__') continue;
+        const optNom = norm(opt.dataset?.nombre);
+        const optPue = norm(opt.dataset?.puesto);
+        if (curAreaNom && optNom && (optNom === norm(curAreaNom) || optNom.includes(norm(curAreaNom)))) {
+          selectArea.selectedIndex = i;
+          break;
+        }
+        if (curAreaCar && optPue && (optPue === norm(curAreaCar) || optPue.includes(norm(curAreaCar)))) {
+          selectArea.selectedIndex = i;
+          break;
+        }
+      }
+    } else if (prevAreaVal && selectArea.querySelector(`option[value="${CSS.escape(prevAreaVal)}"]`)) {
+      selectArea.value = prevAreaVal;
     }
 
     syncComboboxFromSelect('selectTitularArea');
@@ -4387,6 +4504,24 @@ function handleTitularAreaSelect(selectElem) {
       showToast(`Puesto oficial vacante: ${pue}. Especifique el nombre completo de la persona en funciones.`, 'info');
     } else {
       showToast(`Titular de Área seleccionado: ${nom}`);
+    }
+  }
+
+  // Asegurar que el Jefe Inmediato conserve su opción y combobox sincronizado
+  const u2NomVal = (document.getElementById('titularUnidad2Nombre')?.value || '').trim();
+  const selectT2 = document.getElementById('selectTitularUnidad2');
+  if (selectT2 && u2NomVal) {
+    if (selectT2.selectedIndex <= 0 || !selectT2.value) {
+      for (let i = 1; i < selectT2.options.length; i++) {
+        const opt = selectT2.options[i];
+        if (opt.dataset && opt.dataset.nombre && opt.dataset.nombre.toLowerCase().includes(u2NomVal.toLowerCase())) {
+          selectT2.selectedIndex = i;
+          break;
+        }
+      }
+    }
+    if (typeof syncComboboxFromSelect === 'function') {
+      syncComboboxFromSelect('selectTitularUnidad2');
     }
   }
 
@@ -9664,8 +9799,13 @@ function applyRemoteCatalogo(catalogoData) {
   });
 
   if (anyModified) {
-    if (typeof initSelectTitularUnidad2 === 'function') {
-      initSelectTitularUnidad2();
+    const activeMov = document.querySelector('input[name="tipoMovimiento"]:checked')?.value || '';
+    if (activeMov === 'Cambio de dependencia jerárquica') {
+      if (typeof initSelectTitularUnidad2 === 'function') initSelectTitularUnidad2();
+    } else if (activeMov === 'Alta' || activeMov === 'Baja' || activeMov === 'Cambio de nombre') {
+      if (typeof poblarSelectJefeInmediato === 'function') poblarSelectJefeInmediato();
+    } else {
+      if (typeof initSelectTitularUnidad2 === 'function') initSelectTitularUnidad2();
     }
   }
 }
@@ -9702,9 +9842,15 @@ async function syncCatalogoFromGoogleSheets(forceToast = false) {
       localStorage.setItem(REMOTE_CATALOG_KEY, JSON.stringify(result.catalogo));
       applyRemoteCatalogo(result.catalogo);
 
-      if (typeof initSelectTitularUnidad2 === 'function') {
-        initSelectTitularUnidad2();
+      const activeMov = document.querySelector('input[name="tipoMovimiento"]:checked')?.value || '';
+      if (activeMov === 'Cambio de dependencia jerárquica') {
+        if (typeof initSelectTitularUnidad2 === 'function') initSelectTitularUnidad2();
+      } else if (activeMov === 'Alta' || activeMov === 'Baja' || activeMov === 'Cambio de nombre') {
+        if (typeof poblarSelectJefeInmediato === 'function') poblarSelectJefeInmediato();
+      } else {
+        if (typeof initSelectTitularUnidad2 === 'function') initSelectTitularUnidad2();
       }
+
       if (forceToast) {
         showToast(`Catálogo de titulares sincronizado desde Google Sheets (${result.catalogo.length} unidades).`);
       }
