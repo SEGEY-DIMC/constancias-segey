@@ -5236,6 +5236,40 @@ function poblarSelectJustificaciones(tipoMovimiento) {
   }
 }
 
+/**
+ * Actualiza el contador dinámico de caracteres de la Justificación (Máximo 350 caracteres)
+ */
+function updateJustificacionCharCounter() {
+  const justInput = document.getElementById('justificacion');
+  const countSpan = document.getElementById('count-justificacion-chars');
+  const badgeSpan = document.getElementById('badge-justificacion-chars');
+  const hintSpan = document.getElementById('hint-justificacion-chars');
+  if (!justInput) return;
+
+  if (justInput.value.length > 350) {
+    justInput.value = justInput.value.substring(0, 350);
+  }
+
+  const currentLength = justInput.value.length;
+  if (countSpan) {
+    countSpan.textContent = currentLength;
+  }
+
+  if (badgeSpan) {
+    if (currentLength >= 350) {
+      badgeSpan.className = 'font-mono text-xs font-bold px-2 py-0.5 rounded border transition-colors bg-red-100 text-red-700 border-red-300 shadow-sm';
+      if (hintSpan) hintSpan.innerHTML = '<i class="fa-solid fa-circle-exclamation text-red-500"></i> <span class="text-red-600 font-semibold">Límite alcanzado (máx. 350 caracteres)</span>';
+    } else if (currentLength >= 300) {
+      badgeSpan.className = 'font-mono text-xs font-semibold px-2 py-0.5 rounded border transition-colors bg-amber-100 text-amber-700 border-amber-300';
+      if (hintSpan) hintSpan.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-500"></i> <span class="text-amber-700 font-medium">Próximo al límite (quedan ' + (350 - currentLength) + ' caracteres)</span>';
+    } else {
+      badgeSpan.className = 'font-mono text-xs font-semibold px-2 py-0.5 rounded border transition-colors bg-slate-100 text-slate-600 border-slate-200';
+      if (hintSpan) hintSpan.innerHTML = '<i class="fa-solid fa-align-left text-slate-400"></i> Límite establecido: máximo 350 caracteres';
+    }
+  }
+}
+window.updateJustificacionCharCounter = updateJustificacionCharCounter;
+
 function handleSelectJustificacionPredefinida(selectEl) {
   if (!selectEl) return;
   const val = selectEl.value;
@@ -5251,11 +5285,14 @@ function handleSelectJustificacionPredefinida(selectEl) {
     }
     justTextarea.placeholder = 'SE HACE CONSTAR LOS SIGUIENTES MOVIMIENTOS DE CARÁCTER ADMINISTRATIVO...';
     justTextarea.focus();
+    updateJustificacionCharCounter();
     renderDocument(getCurrentFormDataForPreview());
     showToast('Opción "Otros" seleccionada. Describa la justificación en el cuadro inferior.');
   } else if (val) {
-    justTextarea.value = val.toUpperCase();
+    const finalVal = val.length > 350 ? val.substring(0, 350) : val;
+    justTextarea.value = finalVal.toUpperCase();
     justTextarea.focus();
+    updateJustificacionCharCounter();
     justTextarea.dispatchEvent(new Event('input', { bubbles: true }));
     renderDocument(getCurrentFormDataForPreview());
     showToast('Motivo predefinido cargado en el cuadro inferior. Se deberá justificar la selección.');
@@ -6011,8 +6048,13 @@ function initFormDefaults() {
   }
   const justInput = document.getElementById('justificacion');
   if (justInput) {
-    justInput.addEventListener('input', () => {
+    justInput.setAttribute('maxlength', '350');
+    const handleJustInput = () => {
+      if (justInput.value.length > 350) {
+        justInput.value = justInput.value.substring(0, 350);
+      }
       justInput.value = justInput.value.toUpperCase();
+      updateJustificacionCharCounter();
       const selJust = document.getElementById('selectJustificacionPredefinida');
       if (selJust) {
         const curVal = justInput.value.trim();
@@ -6031,7 +6073,11 @@ function initFormDefaults() {
         }
       }
       renderDocument(getCurrentFormDataForPreview());
-    });
+    };
+    justInput.addEventListener('input', handleJustInput);
+    justInput.addEventListener('keyup', updateJustificacionCharCounter);
+    justInput.addEventListener('paste', () => setTimeout(handleJustInput, 0));
+    updateJustificacionCharCounter();
   }
 
   // Sincronizar listas de Testigos si se edita manualmente el nombre de Titular (1) o Titular (2)
@@ -8843,7 +8889,10 @@ function editRecord(id, allowCapturista = false) {
   document.getElementById('testigo2Cargo').value = test2.cargo;
 
   // 6. JUSTIFICACIÓN, ESTATUS Y OBSERVACIONES
-  document.getElementById('justificacion').value = record.justificacion || '';
+  document.getElementById('justificacion').value = (record.justificacion || '').substring(0, 350);
+  if (typeof updateJustificacionCharCounter === 'function') {
+    updateJustificacionCharCounter();
+  }
   document.getElementById('estatus').value = record.estatus || 'Generada para Firma';
   document.getElementById('observaciones').value = record.observaciones || '';
 
@@ -9456,6 +9505,9 @@ function loadSampleData() {
   }
 
   document.getElementById('justificacion').value = 'CON MOTIVO DE LA ACTUALIZACIÓN DEL MANUAL GENERAL DE ORGANIZACIÓN Y EN ATENCIÓN A LOS LINEAMIENTOS DEL PLAN ESTATAL DE DESARROLLO INSTITUCIONAL, SE FORMALIZA LA REESTRUCTURACIÓN ORGÁNICA Y CAMBIO DE DENOMINACIÓN DEL ANTERIOR DEPARTAMENTO DE RECURSOS HUMANOS PARA ASUMIR LA GOBERNANZA INTEGRAL DEL TALENTO HUMANO.';
+  if (typeof updateJustificacionCharCounter === 'function') {
+    updateJustificacionCharCounter();
+  }
 
   document.getElementById('estatus').value = 'Generada para Firma';
   document.getElementById('observaciones').value = 'Notificado a la Dirección de Personal y a la SAF para la debida actualización de estructuras orgánicas y plantillas de plazas.';
