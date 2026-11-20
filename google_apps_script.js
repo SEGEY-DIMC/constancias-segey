@@ -638,6 +638,89 @@ function doGet(e) {
     }
 
     // =========================================================================
+    // ACCIÓN: OBTENER JUSTIFICACIONES PREDEFINIDAS DESDE GOOGLE SHEETS
+    // =========================================================================
+    if (action === "getJustificaciones") {
+      try {
+        var ssJust = null;
+        try {
+          ssJust = SpreadsheetApp.openById(CATALOGO_SPREADSHEET_ID);
+        } catch (eOpenJ) {
+          ssJust = ss;
+        }
+
+        var sheetJust = (ss ? ss.getSheetByName("Justificaciones") : null) ||
+                        (ssJust ? ssJust.getSheetByName("Justificaciones") : null) ||
+                        (ss ? ss.getSheetByName("Justificación y Motivos") : null) ||
+                        (ssJust ? ssJust.getSheetByName("Justificación y Motivos") : null) ||
+                        (ss ? ss.getSheetByName("Motivos") : null);
+
+        if (!sheetJust) {
+          return ContentService.createTextOutput(JSON.stringify({
+            status: "not_found",
+            message: "Hoja 'Justificaciones' no encontrada en la hoja de cálculo.",
+            justificaciones: {}
+          })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        var jData = sheetJust.getDataRange().getValues();
+        var justificaciones = {
+          "Alta": [],
+          "Baja": [],
+          "Cambio de nombre": [],
+          "Cambio de dependencia jerárquica": []
+        };
+
+        var colTipo = 0;
+        var colMotivo = 1;
+        if (jData.length > 0) {
+          for (var c = 0; c < jData[0].length; c++) {
+            var h = String(jData[0][c]).toLowerCase();
+            if (h.indexOf("tipo") !== -1 || h.indexOf("movimiento") !== -1) colTipo = c;
+            if (h.indexOf("motivo") !== -1 || h.indexOf("justifica") !== -1) colMotivo = c;
+          }
+        }
+
+        for (var n = 1; n < jData.length; n++) {
+          var jRow = jData[n];
+          var rawTipo = String(jRow[colTipo] || "").trim();
+          var rawMotivo = String(jRow[colMotivo] || "").trim();
+          if (!rawTipo || !rawMotivo) continue;
+
+          var tipoKey = rawTipo;
+          var tipoLower = rawTipo.toLowerCase();
+          if (tipoLower.indexOf("alta") !== -1) tipoKey = "Alta";
+          else if (tipoLower.indexOf("baja") !== -1) tipoKey = "Baja";
+          else if (tipoLower.indexOf("nombre") !== -1) tipoKey = "Cambio de nombre";
+          else if (tipoLower.indexOf("dependencia") !== -1 || tipoLower.indexOf("jerárquica") !== -1 || tipoLower.indexOf("jerarquica") !== -1) tipoKey = "Cambio de dependencia jerárquica";
+
+          if (!justificaciones[tipoKey]) {
+            justificaciones[tipoKey] = [];
+          }
+          if (justificaciones[tipoKey].indexOf(rawMotivo) === -1) {
+            justificaciones[tipoKey].push(rawMotivo);
+          }
+        }
+
+        var totalItems = 0;
+        for (var k in justificaciones) {
+          totalItems += justificaciones[k].length;
+        }
+
+        return ContentService.createTextOutput(JSON.stringify({
+          status: "success",
+          total: totalItems,
+          justificaciones: justificaciones
+        })).setMimeType(ContentService.MimeType.JSON);
+      } catch (errJust) {
+        return ContentService.createTextOutput(JSON.stringify({
+          status: "error",
+          message: errJust.toString()
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+
+    // =========================================================================
     // ACCIÓN 4: BÚSQUEDA DINÁMICA EN REPORTE DE FUNCIONARIOS (2,929 PUESTOS)
     // =========================================================================
     if (action === "buscarFuncionario") {
