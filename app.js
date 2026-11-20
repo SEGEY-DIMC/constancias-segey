@@ -5192,8 +5192,47 @@ function poblarSelectJustificaciones(tipoMovimiento) {
     if (!matched) {
       select.value = '__OTRO__';
     }
+    if (typeof setJustificacionEnabledState === 'function') {
+      setJustificacionEnabledState(true);
+    }
+  } else {
+    select.value = '';
+    if (typeof setJustificacionEnabledState === 'function') {
+      setJustificacionEnabledState(false);
+    }
   }
 }
+
+/**
+ * Controla el estado habilitado/deshabilitado del cuadro de justificación.
+ * Solo permite escribir cuando se ha elegido una opción del combobox o "Otros".
+ */
+function setJustificacionEnabledState(enabled, customPlaceholder = null) {
+  const justTextarea = document.getElementById('justificacion');
+  if (!justTextarea) return;
+
+  if (enabled) {
+    justTextarea.disabled = false;
+    justTextarea.classList.remove('bg-slate-100', 'cursor-not-allowed', 'text-slate-400', 'border-dashed');
+    justTextarea.classList.add('bg-white', 'text-slate-800');
+    if (customPlaceholder) {
+      justTextarea.placeholder = customPlaceholder;
+    } else {
+      justTextarea.placeholder = 'SE HACE CONSTAR LOS SIGUIENTES MOVIMIENTOS DE CARÁCTER ADMINISTRATIVO...';
+    }
+  } else {
+    justTextarea.disabled = true;
+    justTextarea.value = '';
+    justTextarea.classList.remove('bg-white', 'text-slate-800');
+    justTextarea.classList.add('bg-slate-100', 'cursor-not-allowed', 'text-slate-400', 'border-dashed');
+    justTextarea.placeholder = customPlaceholder || '🔒 Seleccione primero una opción del menú superior (o elija "Otros") para escribir la justificación...';
+  }
+
+  if (typeof updateJustificacionCharCounter === 'function') {
+    updateJustificacionCharCounter();
+  }
+}
+window.setJustificacionEnabledState = setJustificacionEnabledState;
 
 /**
  * Actualiza el contador dinámico de caracteres de la Justificación (Máximo 350 caracteres)
@@ -5236,25 +5275,27 @@ function handleSelectJustificacionPredefinida(selectEl) {
   if (!justTextarea) return;
 
   if (val === '__OTRO__') {
-    // Si el usuario selecciona "Otros", limpiamos el texto si coincidía con una opción predefinida para que redacte
-    const catalog = getJustificacionesCatalog();
-    const allPredefinidas = Object.values(catalog).flat().map(s => s.trim().toUpperCase());
-    if (allPredefinidas.includes(justTextarea.value.trim().toUpperCase())) {
-      justTextarea.value = '';
-    }
-    justTextarea.placeholder = 'SE HACE CONSTAR LOS SIGUIENTES MOVIMIENTOS DE CARÁCTER ADMINISTRATIVO...';
+    // Si el usuario selecciona "Otros", habilitamos y dejamos limpio para escribir
+    setJustificacionEnabledState(true, 'SE HACE CONSTAR LOS SIGUIENTES MOVIMIENTOS DE CARÁCTER ADMINISTRATIVO...');
+    justTextarea.value = '';
     justTextarea.focus();
     updateJustificacionCharCounter();
     renderDocument(getCurrentFormDataForPreview());
     showToast('Opción "Otros" seleccionada. Describa la justificación en el cuadro inferior.');
   } else if (val) {
+    // Si selecciona una opción predefinida, habilitamos y copiamos el texto
+    setJustificacionEnabledState(true);
     const finalVal = val.length > 350 ? val.substring(0, 350) : val;
     justTextarea.value = finalVal.toUpperCase();
     justTextarea.focus();
     updateJustificacionCharCounter();
     justTextarea.dispatchEvent(new Event('input', { bubbles: true }));
     renderDocument(getCurrentFormDataForPreview());
-    showToast('Motivo predefinido cargado en el cuadro inferior. Se deberá justificar la selección.');
+    showToast('Motivo predefinido cargado en el cuadro inferior.');
+  } else {
+    // Si vuelve a "-- Seleccione una opción predefinida --", deshabilitamos y limpiamos
+    setJustificacionEnabledState(false);
+    renderDocument(getCurrentFormDataForPreview());
   }
 }
 
@@ -6346,6 +6387,9 @@ function limpiarCamposPorCambioMovimiento(nuevoMovimiento) {
   if (just) just.value = '';
   const selJust = document.getElementById('selectJustificacionPredefinida');
   if (selJust) selJust.selectedIndex = 0;
+  if (typeof setJustificacionEnabledState === 'function') {
+    setJustificacionEnabledState(false);
+  }
 }
 
 window.cancelarCambioMovimiento = cancelarCambioMovimiento;
@@ -6728,11 +6772,12 @@ function handleTipoMovimientoChange() {
 
   const justTextarea = document.getElementById('justificacion');
   if (justTextarea && !justTextarea.value.trim()) {
-    const catalog = getJustificacionesCatalog();
-    const opciones = catalog[val] || [];
-    if (opciones.length > 0) {
-      if (selJust) selJust.value = opciones[0];
-      justTextarea.value = opciones[0].toUpperCase();
+    if (typeof setJustificacionEnabledState === 'function') {
+      setJustificacionEnabledState(false);
+    }
+  } else if (justTextarea && justTextarea.value.trim()) {
+    if (typeof setJustificacionEnabledState === 'function') {
+      setJustificacionEnabledState(true);
     }
   }
 
@@ -8847,7 +8892,32 @@ function editRecord(id, allowCapturista = false) {
   document.getElementById('testigo2Cargo').value = test2.cargo;
 
   // 6. JUSTIFICACIÓN, ESTATUS Y OBSERVACIONES
-  document.getElementById('justificacion').value = (record.justificacion || '').substring(0, 350);
+  const justVal = (record.justificacion || '').substring(0, 350);
+  document.getElementById('justificacion').value = justVal;
+  if (justVal && justVal.trim()) {
+    if (typeof setJustificacionEnabledState === 'function') {
+      setJustificacionEnabledState(true);
+    }
+    const selJust = document.getElementById('selectJustificacionPredefinida');
+    if (selJust) {
+      let matched = false;
+      const curU = justVal.trim().toUpperCase();
+      for (let i = 1; i < selJust.options.length; i++) {
+        if (selJust.options[i].value !== '__OTRO__' && selJust.options[i].value.toUpperCase() === curU) {
+          selJust.selectedIndex = i;
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) {
+        selJust.value = '__OTRO__';
+      }
+    }
+  } else {
+    if (typeof setJustificacionEnabledState === 'function') {
+      setJustificacionEnabledState(false);
+    }
+  }
   if (typeof updateJustificacionCharCounter === 'function') {
     updateJustificacionCharCounter();
   }
@@ -9407,6 +9477,9 @@ function resetForm() {
   const containerNuevoNombre = document.getElementById('containerNuevoNombre');
   if (containerNuevoNombre) containerNuevoNombre.classList.add('hidden');
   handleTipoMovimientoChange();
+  if (typeof setJustificacionEnabledState === 'function') {
+    setJustificacionEnabledState(false);
+  }
   renderDocument(getCurrentFormDataForPreview());
   updateEstatusPermissions(isSuperAdmin());
   showToast('Formulario restablecido.');
