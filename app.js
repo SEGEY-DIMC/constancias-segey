@@ -625,13 +625,13 @@ const DEFAULT_LAYOUT_HTML = `
   <!-- APARTADO IV. CIERRE Y FIRMAS -->
   <div class="page-break-avoid">
     <div class="font-bold text-[10pt] mb-1 uppercase tracking-wide text-slate-900 text-left">IV. CIERRE</div>
-    <p class="text-justify mb-4 leading-relaxed text-[10pt]">
+    <p class="text-justify mb-2 leading-relaxed text-[10pt]">
       Una vez expresado lo anterior y al no haber más hechos que hacer constar, se da por concluida la presente, firmando al calce para su debida constancia y manifestando su entera conformidad los involucrados, siendo el mismo día y año.
     </p>
 
     <!-- ESPACIO DE FIRMAS CON ESPACIO AMPLIO Y RAZONABLE PARA FIRMAR -->
-    <div class="firmas-container mt-8 space-y-6 font-sans">
-      <div class="grid grid-cols-2 gap-8 text-center pt-2">
+    <div class="firmas-container mt-6 space-y-5 font-sans">
+      <div class="grid grid-cols-2 gap-8 text-center pt-1.5">
         <div>
           <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
             <div class="font-bold uppercase text-[10.5px] tracking-tight">Titular de Unidad Administrativa (1)</div>
@@ -681,16 +681,16 @@ const DEFAULT_LAYOUT_HTML = `
         {{#if noEsCambioDependenciaJerarquica}}
         <!-- Para Alta, Baja y Cambio de Nombre: 4 FIRMAS (2 filas de 2) -->
         <!-- Fila 2: Izquierda Titular de Área, Derecha Testigo (1) -->
-        <div class="grid grid-cols-2 gap-8 text-center pt-2">
+        <div class="grid grid-cols-2 gap-8 text-center pt-1.5">
           <div>
-            <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
+            <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5 pb-0.5">
               <div class="font-bold uppercase text-[10.5px] tracking-tight">Titular de Área</div>
               <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{titularAreaNombre}}</div>
               <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{titularAreaCargo}}</div>
             </div>
           </div>
           <div>
-            <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
+            <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5 pb-0.5">
               <div class="font-bold uppercase text-[10.5px] tracking-tight">Testigo (1)</div>
               <div class="text-slate-900 text-[10.5px] mt-0.5 font-bold">{{testigo1Nombre}}</div>
               <div class="text-slate-600 text-[9.5px] leading-tight mt-0.5">{{testigo1Cargo}}</div>
@@ -8038,11 +8038,10 @@ async function generateClientSidePDF(element, filename) {
   innerSheets.forEach(s => s.classList.add('generating-pdf'));
 
   // Dimensiones estándar Carta (Letter): 215.9mm x 279.4mm
-  // Márgenes laterales amplios y proporcionados: Arriba: 8mm, Izquierda: 15mm, Abajo: 10mm, Derecha: 15mm
-  // Sumado al buffer interno en el canvas, produce un margen lateral total de ~18mm (1.8 cm)
-  // perfectamente simétrico, con presencia visual clara y holgura absoluta para que ninguna letra del costado derecho se corte.
+  // Márgenes calibrados: Arriba: 6mm, Izquierda: 15mm, Abajo: 6mm, Derecha: 15mm
+  // Proporciona máxima holgura vertical para que los cargos y puestos de las firmas inferiores nunca se corten.
   const opt = {
-    margin: [8, 15, 10, 15],
+    margin: [6, 15, 6, 15],
     filename: filename,
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: {
@@ -8122,14 +8121,14 @@ async function generateClientSidePDF(element, filename) {
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       const marginX = 15; // mm (alineado con los 15mm de margen lateral del documento)
-      const textY = pageHeight - 5.5; // 5.5mm arriba del borde inferior
+      const textY = pageHeight - 4; // 4mm arriba del borde inferior (bajado para evitar cortes en firmas)
 
       for (let p = 1; p <= totalPages; p++) {
         pdf.setPage(p);
 
-        // 1. Franja de protección con fondo blanco limpio al pie de la página
+        // 1. Franja de protección con fondo blanco limpio al pie de la página (reducido a 6mm)
         pdf.setFillColor(255, 255, 255);
-        pdf.rect(0, pageHeight - 9, pageWidth, 9, 'F');
+        pdf.rect(0, pageHeight - 6, pageWidth, 6, 'F');
 
         // Se elimina la línea divisoria horizontal gris según el formato oficial SEGEY
 
