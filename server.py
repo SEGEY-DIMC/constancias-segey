@@ -140,8 +140,8 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
         elif self.path == '/api/sync-excel':
             global _last_excel_mtime
             try:
-                # Sincronización oficial: descarga directa desde Google Drive y regeneración de mapas
-                res = sync_catalogo.sync(EXCEL_FILE, download_from_drive=True)
+                # Sincronización oficial: lectura directa del archivo Excel y regeneración de mapas
+                res = sync_catalogo.sync(EXCEL_FILE)
                 if os.path.exists(EXCEL_FILE):
                     _last_excel_mtime = os.path.getmtime(EXCEL_FILE)
                 self.send_response(200)
@@ -286,8 +286,8 @@ class CustomHandler(http.server.SimpleHTTPRequestHandler):
         elif self.path == '/api/sync-excel':
             global _last_excel_mtime
             try:
-                # Sincronización oficial: descarga directa desde Google Drive y regeneración de mapas
-                res = sync_catalogo.sync(EXCEL_FILE, download_from_drive=True)
+                # Sincronización oficial: lectura directa del archivo Excel y regeneración de mapas
+                res = sync_catalogo.sync(EXCEL_FILE)
                 if os.path.exists(EXCEL_FILE):
                     _last_excel_mtime = os.path.getmtime(EXCEL_FILE)
                 self.send_response(200)
