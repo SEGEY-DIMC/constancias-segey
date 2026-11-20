@@ -6085,6 +6085,29 @@ function initFormDefaults() {
       }
     });
   }
+
+  // Detección automática de modificaciones en folios cargados para edición
+  const formEl = document.getElementById('constancia-form');
+  if (formEl) {
+    const onFormChange = (e) => {
+      if (editingRecordId) {
+        const estSelect = document.getElementById('estatus');
+        if (estSelect && estSelect.value !== 'Modificación' && estSelect.value !== 'Firmada y Concluida' && estSelect.value !== 'Inactivo') {
+          estSelect.value = 'Modificación';
+          const lblSt = document.getElementById('lbl-editing-status');
+          if (lblSt) lblSt.textContent = 'Modificación';
+          const lblBadge = document.getElementById('lbl-editing-status-badge');
+          if (lblBadge) {
+            lblBadge.className = 'text-[11px] bg-amber-100 border border-amber-300 text-amber-900 px-2 py-0.5 rounded-full font-bold';
+            lblBadge.innerHTML = 'Estatus actual: <strong>Modificación</strong>';
+          }
+        }
+      }
+      renderDocument(getCurrentFormDataForPreview());
+    };
+    formEl.addEventListener('input', onFormChange);
+    formEl.addEventListener('change', onFormChange);
+  }
 }
 
 // =========================================================================
@@ -7164,6 +7187,13 @@ function handleFormSubmit(event) {
 
   const editingBanner = document.getElementById('editing-folio-banner');
   if (editingBanner) editingBanner.classList.add('hidden');
+
+  const submitBtn = document.getElementById('btn-submit-form');
+  if (submitBtn) {
+    submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk mr-1.5"></i> Guardar Constancia';
+    submitBtn.classList.remove('bg-amber-700', 'hover:bg-amber-800');
+    submitBtn.classList.add('bg-segey-800', 'hover:bg-segey-900');
+  }
 
   showToast(`Constancia ${folio} guardada con éxito (${recordData.estatus}). Puede descargar el PDF oficial desde este visor.`);
   } catch (err) {
@@ -8985,6 +9015,14 @@ function editRecord(id, allowCapturista = false) {
     if (lblSt) lblSt.textContent = record.estatus || 'Generada para Firma';
     banner.classList.remove('hidden');
   }
+
+  const submitBtn = document.getElementById('btn-submit-form');
+  if (submitBtn) {
+    submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk mr-1.5"></i> Guardar Modificación de Folio';
+    submitBtn.classList.remove('bg-segey-800', 'hover:bg-segey-900');
+    submitBtn.classList.add('bg-amber-700', 'hover:bg-amber-800');
+  }
+
   showToast(`Constancia ${record.folio} cargada en formulario.`);
   renderDocument(getCurrentFormDataForPreview());
 }
@@ -9257,6 +9295,13 @@ function resetForm() {
   try { localStorage.removeItem(AUTOSAVE_DRAFT_KEY); } catch(e){}
   const editingBanner = document.getElementById('editing-folio-banner');
   if (editingBanner) editingBanner.classList.add('hidden');
+
+  const submitBtn = document.getElementById('btn-submit-form');
+  if (submitBtn) {
+    submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk mr-1.5"></i> Guardar Constancia';
+    submitBtn.classList.remove('bg-amber-700', 'hover:bg-amber-800');
+    submitBtn.classList.add('bg-segey-800', 'hover:bg-segey-900');
+  }
   document.getElementById('constancia-form').reset();
   ['titular1', 'titular2', 'area1', 'area2'].forEach(r => gestionarAlertaVacanteGenerales(r, false));
   setAreaNotificadoraValue('');
@@ -9895,6 +9940,12 @@ function verFolioEnVisor(id) {
 
 function cancelarEdicionFolio() {
   resetForm();
+  const submitBtn = document.getElementById('btn-submit-form');
+  if (submitBtn) {
+    submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk mr-1.5"></i> Guardar Constancia';
+    submitBtn.classList.remove('bg-amber-700', 'hover:bg-amber-800');
+    submitBtn.classList.add('bg-segey-800', 'hover:bg-segey-900');
+  }
   showToast('Modo edición cancelado. Formulario listo para nueva constancia.');
 }
 
