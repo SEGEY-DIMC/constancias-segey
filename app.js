@@ -8634,8 +8634,18 @@ function viewRecord(id) {
 /**
  * Parsea y estandariza cadenas de fecha a formato YYYY-MM-DD para <input type="date">
  */
-function parseToInputDateFormat(val) {
-  if (!val) return '';
+function parseToInputDateFormat(val, record) {
+  if (!val && record) {
+    val = record.fechaConstancia || record.fechaActa || record.fechaRegistro || '';
+  }
+  if (!val && record && record.dia && record.anioCompleto) {
+    const MESES = {'enero':'01','febrero':'02','marzo':'03','abril':'04','mayo':'05','junio':'06','julio':'07','agosto':'08','septiembre':'09','octubre':'10','noviembre':'11','diciembre':'12'};
+    const m = MESES[(record.mes || '').toLowerCase()] || '11';
+    return `${record.anioCompleto}-${m}-${String(record.dia).padStart(2, '0')}`;
+  }
+  if (!val) {
+    return new Date().toISOString().split('T')[0];
+  }
   val = String(val).trim();
   if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
   if (val.includes('T')) return val.split('T')[0];
@@ -8650,13 +8660,17 @@ function parseToInputDateFormat(val) {
     const d = String(parsed.getDate()).padStart(2, '0');
     return `${y}-${m}-${d}`;
   }
-  return '';
+  return new Date().toISOString().split('T')[0];
 }
 
 /**
  * Parsea y estandariza cadenas de hora a formato HH:MM para <input type="time">
  */
-function parseToInputTimeFormat(val) {
+function parseToInputTimeFormat(val, record) {
+  if (!val && record) {
+    if (record.horaActa) val = record.horaActa;
+    else if (record.horas && record.minutos) val = `${record.horas}:${record.minutos}`;
+  }
   if (!val) return '10:00';
   val = String(val).trim();
   if (/^\d{2}:\d{2}$/.test(val)) return val;
@@ -8729,8 +8743,8 @@ function editRecord(id, allowCapturista = false) {
 
   // 2. DATOS GENERALES (Municipio, Fechas, Inmueble)
   document.getElementById('municipio').value = record.municipio || 'Mérida';
-  document.getElementById('fechaActa').value = parseToInputDateFormat(record.fechaConstancia || record.fechaActa || record.fechaRegistro || '');
-  document.getElementById('horaActa').value = parseToInputTimeFormat(record.horaActa || '');
+  document.getElementById('fechaActa').value = parseToInputDateFormat(record.fechaConstancia || record.fechaActa || record.fechaRegistro || '', record);
+  document.getElementById('horaActa').value = parseToInputTimeFormat(record.horaActa || '', record);
   document.getElementById('inmueble').value = record.inmueble || 'el Edificio Central de la Secretaría de Educación';
 
   // 3. TIPO DE MOVIMIENTO
@@ -10732,8 +10746,8 @@ function loadRecordIntoForm(d) {
   if (d.areaNotificadora) setAreaNotificadoraValue(d.areaNotificadora);
   if (d.responsableCaptura) setResponsableCapturaValue(d.responsableCaptura);
   if (d.municipio) document.getElementById('municipio').value = d.municipio;
-  if (d.fechaActa || d.fechaConstancia) document.getElementById('fechaActa').value = parseToInputDateFormat(d.fechaConstancia || d.fechaActa);
-  if (d.horaActa) document.getElementById('horaActa').value = parseToInputTimeFormat(d.horaActa);
+  if (d.fechaActa || d.fechaConstancia) document.getElementById('fechaActa').value = parseToInputDateFormat(d.fechaConstancia || d.fechaActa, d);
+  if (d.horaActa) document.getElementById('horaActa').value = parseToInputTimeFormat(d.horaActa, d);
   if (d.inmueble) document.getElementById('inmueble').value = d.inmueble;
 
   if (d.tipoMovimiento) {
