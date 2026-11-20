@@ -2830,17 +2830,28 @@ function poblarSelectAreaBaja(areaNombre) {
   }
 
   html += '<option value="__OTRA__">✏️ Otra área (escribir manualmente en el cuadro inferior)...</option>';
+  const prevVal = selectBaja.value || (document.getElementById('nuevaDenominacion')?.value || '').trim();
   selectBaja.innerHTML = html;
 
-  selectBaja.selectedIndex = 0;
-  selectBaja.value = '';
+  if (prevVal && (areas.some(a => a.toUpperCase() === prevVal.toUpperCase()) || prevVal === '__OTRA__')) {
+    const matched = areas.find(a => a.toUpperCase() === prevVal.toUpperCase());
+    selectBaja.value = matched || prevVal;
+  } else {
+    selectBaja.selectedIndex = 0;
+    selectBaja.value = '';
+  }
 
   const wrapper = selectBaja.parentElement?.querySelector('.segey-combobox[data-for="selectAreaBaja"]') || selectBaja.parentElement?.querySelector('.segey-combobox');
   if (wrapper) {
     const input = wrapper.querySelector('.combobox-input');
     const clearBtn = wrapper.querySelector('.combobox-clear');
-    if (input) input.value = '';
-    if (clearBtn) clearBtn.classList.add('hidden');
+    if (selectBaja.value) {
+      if (input) input.value = selectBaja.value;
+      if (clearBtn) clearBtn.classList.remove('hidden');
+    } else {
+      if (input) input.value = '';
+      if (clearBtn) clearBtn.classList.add('hidden');
+    }
   }
 
   if (badgeBaja) {
@@ -2909,17 +2920,28 @@ function poblarSelectAreaCambioNombre(areaNombre) {
   }
 
   html += '<option value="__OTRA__">✏️ Otra área (escribir manualmente en el cuadro inferior)...</option>';
+  const prevVal = selectCambio.value || (document.getElementById('nuevaDenominacion')?.value || '').trim();
   selectCambio.innerHTML = html;
 
-  selectCambio.selectedIndex = 0;
-  selectCambio.value = '';
+  if (prevVal && (areas.some(a => a.toUpperCase() === prevVal.toUpperCase()) || prevVal === '__OTRA__')) {
+    const matched = areas.find(a => a.toUpperCase() === prevVal.toUpperCase());
+    selectCambio.value = matched || prevVal;
+  } else {
+    selectCambio.selectedIndex = 0;
+    selectCambio.value = '';
+  }
 
   const wrapper = selectCambio.parentElement?.querySelector('.segey-combobox[data-for="selectAreaCambioNombre"]') || selectCambio.parentElement?.querySelector('.segey-combobox');
   if (wrapper) {
     const input = wrapper.querySelector('.combobox-input');
     const clearBtn = wrapper.querySelector('.combobox-clear');
-    if (input) input.value = '';
-    if (clearBtn) clearBtn.classList.add('hidden');
+    if (selectCambio.value) {
+      if (input) input.value = selectCambio.value;
+      if (clearBtn) clearBtn.classList.remove('hidden');
+    } else {
+      if (input) input.value = '';
+      if (clearBtn) clearBtn.classList.add('hidden');
+    }
   }
 
   if (badgeCambio) {
@@ -2988,17 +3010,28 @@ function poblarSelectAreaCambioDep(areaNombre) {
   }
 
   html += '<option value="__OTRA__">✏️ Otra área (escribir manualmente en el cuadro inferior)...</option>';
+  const prevVal = selectDep.value || (document.getElementById('nuevaDenominacion')?.value || '').trim();
   selectDep.innerHTML = html;
 
-  selectDep.selectedIndex = 0;
-  selectDep.value = '';
+  if (prevVal && (areas.some(a => a.toUpperCase() === prevVal.toUpperCase()) || prevVal === '__OTRA__')) {
+    const matched = areas.find(a => a.toUpperCase() === prevVal.toUpperCase());
+    selectDep.value = matched || prevVal;
+  } else {
+    selectDep.selectedIndex = 0;
+    selectDep.value = '';
+  }
 
   const wrapper = selectDep.parentElement?.querySelector('.segey-combobox[data-for="selectAreaCambioDep"]') || selectDep.parentElement?.querySelector('.segey-combobox');
   if (wrapper) {
     const input = wrapper.querySelector('.combobox-input');
     const clearBtn = wrapper.querySelector('.combobox-clear');
-    if (input) input.value = '';
-    if (clearBtn) clearBtn.classList.add('hidden');
+    if (selectDep.value) {
+      if (input) input.value = selectDep.value;
+      if (clearBtn) clearBtn.classList.remove('hidden');
+    } else {
+      if (input) input.value = '';
+      if (clearBtn) clearBtn.classList.add('hidden');
+    }
   }
 
   if (badgeDep) {
@@ -3661,7 +3694,7 @@ function actualizarOpcionesTitularAreaPorJefe(jefeCargo, jefeNombre, areaTarget 
 }
 window.actualizarOpcionesTitularAreaPorJefe = actualizarOpcionesTitularAreaPorJefe;
 
-function actualizarTitularesPorArea(areaNombre) {
+function actualizarTitularesPorArea(areaNombre, forzarLimpieza = false) {
   if (typeof CATALOGO_ORGANICO_SEGEY === 'undefined' || !areaNombre) return;
 
   // 1. Obtener la Unidad Administrativa oficial
@@ -3719,15 +3752,23 @@ function actualizarTitularesPorArea(areaNombre) {
 
   // Autocompletar inputs de Titular (1) con detección de vacantes
   const esVacanteT1 = !unidad.titular.nombre || unidad.titular.nombre.toLowerCase().trim() === 'vacante';
-  gestionarAlertaVacanteGenerales('titular1', esVacanteT1, unidad.titular.cargo || '', esVacanteT1 ? '' : (unidad.titular.nombre || ''));
+  if (forzarLimpieza || !u1Nom?.value) {
+    gestionarAlertaVacanteGenerales('titular1', esVacanteT1, unidad.titular.cargo || '', esVacanteT1 ? '' : (unidad.titular.nombre || ''));
+  }
 
   // 3. Filtrar y cargar menú desplegable dependiente de "Titular de Área" (Puesto — Nombre)
   const selectArea = document.getElementById('selectTitularArea');
   const badgeArea = document.getElementById('badgeAreaSubordinados');
+  const aNom = document.getElementById('titularAreaNombre');
+  const aCar = document.getElementById('titularAreaCargo');
+
   if (selectArea) {
     selectArea.disabled = false;
     selectArea.classList.remove('bg-slate-50', 'text-slate-700');
     selectArea.classList.add('bg-white', 'text-slate-800');
+
+    const curAreaNom = (aNom?.value || '').trim();
+    const curAreaCar = (aCar?.value || '').trim();
 
     const rawSubs = unidad.subordinados || [];
     const subs = rawSubs.filter(s => esMandoAlto(s.puesto));
@@ -3757,18 +3798,22 @@ function actualizarTitularesPorArea(areaNombre) {
       const esVacante = s.es_vacante || (s.nombre && s.nombre.toLowerCase().trim() === 'vacante');
       const displayNombre = esVacante ? 'Vacante' : s.nombre;
       const displayLabel = `${s.puesto} — ${displayNombre}`;
-      areaHtml += `<option value="p_${idx}" data-nombre="${escapeHtml(displayNombre)}" data-puesto="${escapeHtml(s.puesto)}">${escapeHtml(displayLabel)}</option>`;
+      const isSel = (!forzarLimpieza && curAreaNom && (s.nombre.toUpperCase() === curAreaNom.toUpperCase() || s.puesto.toUpperCase() === curAreaCar.toUpperCase())) ? ' selected' : '';
+      areaHtml += `<option value="p_${idx}" data-nombre="${escapeHtml(displayNombre)}" data-puesto="${escapeHtml(s.puesto)}"${isSel}>${escapeHtml(displayLabel)}</option>`;
     });
 
     areaHtml += '<option value="__MANUAL__">✏️ + Ingresar otro puesto y nombre manualmente...</option>';
     selectArea.innerHTML = areaHtml;
 
-    // Limpiar campos de titular de área para que el usuario elija
-    gestionarAlertaVacanteGenerales('area1', false);
-    const aNom = document.getElementById('titularAreaNombre');
-    const aCar = document.getElementById('titularAreaCargo');
-    if (aNom) aNom.value = '';
-    if (aCar) aCar.value = '';
+    if (forzarLimpieza) {
+      gestionarAlertaVacanteGenerales('area1', false);
+      if (aNom) aNom.value = '';
+      if (aCar) aCar.value = '';
+    } else {
+      // Mantener los valores ya capturados o vinculados
+      if (curAreaNom && aNom) aNom.value = curAreaNom;
+      if (curAreaCar && aCar) aCar.value = curAreaCar;
+    }
   }
 
   // 4. Actualizar Responsable de Captura exclusivo del Área (admite múltiples enlaces por área)
@@ -3789,7 +3834,13 @@ function actualizarTitularesPorArea(areaNombre) {
     respHtml += '<option value="__MANUAL__">✏️ Ingresar otro responsable manualmente...</option>';
     selectResp.innerHTML = respHtml;
 
-    if (enlacesList.length > 0) {
+    const curRespVal = (respInput?.value || '').trim();
+    if (!forzarLimpieza && curRespVal) {
+      if (enlacesList.includes(curRespVal)) {
+        selectResp.value = curRespVal;
+      }
+      sincronizarTestigo1ConResponsable(curRespVal);
+    } else if (enlacesList.length > 0) {
       const selectedResp = enlacesList[0];
       selectResp.value = selectedResp;
       if (respInput) respInput.value = selectedResp;
@@ -5539,7 +5590,7 @@ function handleAreaSelectChange(selectEl) {
   if (hiddenInput) hiddenInput.value = areaVal;
 
   // Actualizar automáticamente Titular (1) y catálogo de subordinados de Titular de Área
-  actualizarTitularesPorArea(areaVal);
+  actualizarTitularesPorArea(areaVal, true);
   renderDocument(getCurrentFormDataForPreview());
 }
 
@@ -5614,6 +5665,11 @@ function initFormDefaults() {
 
   if (folioInput && !folioInput.value) {
     folioInput.value = generateNextFolio();
+  }
+
+  const inmInput = document.getElementById('inmueble');
+  if (inmInput && !inmInput.value) {
+    inmInput.value = 'el Edificio Central de la Secretaría de Educación';
   }
 
   // Vincular eventos de Tipo de Movimiento con detección de cambios y advertencia
@@ -6366,6 +6422,16 @@ function handleTipoMovimientoChange() {
   if (selJust) selJust.value = '';
   poblarSelectJustificaciones(val);
 
+  const justTextarea = document.getElementById('justificacion');
+  if (justTextarea && !justTextarea.value.trim()) {
+    const catalog = getJustificacionesCatalog();
+    const opciones = catalog[val] || [];
+    if (opciones.length > 0) {
+      if (selJust) selJust.value = opciones[0];
+      justTextarea.value = opciones[0].toUpperCase();
+    }
+  }
+
   // 5. Control de Listas Desplegables de Testigos (1 y 2)
   poblarSelectTestigos();
 
@@ -6630,16 +6696,14 @@ function handleFormSubmit(event) {
   // Control de Estatus y Trazabilidad al Guardar
   if (editingRecordId) {
     if (estatus === 'Generada para Firma') {
+      estatus = 'Modificación';
       const estSelect = document.getElementById('estatus');
       if (estSelect) {
         estSelect.value = 'Modificación';
         estSelect.classList.add('ring-4', 'ring-amber-500', 'bg-amber-50');
         setTimeout(() => estSelect.classList.remove('ring-4', 'ring-amber-500', 'bg-amber-50'), 4000);
-        estSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-      showToast('Atención: Al editar una constancia existente, debe actualizar el estatus a "Modificación". Se ha seleccionado "Modificación", haga clic nuevamente en "Guardar Constancia" para confirmar.', 'warning', 6000);
-      isSubmittingForm = false;
-      return;
+      showToast('Constancia en edición: El estatus se actualizó automáticamente a "Modificación".', 'info', 4000);
     } else if (estatus !== 'Modificación' && estatus !== 'Borrador' && estatus !== 'Firmada y Concluida') {
       estatus = 'Modificación';
       const estSelect = document.getElementById('estatus');
@@ -7337,6 +7401,13 @@ function actualizarBannerVistaPreviaIncompleta() {
   const texto = document.getElementById('banner-preview-incompleto-texto');
   if (!banner) return;
 
+  // Si el registro actualmente visualizado ya está guardado en la bitácora institucional,
+  // el documento es oficial y válido: no mostrar advertencias ni bloquear descarga.
+  if (currentRenderedRecord && records && records.some(r => r.id === currentRenderedRecord.id || (r.folio && r.folio === currentRenderedRecord.folio))) {
+    banner.classList.add('hidden');
+    return;
+  }
+
   const camposVacios = obtenerCamposVaciosFormulario();
   if (camposVacios.length > 0) {
     banner.classList.remove('hidden');
@@ -7504,11 +7575,14 @@ async function downloadCurrentDocumentPDF(skipValidation = false) {
 
   // 0. BLOQUEO SI HAY CAMPOS VACÍOS EN EL FORMULARIO
   if (!skipValidation) {
-    const camposVacios = obtenerCamposVaciosFormulario();
-    if (camposVacios.length > 0) {
-      mostrarModalCamposVacios(camposVacios);
-      showToast(`Descarga bloqueada: Complete los ${camposVacios.length} campos vacíos en el formulario.`, 'error');
-      return;
+    const isSavedRecord = currentRenderedRecord && records && records.some(r => r.id === currentRenderedRecord.id || (r.folio && r.folio === currentRenderedRecord.folio));
+    if (!isSavedRecord) {
+      const camposVacios = obtenerCamposVaciosFormulario();
+      if (camposVacios.length > 0) {
+        mostrarModalCamposVacios(camposVacios);
+        showToast(`Descarga bloqueada: Complete los ${camposVacios.length} campos vacíos en el formulario.`, 'error');
+        return;
+      }
     }
   }
 
@@ -7732,11 +7806,14 @@ async function downloadCurrentDocumentDOCX(skipValidation = false) {
 
   // 0. BLOQUEO SI HAY CAMPOS VACÍOS EN EL FORMULARIO
   if (!skipValidation) {
-    const camposVacios = obtenerCamposVaciosFormulario();
-    if (camposVacios.length > 0) {
-      mostrarModalCamposVacios(camposVacios);
-      showToast(`Descarga bloqueada: Complete los ${camposVacios.length} campos vacíos en el formulario.`, 'error');
-      return;
+    const isSavedRecord = currentRenderedRecord && records && records.some(r => r.id === currentRenderedRecord.id || (r.folio && r.folio === currentRenderedRecord.folio));
+    if (!isSavedRecord) {
+      const camposVacios = obtenerCamposVaciosFormulario();
+      if (camposVacios.length > 0) {
+        mostrarModalCamposVacios(camposVacios);
+        showToast(`Descarga bloqueada: Complete los ${camposVacios.length} campos vacíos en el formulario.`, 'error');
+        return;
+      }
     }
   }
 
@@ -8288,7 +8365,7 @@ function editRecord(id, allowCapturista = false) {
   document.getElementById('municipio').value = record.municipio || 'Mérida';
   document.getElementById('fechaActa').value = record.fechaConstancia || record.fechaActa || '';
   document.getElementById('horaActa').value = record.horaActa || '';
-  document.getElementById('inmueble').value = record.inmueble || '';
+  document.getElementById('inmueble').value = record.inmueble || 'el Edificio Central de la Secretaría de Educación';
 
   document.getElementById('titularUnidad1Nombre').value = record.titularUnidad1Nombre || record.titularUnidad1 || '';
   document.getElementById('titularUnidad1Cargo').value = record.titularUnidad1Cargo || '';
@@ -9581,10 +9658,6 @@ function applyRemoteCatalogo(catalogoData) {
     if (typeof initSelectTitularUnidad2 === 'function') {
       initSelectTitularUnidad2();
     }
-    const areaSel = document.getElementById('areaNotificadoraSelect');
-    if (areaSel && areaSel.value && areaSel.value !== '__OTRA__') {
-      actualizarTitularesPorArea(areaSel.value);
-    }
   }
 }
 window.applyRemoteCatalogo = applyRemoteCatalogo;
@@ -9667,10 +9740,6 @@ async function syncResponsablesFromGoogleSheets(forceToast = false) {
         populateAreaSelect();
         if (typeof renderAdminResponsablesList === 'function') {
           renderAdminResponsablesList();
-        }
-        const currentArea = document.getElementById('areaNotificadoraSelect');
-        if (currentArea && currentArea.value && currentArea.value !== '__OTRA__') {
-          actualizarTitularesPorArea(currentArea.value);
         }
 
         if (forceToast) {
