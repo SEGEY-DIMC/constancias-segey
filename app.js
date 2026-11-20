@@ -7820,16 +7820,20 @@ async function generateClientSidePDF(element, filename) {
   innerSheets.forEach(s => s.classList.add('generating-pdf'));
 
   // Dimensiones estándar Carta (Letter): 215.9mm x 279.4mm
-  // Márgenes: Arriba: 6mm, Izquierda/Derecha: 10mm, Abajo: 10mm (reserva limpia para pie de página)
+  // Márgenes: Arriba: 6mm, Izquierda: 8mm, Abajo: 10mm, Derecha: 8mm
+  // El margen de 8mm en jsPDF compensa el desfase de 2mm interno de renderizado y el padding de seguridad,
+  // garantizando un centrado simétrico exacto de 10.0mm a ambos lados y eliminando cualquier truncamiento de texto.
   const opt = {
-    margin: [6, 10, 10, 10],
+    margin: [6, 8, 10, 8],
     filename: filename,
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: {
       scale: 2,
       useCORS: true,
       letterRendering: true,
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      scrollX: 0,
+      scrollY: 0
     },
     jsPDF: {
       unit: 'mm',
