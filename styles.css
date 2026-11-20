@@ -65,6 +65,41 @@ body {
   font-size: 10pt;
 }
 
+/* ==============================================================
+   CUADRO INVISIBLE DELIMITADOR DE TEXTO Y JUSTIFICACIÓN
+   Garantiza que el texto nunca desborde los márgenes, divida las
+   líneas hacia abajo y se mantenga perfectamente justificado.
+   ============================================================== */
+.cuadro-invisible-justificacion,
+.cuadro-invisible-texto {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.cuadro-invisible-justificacion table,
+.cuadro-invisible-texto table {
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: fixed !important;
+  border-collapse: collapse !important;
+  border: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.cuadro-invisible-justificacion td,
+.cuadro-invisible-texto td,
+.official-body .text-justify,
+.official-body p.text-justify {
+  text-align: justify !important;
+  text-justify: inter-word !important;
+  overflow-wrap: break-word !important;
+  word-break: break-word !important;
+  hyphens: auto !important;
+  box-sizing: border-box !important;
+}
+
 .official-header-table {
   width: 100%;
   border-collapse: collapse;
