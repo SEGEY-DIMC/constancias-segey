@@ -10301,6 +10301,61 @@ async function syncResponsablesFromGoogleSheets(forceToast = false) {
   }
 }
 
+async function syncJustificacionesFromGoogleSheets(forceToast = false) {
+  const webhook = localStorage.getItem(WEBHOOK_KEY) || DEFAULT_WEBHOOK_URL;
+  if (!webhook) {
+    if (forceToast) showToast('Configure primero la URL del Webhook de Google Sheets.', 'error');
+    return false;
+  }
+
+  const icon = document.getElementById('icon-sync-justificaciones');
+  if (icon) icon.classList.add('fa-spin');
+
+  try {
+    const fetchUrl = `${webhook}?action=getJustificaciones&t=${Date.now()}`;
+    const resp = await fetch(fetchUrl);
+    const result = await resp.json();
+
+    if (result && result.status === 'success' && result.justificaciones && typeof result.justificaciones === 'object') {
+      const keys = Object.keys(result.justificaciones);
+      let total = 0;
+      keys.forEach(k => {
+        if (Array.isArray(result.justificaciones[k])) {
+          total += result.justificaciones[k].length;
+        }
+      });
+
+      if (total > 0) {
+        saveJustificacionesCatalog(result.justificaciones);
+
+        const selectedRadio = document.querySelector('input[name="tipoMovimiento"]:checked');
+        if (selectedRadio) {
+          poblarSelectJustificaciones(selectedRadio.value);
+        }
+        if (typeof renderAdminJustificacionesList === 'function' && typeof currentAdminJustCat !== 'undefined') {
+          renderAdminJustificacionesList(currentAdminJustCat);
+        }
+
+        if (forceToast) {
+          showToast(`✨ Justificaciones sincronizadas desde Google Sheets (${total} motivos).`, 'success');
+        }
+        return true;
+      } else {
+        if (forceToast) showToast('No se encontraron motivos en la hoja "Justificaciones" de Google Sheets.', 'warning');
+      }
+    } else if (result && result.status === 'not_found') {
+      if (forceToast) showToast('Hoja "Justificaciones" no encontrada en Google Sheets.', 'warning');
+    }
+  } catch (e) {
+    console.warn('Error sincronizando justificaciones desde Google Sheets:', e);
+    if (forceToast) showToast('No se pudo conectar con Google Sheets para sincronizar justificaciones.', 'error');
+  } finally {
+    if (icon) icon.classList.remove('fa-spin');
+  }
+  return false;
+}
+window.syncJustificacionesFromGoogleSheets = syncJustificacionesFromGoogleSheets;
+
 async function sincronizarCatalogoDesdeGoogleSheets() {
   showToast('Sincronizando catálogo con Google Sheets...', 'info');
   try {
@@ -10316,9 +10371,13 @@ async function sincronizarCatalogoDesdeGoogleSheets() {
 
     await syncCatalogoFromGoogleSheets(true);
     await syncResponsablesFromGoogleSheets(true);
+    await syncJustificacionesFromGoogleSheets(true);
 
     if (typeof renderAdminAreasList === 'function') renderAdminAreasList();
     if (typeof renderAdminResponsablesList === 'function') renderAdminResponsablesList();
+    if (typeof renderAdminJustificacionesList === 'function' && typeof currentAdminJustCat !== 'undefined') {
+      renderAdminJustificacionesList(currentAdminJustCat);
+    }
     populateAreaSelect();
     if (typeof populateAreaFilter === 'function') populateAreaFilter();
 
@@ -10376,9 +10435,10 @@ async function checkAndSyncIfCatalogChanged(force = false) {
       fetch('/api/sync-excel', { method: 'POST', cache: 'no-store' }).catch(() => {});
     } catch (eLocal) {}
 
-    // Sincronizar titulares y responsables
+    // Sincronizar titulares, responsables y justificaciones
     await syncCatalogoFromGoogleSheets(false);
     await syncResponsablesFromGoogleSheets(false);
+    await syncJustificacionesFromGoogleSheets(false);
 
     // Guardar versión sincronizada
     if (remoteVersion) {
@@ -10403,6 +10463,7 @@ window.checkAndSyncIfCatalogChanged = checkAndSyncIfCatalogChanged;
 if (typeof window !== 'undefined') {
   setTimeout(() => {
     syncRecordsFromGoogleSheets(false);
+    syncJustificacionesFromGoogleSheets(false);
     checkAndSyncIfCatalogChanged(false);
     initDraftAutosave();
 
