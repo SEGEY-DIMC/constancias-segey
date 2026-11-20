@@ -561,6 +561,12 @@ const DEFAULT_LAYOUT_HTML = `
         <span class="inline font-normal ml-1 text-slate-900 uppercase">{{nuevaDenominacion}}</span>
       </div>
       {{/if}}
+      {{#if esCambioDependenciaJerarquica}}
+      <div>
+        <span class="font-bold">• Dependencia jerárquica de destino:</span>
+        <span class="inline font-normal ml-1 text-slate-900 uppercase">{{unidadDestino}}</span>
+      </div>
+      {{/if}}
     </div>
   </div>
 
@@ -1707,6 +1713,17 @@ function compileLayout(templateStr, data) {
     })(),
 
     nuevaDenominacion: (data.nuevaDenominacion || '—').toUpperCase(),
+    unidadDestino: (() => {
+      let dest = (data.unidadDestino || '').trim();
+      if (!dest && typeof getSelectedUnidadDestinoNombre === 'function') {
+        dest = getSelectedUnidadDestinoNombre();
+      }
+      if (!dest && typeof CATALOGO_ORGANICO_SEGEY !== 'undefined' && Array.isArray(CATALOGO_ORGANICO_SEGEY) && u2Nom) {
+        const uFound = CATALOGO_ORGANICO_SEGEY.find(item => item.titular && item.titular.nombre && item.titular.nombre.toLowerCase().trim() === u2Nom.toLowerCase().trim());
+        if (uFound && uFound.unidad) dest = uFound.unidad;
+      }
+      return (dest || '___________________________').toUpperCase();
+    })(),
     justificacion: (() => {
       let j = (data.justificacion || '—').trim();
       if (j && (j.startsWith('Se hace constar') || j.startsWith('SE HACE CONSTAR'))) {
@@ -4388,6 +4405,26 @@ function sincronizarTestigo1ConResponsable(nombreResponsable) {
 
   renderDocument(getCurrentFormDataForPreview());
 }
+
+function getSelectedUnidadDestinoNombre() {
+  const selectDestino = document.getElementById('selectUnidadDestinoCambioDep');
+  if (!selectDestino || !selectDestino.value) return '';
+  const val = selectDestino.value;
+  if (val === '__MANUAL__') return '';
+  if (typeof CATALOGO_ORGANICO_SEGEY !== 'undefined' && Array.isArray(CATALOGO_ORGANICO_SEGEY)) {
+    const u = CATALOGO_ORGANICO_SEGEY.find(item => item.id === val);
+    if (u && u.unidad) return u.unidad;
+  }
+  if (selectDestino.selectedOptions && selectDestino.selectedOptions.length > 0) {
+    const opt = selectDestino.selectedOptions[0];
+    const dataU = opt.getAttribute('data-unidad');
+    if (dataU) return dataU;
+    const txt = (opt.textContent || '').split('—')[0].trim();
+    if (txt && !txt.startsWith('--')) return txt;
+  }
+  return '';
+}
+window.getSelectedUnidadDestinoNombre = getSelectedUnidadDestinoNombre;
 window.buscarCargoDePersona = buscarCargoDePersona;
 window.sincronizarTestigo1ConResponsable = sincronizarTestigo1ConResponsable;
 
@@ -7114,6 +7151,7 @@ function handleFormSubmit(event) {
     nombreActual: (tipoMovimiento === 'Cambio de nombre') ? nuevaDenominacion : '',
     nuevoNombre: (tipoMovimiento === 'Cambio de nombre') ? nuevoNombre : '',
     nuevaDenominacion: (tipoMovimiento === 'Cambio de nombre') ? `${nuevaDenominacion} ➔ ${nuevoNombre}` : nuevaDenominacion,
+    unidadDestino: (typeof getSelectedUnidadDestinoNombre === 'function' ? getSelectedUnidadDestinoNombre() : '').toUpperCase(),
     justificacion,
     estatus,
     observaciones
@@ -7275,6 +7313,15 @@ function getCurrentFormDataForPreview() {
     }
   }
 
+  let unidadDestinoVal = '';
+  if (typeof getSelectedUnidadDestinoNombre === 'function') {
+    unidadDestinoVal = getSelectedUnidadDestinoNombre();
+  }
+  if (!unidadDestinoVal && typeof CATALOGO_ORGANICO_SEGEY !== 'undefined' && Array.isArray(CATALOGO_ORGANICO_SEGEY) && u2Nom) {
+    const uFound = CATALOGO_ORGANICO_SEGEY.find(item => item.titular && item.titular.nombre && item.titular.nombre.toLowerCase().trim() === u2Nom.toLowerCase().trim());
+    if (uFound && uFound.unidad) unidadDestinoVal = uFound.unidad;
+  }
+
   return {
     id: editingRecordId || 'preview_current',
     folio: document.getElementById('folioControl')?.value.trim() || generateNextFolio(),
@@ -7322,6 +7369,7 @@ function getCurrentFormDataForPreview() {
     nombreActual: ndRaw || '—',
     nuevoNombre: nnRaw || '—',
     nuevaDenominacion: finalNuevaDenominacion,
+    unidadDestino: (unidadDestinoVal || '').toUpperCase(),
     justificacion: (document.getElementById('justificacion')?.value.trim() || '___________________________').toUpperCase(),
     estatus: document.getElementById('estatus')?.value || 'Generada para Firma',
     observaciones: document.getElementById('observaciones')?.value.trim() || ''
@@ -7824,6 +7872,7 @@ function ensureCurrentDocumentSaved() {
     nombreActual: (tipoMovimiento === 'Cambio de nombre') ? ndRaw : '',
     nuevoNombre: (tipoMovimiento === 'Cambio de nombre') ? nnRaw : '',
     nuevaDenominacion: finalNuevaDenominacion,
+    unidadDestino: (formData.unidadDestino || '').toUpperCase(),
     justificacion: (document.getElementById('justificacion')?.value.trim() || '').toUpperCase(),
     titularUnidad1Nombre: u1Nom,
     titularUnidad1Cargo: u1Car,
@@ -8905,6 +8954,44 @@ function editRecord(id, allowCapturista = false) {
         if (selCambio.options.length > 1) selCambio.insertBefore(opt, selCambio.options[1]);
         else selCambio.appendChild(opt);
         selCambio.selectedIndex = 1;
+      }
+    }
+  }
+
+  if (record.tipoMovimiento === 'Cambio de dependencia jerárquica') {
+    const selDep = document.getElementById('selectAreaCambioDep');
+    const targetArea = (record.nuevaDenominacion || '').trim();
+    if (selDep && targetArea) {
+      let matched = false;
+      for (let i = 0; i < selDep.options.length; i++) {
+        if (selDep.options[i].value && selDep.options[i].value.toUpperCase() === targetArea.toUpperCase()) {
+          selDep.selectedIndex = i;
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) {
+        const opt = document.createElement('option');
+        opt.value = targetArea;
+        opt.textContent = targetArea;
+        if (selDep.options.length > 1) selDep.insertBefore(opt, selDep.options[1]);
+        else selDep.appendChild(opt);
+        selDep.selectedIndex = 1;
+      }
+    }
+
+    const selDestino = document.getElementById('selectUnidadDestinoCambioDep');
+    const targetDestino = (record.unidadDestino || '').trim();
+    if (selDestino && targetDestino) {
+      for (let i = 0; i < selDestino.options.length; i++) {
+        const opt = selDestino.options[i];
+        const dataU = opt.getAttribute('data-unidad') || '';
+        const txt = (opt.textContent || '').toUpperCase();
+        if ((dataU && dataU.toUpperCase() === targetDestino.toUpperCase()) ||
+            txt.includes(targetDestino.toUpperCase())) {
+          selDestino.selectedIndex = i;
+          break;
+        }
       }
     }
   }
