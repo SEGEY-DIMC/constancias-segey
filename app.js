@@ -8988,7 +8988,6 @@ function editRecord(id, allowCapturista = false) {
   showToast(`Constancia ${record.folio} cargada en formulario.`);
   renderDocument(getCurrentFormDataForPreview());
 }
-}
 
 let currentInactivarRecordId = null;
 
