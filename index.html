@@ -50,7 +50,7 @@
   <!-- Librería para generar y descargar PDF directamente -->
   <script src="assets/logos_base64.js"></script>
   <script src="html2pdf.bundle.min.js"></script>
-  <link rel="stylesheet" href="styles.css?v=2.9.0">
+  <link rel="stylesheet" href="styles.css?v=2.9.1">
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen font-sans flex flex-col">
 
@@ -764,11 +764,21 @@
                 </p>
               </div>
 
-              <textarea id="justificacion" rows="5" required
-                placeholder="SE HACE CONSTAR LOS SIGUIENTES MOVIMIENTOS DE CARÁCTER ADMINISTRATIVO..."
-                style="text-transform: uppercase;"
-                oninput="this.value = this.value.toUpperCase();"
-                class="w-full text-sm rounded-lg border-slate-300 border p-3 focus:ring-2 focus:ring-segey-700 focus:outline-none leading-relaxed uppercase"></textarea>
+              <div class="relative space-y-1">
+                <textarea id="justificacion" rows="4" required maxlength="350"
+                  placeholder="SE HACE CONSTAR LOS SIGUIENTES MOVIMIENTOS DE CARÁCTER ADMINISTRATIVO..."
+                  style="text-transform: uppercase;"
+                  oninput="this.value = this.value.toUpperCase(); if (window.updateJustificacionCharCounter) window.updateJustificacionCharCounter();"
+                  class="w-full text-sm rounded-lg border-slate-300 border p-3 focus:ring-2 focus:ring-segey-700 focus:outline-none leading-relaxed uppercase transition-colors"></textarea>
+                <div class="flex items-center justify-between text-[11px] px-1 text-slate-500">
+                  <span id="hint-justificacion-chars" class="flex items-center gap-1 text-slate-500">
+                    <i class="fa-solid fa-align-left text-slate-400"></i> Límite establecido: máximo 350 caracteres
+                  </span>
+                  <span id="badge-justificacion-chars" class="font-mono text-xs font-semibold px-2 py-0.5 rounded border transition-colors bg-slate-100 text-slate-600 border-slate-200">
+                    <span id="count-justificacion-chars">0</span> / 350 caracteres
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -2563,6 +2573,6 @@
   <script src="assets/catalogo_organico.js?v=2.7.0"></script>
   <script src="assets/mapa_jefes_inmediatos.js?v=2.7.0"></script>
   <script src="assets/mapa_areas_subordinadas.js?v=2.7.0"></script>
-  <script src="app.js?v=2.8.9"></script>
+  <script src="app.js?v=2.9.1"></script>
 </body>
 </html>
