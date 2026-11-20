@@ -7908,11 +7908,11 @@ async function generateClientSidePDF(element, filename) {
   innerSheets.forEach(s => s.classList.add('generating-pdf'));
 
   // Dimensiones estándar Carta (Letter): 215.9mm x 279.4mm
-  // Márgenes estándar institucionales amplios: Arriba: 8mm, Izquierda: 11mm, Abajo: 10mm, Derecha: 11mm
-  // Sumado al buffer interno de 16px en el canvas (4.2mm), produce un margen lateral total de 15.2mm (1.5 cm)
-  // perfectamente simétrico a ambos lados y con holgura absoluta para que ninguna letra del costado derecho se corte.
+  // Márgenes laterales amplios y proporcionados: Arriba: 8mm, Izquierda: 15mm, Abajo: 10mm, Derecha: 15mm
+  // Sumado al buffer interno en el canvas, produce un margen lateral total de ~18mm (1.8 cm)
+  // perfectamente simétrico, con presencia visual clara y holgura absoluta para que ninguna letra del costado derecho se corte.
   const opt = {
-    margin: [8, 11, 10, 11],
+    margin: [8, 15, 10, 15],
     filename: filename,
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: {
