@@ -6190,6 +6190,66 @@ function initFormDefaults() {
     };
     formEl.addEventListener('input', onFormChange);
     formEl.addEventListener('change', onFormChange);
+
+    // Prevenir el guardado accidental del formulario al presionar Enter en campos de texto y avanzar al siguiente campo
+    formEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const target = e.target;
+        if (!target) return;
+
+        // 1. Permitir saltos de línea normales en textareas (ej: Justificación, Observaciones)
+        if (target.tagName === 'TEXTAREA') {
+          return;
+        }
+
+        // 2. Permitir activar botones con Enter si el foco está explícitamente en el botón
+        if (target.tagName === 'BUTTON' || target.getAttribute('role') === 'button') {
+          return;
+        }
+
+        // 3. En comboboxes buscables, si el menú de opciones desplegable está abierto,
+        // dejar que el listener propio del combobox seleccione la opción
+        if (target.classList && target.classList.contains('combobox-input')) {
+          const wrapper = target.closest('.segey-combobox');
+          const menu = wrapper ? wrapper.querySelector('.combobox-menu') : null;
+          if (menu && !menu.classList.contains('hidden')) {
+            return;
+          }
+        }
+
+        // 4. En cualquier otro campo de entrada de texto (input), evitar SIEMPRE el envío/guardado del formulario
+        e.preventDefault();
+
+        // 5. Avanzar de forma natural al siguiente campo interactivo visible (comportamiento tipo Tab)
+        avanzarAlSiguienteCampoFormulario(target);
+      }
+    });
+  }
+}
+
+/**
+ * Pasa de forma fluida el foco al siguiente campo interactivo visible en el formulario
+ * cuando el usuario presiona Enter, evitando envíos accidentales.
+ */
+function avanzarAlSiguienteCampoFormulario(currentElem) {
+  if (!currentElem) return;
+  const form = document.getElementById('constancia-form');
+  if (!form) return;
+
+  const focusableSelector = 'input:not([type="hidden"]):not([disabled]):not([readonly]), textarea:not([disabled]):not([readonly]), select:not([disabled]):not([data-combobox-hidden])';
+  const allFocusable = Array.from(form.querySelectorAll(focusableSelector)).filter(el => {
+    return el.offsetParent !== null && !el.closest('.hidden') && el.style.display !== 'none';
+  });
+
+  const currentIndex = allFocusable.indexOf(currentElem);
+  if (currentIndex >= 0 && currentIndex < allFocusable.length - 1) {
+    const nextElem = allFocusable[currentIndex + 1];
+    if (nextElem && nextElem.id !== 'btn-submit-form') {
+      nextElem.focus();
+      if (typeof nextElem.select === 'function' && nextElem.tagName === 'INPUT') {
+        nextElem.select();
+      }
+    }
   }
 }
 
