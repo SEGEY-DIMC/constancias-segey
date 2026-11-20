@@ -219,7 +219,7 @@ select[data-combobox-hidden="true"] {
     print-color-adjust: exact !important;
   }
 
-  /* Ocultar interfaz web (navegación, pestañas, botones, barra de herramientas) */
+  /* Ocultar interfaz web (navegación, pestañas, botones, barra de herramientas y alertas) */
   header,
   nav,
   aside,
@@ -231,6 +231,7 @@ select[data-combobox-hidden="true"] {
   #tab-catalog,
   #toast-container,
   #modal-container,
+  #banner-preview-incompleto,
   .sticky,
   .fixed,
   [data-no-print="true"] {
@@ -242,6 +243,15 @@ select[data-combobox-hidden="true"] {
     padding: 0 !important;
     margin: 0 !important;
     width: 100% !important;
+    background: transparent !important;
+  }
+
+  #tab-preview > div:has(#print-sheet),
+  #tab-preview > div:last-child {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
     background: transparent !important;
   }
 
