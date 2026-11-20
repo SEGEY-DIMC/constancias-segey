@@ -6994,26 +6994,6 @@ function handleFormSubmit(event) {
   const titularAreaNombre = document.getElementById('titularAreaNombre').value.trim();
   const titularAreaCargo = document.getElementById('titularAreaCargo').value.trim();
 
-  // Validación institucional de plazas vacantes: no se permite estampar "Vacante" en la firma
-  if (titularUnidad1Nombre.toLowerCase() === 'vacante') {
-    showToast('Por favor capture el nombre de la persona en funciones que firmará por Titular de Unidad 1 (no puede quedar como "Vacante").', 'error');
-    document.getElementById('titularUnidad1Nombre')?.focus();
-    isSubmittingForm = false;
-    return;
-  }
-  if (titularAreaNombre.toLowerCase() === 'vacante') {
-    showToast('Por favor capture el nombre de la persona en funciones que firmará por Titular de Área (no puede quedar como "Vacante").', 'error');
-    document.getElementById('titularAreaNombre')?.focus();
-    isSubmittingForm = false;
-    return;
-  }
-  if (titularUnidad2Nombre.toLowerCase() === 'vacante') {
-    showToast('Por favor capture el nombre de la persona en funciones que firmará como Jefe Inmediato / Titular (2) (no puede quedar como "Vacante").', 'error');
-    document.getElementById('titularUnidad2Nombre')?.focus();
-    isSubmittingForm = false;
-    return;
-  }
-
   const titularArea2Nombre = document.getElementById('titularArea2Nombre')?.value.trim() || '';
   const titularArea2Cargo = document.getElementById('titularArea2Cargo')?.value.trim() || '';
 
@@ -7513,12 +7493,12 @@ function obtenerCamposVaciosFormulario() {
   // 1) Titular de Unidad Administrativa (1)
   const u1Nom = (document.getElementById('titularUnidad1Nombre')?.value || '').trim();
   const u1Car = (document.getElementById('titularUnidad1Cargo')?.value || '').trim();
-  if (!u1Nom || u1Nom.toLowerCase() === 'vacante') {
+  if (!u1Nom) {
     camposVacios.push({
       id: 'titularUnidad1Nombre',
       seccion: 'Apartado II: Firmantes',
-      nombre: !u1Nom ? 'Titular de Unidad Administrativa (1) - Nombre Completo' : 'Titular de Unidad Administrativa (1) - Nombre en funciones (está como Vacante)',
-      detalle: !u1Nom ? 'Capture el nombre de la persona titular de la unidad administrativa.' : 'No se permite firmar como "Vacante". Ingrese el nombre de la persona en funciones.'
+      nombre: 'Titular de Unidad Administrativa (1) - Nombre Completo',
+      detalle: 'Capture el nombre de la persona titular de la unidad administrativa o especifique "Vacante".'
     });
   }
   if (!u1Car) {
@@ -7536,12 +7516,12 @@ function obtenerCamposVaciosFormulario() {
   const u2Car = (document.getElementById('titularUnidad2Cargo')?.value || '').trim();
 
   if (isCambioJerarquico) {
-    if (!u2Nom || u2Nom.toLowerCase() === 'vacante') {
+    if (!u2Nom) {
       camposVacios.push({
         id: 'titularUnidad2Nombre',
         seccion: 'Apartado II: Firmantes',
-        nombre: !u2Nom ? 'Titular de Unidad Administrativa de Destino (2) - Nombre Completo' : 'Titular de Unidad Administrativa de Destino (2) - Nombre en funciones (está como Vacante)',
-        detalle: !u2Nom ? 'Capture el nombre del titular de la unidad de destino.' : 'Ingrese el nombre de la persona en funciones asignada para la firma.'
+        nombre: 'Titular de Unidad Administrativa de Destino (2) - Nombre Completo',
+        detalle: 'Capture el nombre del titular de la unidad de destino o especifique "Vacante".'
       });
     }
     if (!u2Car) {
@@ -7553,12 +7533,12 @@ function obtenerCamposVaciosFormulario() {
       });
     }
   } else {
-    if (!u2Nom || u2Nom.toLowerCase() === 'vacante') {
+    if (!u2Nom) {
       camposVacios.push({
         id: 'titularUnidad2Nombre',
         seccion: 'Apartado II: Firmantes',
-        nombre: !u2Nom ? 'Jefe Inmediato - Nombre Completo' : 'Jefe Inmediato - Nombre en funciones (está como Vacante)',
-        detalle: !u2Nom ? 'Capture el nombre de la persona designada como jefe inmediato.' : 'Ingrese el nombre de la persona en funciones para la firma del jefe inmediato.'
+        nombre: 'Jefe Inmediato - Nombre Completo',
+        detalle: 'Capture el nombre de la persona designada como jefe inmediato o especifique "Vacante".'
       });
     }
     if (!u2Car) {
@@ -7574,12 +7554,12 @@ function obtenerCamposVaciosFormulario() {
   // 3) Titular de Área
   const areaNom = (document.getElementById('titularAreaNombre')?.value || '').trim();
   const areaCar = (document.getElementById('titularAreaCargo')?.value || '').trim();
-  if (!areaNom || areaNom.toLowerCase() === 'vacante') {
+  if (!areaNom) {
     camposVacios.push({
       id: 'titularAreaNombre',
       seccion: 'Apartado II: Firmantes',
-      nombre: !areaNom ? 'Titular de Área - Nombre Completo' : 'Titular de Área - Nombre en funciones (está como Vacante)',
-      detalle: !areaNom ? 'Capture el nombre de la persona titular del área involucrada.' : 'No se puede firmar como "Vacante". Ingrese el nombre de la persona en funciones.'
+      nombre: 'Titular de Área - Nombre Completo',
+      detalle: 'Capture el nombre de la persona titular del área involucrada o especifique "Vacante".'
     });
   }
   if (!areaCar) {
@@ -7589,48 +7569,6 @@ function obtenerCamposVaciosFormulario() {
       nombre: 'Titular de Área - Cargo o Puesto',
       detalle: 'Especifique el cargo o puesto del titular del área.'
     });
-  }
-
-  // 4) Testigo (1)
-  const t1Nom = (document.getElementById('testigo1Nombre')?.value || '').trim();
-  const t1Car = (document.getElementById('testigo1Cargo')?.value || '').trim();
-  if (!t1Nom) {
-    camposVacios.push({
-      id: 'testigo1Nombre',
-      seccion: 'Apartado II: Firmantes',
-      nombre: 'Testigo (1) - Nombre Completo',
-      detalle: 'Capture el nombre completo del primer testigo.'
-    });
-  }
-  if (!t1Car) {
-    camposVacios.push({
-      id: 'testigo1Cargo',
-      seccion: 'Apartado II: Firmantes',
-      nombre: 'Testigo (1) - Cargo o Adscripción',
-      detalle: 'Especifique el cargo o adscripción del primer testigo.'
-    });
-  }
-
-  // 5) Testigo (2) (Exclusivo para Cambio de Dependencia Jerárquica)
-  if (isCambioJerarquico) {
-    const t2Nom = (document.getElementById('testigo2Nombre')?.value || '').trim();
-    const t2Car = (document.getElementById('testigo2Cargo')?.value || '').trim();
-    if (!t2Nom) {
-      camposVacios.push({
-        id: 'testigo2Nombre',
-        seccion: 'Apartado II: Firmantes',
-        nombre: 'Testigo (2) - Nombre Completo',
-        detalle: 'Capture el nombre completo del segundo testigo (requerido para cambio de dependencia).'
-      });
-    }
-    if (!t2Car) {
-      camposVacios.push({
-        id: 'testigo2Cargo',
-        seccion: 'Apartado II: Firmantes',
-        nombre: 'Testigo (2) - Cargo o Adscripción',
-        detalle: 'Especifique el cargo o adscripción del segundo testigo.'
-      });
-    }
   }
 
   // APARTADO III: JUSTIFICACIÓN Y MOTIVOS DEL CAMBIO
