@@ -50,7 +50,7 @@
   <!-- Librería para generar y descargar PDF directamente -->
   <script src="assets/logos_base64.js"></script>
   <script src="html2pdf.bundle.min.js"></script>
-  <link rel="stylesheet" href="styles.css?v=2.9.9">
+  <link rel="stylesheet" href="styles.css?v=2.9.10">
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen font-sans flex flex-col">
 
@@ -177,7 +177,7 @@
           </div>
         </div>
 
-        <form id="constancia-form" onsubmit="handleFormSubmit(event)" novalidate class="p-6 sm:p-8 space-y-8">
+        <form id="constancia-form" onsubmit="event.preventDefault(); return false;" novalidate class="p-6 sm:p-8 space-y-8">
         <!-- BANNER DE RECUPERACIÓN DE BORRADOR NO GUARDADO -->
         <div id="draft-recovery-banner" class="hidden bg-sky-50 border-2 border-sky-400 p-4 rounded-xl shadow-xs transition-all mb-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -832,7 +832,7 @@
           <button type="button" onclick="previewCurrentForm()" class="w-full sm:w-auto px-5 py-2.5 rounded-lg border border-slate-300 text-slate-700 text-sm font-semibold hover:bg-slate-100 transition flex items-center justify-center gap-2">
               <i class="fa-solid fa-eye"></i> Previsualizar Documento
             </button>
-            <button type="submit" id="btn-submit-form" class="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-segey-800 hover:bg-segey-900 text-white text-sm font-bold shadow-md hover:shadow transition flex items-center justify-center gap-2">
+            <button type="button" id="btn-submit-form" onclick="handleFormSubmit(event)" class="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-segey-800 hover:bg-segey-900 text-white text-sm font-bold shadow-md hover:shadow transition flex items-center justify-center gap-2">
               <i class="fa-solid fa-floppy-disk"></i> Guardar Constancia
             </button>
           </div>
@@ -2578,6 +2578,6 @@
   <script src="assets/catalogo_organico.js?v=2.7.0"></script>
   <script src="assets/mapa_jefes_inmediatos.js?v=2.7.0"></script>
   <script src="assets/mapa_areas_subordinadas.js?v=2.7.0"></script>
-  <script src="app.js?v=2.9.9"></script>
+  <script src="app.js?v=2.9.10"></script>
 </body>
 </html>
