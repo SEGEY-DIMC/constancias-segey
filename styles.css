@@ -174,12 +174,16 @@ body {
   display: none !important;
 }
 
-.official-sheet.generating-pdf,
-.official-sheet.generating-pdf * {
+.official-sheet.generating-pdf {
   page-break-inside: auto !important;
   break-inside: auto !important;
-  page-break-before: auto !important;
-  break-before: auto !important;
+}
+
+.official-sheet.generating-pdf .official-header,
+.official-sheet.generating-pdf .firmas-container,
+.official-sheet.generating-pdf .grid-cols-2 {
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
 }
 
 /* Animación de carga para generación de PDF */
