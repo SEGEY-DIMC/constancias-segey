@@ -50,7 +50,7 @@
   <!-- Librería para generar y descargar PDF directamente -->
   <script src="assets/logos_base64.js"></script>
   <script src="html2pdf.bundle.min.js"></script>
-  <link rel="stylesheet" href="styles.css?v=2.7.5">
+  <link rel="stylesheet" href="styles.css?v=2.7.6">
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen font-sans flex flex-col">
 
@@ -177,7 +177,7 @@
           </div>
         </div>
 
-        <form id="constancia-form" onsubmit="handleFormSubmit(event)" class="p-6 sm:p-8 space-y-8">
+        <form id="constancia-form" onsubmit="handleFormSubmit(event)" novalidate class="p-6 sm:p-8 space-y-8">
         <!-- BANNER DE RECUPERACIÓN DE BORRADOR NO GUARDADO -->
         <div id="draft-recovery-banner" class="hidden bg-sky-50 border-2 border-sky-400 p-4 rounded-xl shadow-xs transition-all mb-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -263,7 +263,7 @@
                     class="w-full text-xs rounded-lg border-amber-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-amber-50/50">
                   <p class="text-[10px] text-amber-700 mt-1"><i class="fa-solid fa-circle-info mr-1"></i>Escriba el nombre exacto de la dirección, departamento o coordinación.</p>
                 </div>
-                <input type="hidden" id="areaNotificadora" required>
+                <input type="hidden" id="areaNotificadora">
               </div>
 
               <div>
@@ -287,7 +287,7 @@
                   <p class="text-[10px] text-amber-700 mt-1"><i class="fa-solid fa-circle-info mr-1"></i>Escriba el nombre de quien elabora la solicitud.</p>
                 </div>
                 <!-- Campo con el valor real para el formulario / bitácora -->
-                <input type="hidden" id="responsableCaptura" required>
+                <input type="hidden" id="responsableCaptura">
               </div>
 
               <div>
@@ -394,7 +394,7 @@
               </div>
 
               <!-- Primer cuadro de texto: Nombre del Área o Nombre Actual si es Cambio de Nombre -->
-              <textarea id="nuevaDenominacion" rows="2" required disabled
+              <textarea id="nuevaDenominacion" rows="2" disabled
                 placeholder="PRIMERO SELECCIONE UN TIPO DE MOVIMIENTO ARRIBA (ALTA, BAJA, CAMBIO DE NOMBRE O CAMBIO DE DEPENDENCIA JERÁRQUICA)..."
                 style="text-transform: uppercase;"
                 oninput="this.value = this.value.toUpperCase();"
@@ -715,12 +715,12 @@
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-100">
                     <div>
                       <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">1. Nombre Completo:</label>
-                      <input type="text" id="testigo2Nombre" required placeholder="Nombre completo del Testigo 2"
+                      <input type="text" id="testigo2Nombre" placeholder="Nombre completo del Testigo 2"
                         class="w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-white">
                     </div>
                     <div>
                       <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">2. Cargo o Adscripción:</label>
-                      <input type="text" id="testigo2Cargo" required placeholder="Cargo o función institucional"
+                      <input type="text" id="testigo2Cargo" placeholder="Cargo o función institucional"
                         class="w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-slate-50 text-slate-700">
                     </div>
                   </div>
@@ -2563,6 +2563,6 @@
   <script src="assets/catalogo_organico.js?v=2.7.0"></script>
   <script src="assets/mapa_jefes_inmediatos.js?v=2.7.0"></script>
   <script src="assets/mapa_areas_subordinadas.js?v=2.7.0"></script>
-  <script src="app.js?v=2.7.5"></script>
+  <script src="app.js?v=2.7.6"></script>
 </body>
 </html>
