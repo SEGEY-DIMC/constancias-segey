@@ -781,11 +781,11 @@ function initSearchableCombobox(selectId, placeholderText = 'Escriba o seleccion
         autocomplete="off"
         spellcheck="false"
       />
-      <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 text-slate-400">
-        <button type="button" class="combobox-clear hidden p-1 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors" title="Limpiar selección">
-          <i class="fa-solid fa-xmark text-xs"></i>
+      <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-slate-400">
+        <button type="button" class="combobox-clear hidden p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md focus:outline-none transition-all cursor-pointer" title="Limpiar y elegir otro...">
+          <i class="fa-solid fa-xmark text-sm font-bold"></i>
         </button>
-        <button type="button" class="combobox-toggle p-1 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors" title="Ver opciones">
+        <button type="button" class="combobox-toggle p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md focus:outline-none transition-all cursor-pointer" title="Ver opciones">
           <i class="fa-solid fa-chevron-down text-[11px] transition-transform duration-200"></i>
         </button>
       </div>
@@ -901,12 +901,31 @@ function initSearchableCombobox(selectId, placeholderText = 'Escriba o seleccion
 
   function syncInputFromSelect() {
     const selIdx = select.selectedIndex;
+    let hasLinkedData = false;
+    if (selectId === 'selectTitularUnidad2') {
+      const u2Nom = document.getElementById('titularUnidad2Nombre');
+      const u2Car = document.getElementById('titularUnidad2Cargo');
+      hasLinkedData = Boolean((u2Nom && u2Nom.value.trim()) || (u2Car && u2Car.value.trim()));
+    } else if (selectId === 'selectTitularArea') {
+      const aNom = document.getElementById('titularAreaNombre');
+      const aCar = document.getElementById('titularAreaCargo');
+      hasLinkedData = Boolean((aNom && aNom.value.trim()) || (aCar && aCar.value.trim()));
+    } else if (selectId === 'selectTitularUnidad1') {
+      const u1Nom = document.getElementById('titularUnidad1Nombre');
+      const u1Car = document.getElementById('titularUnidad1Cargo');
+      hasLinkedData = Boolean((u1Nom && u1Nom.value.trim()) || (u1Car && u1Car.value.trim()));
+    }
+
     if (selIdx >= 0 && select.options[selIdx] && select.options[selIdx].value) {
       input.value = select.options[selIdx].textContent.trim();
       clearBtn.classList.remove('hidden');
     } else {
       input.value = '';
-      clearBtn.classList.add('hidden');
+      if (hasLinkedData) {
+        clearBtn.classList.remove('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+      }
     }
     input.disabled = select.disabled;
     if (select.disabled) {
@@ -994,6 +1013,36 @@ function initSearchableCombobox(selectId, placeholderText = 'Escriba o seleccion
     e.stopPropagation();
     select.value = '';
     select.selectedIndex = 0;
+
+    // Limpiar explícitamente los campos de texto asociados para permitir vaciar y capturar/elegir otro
+    if (selectId === 'selectTitularUnidad2') {
+      const u2Nom = document.getElementById('titularUnidad2Nombre');
+      const u2Car = document.getElementById('titularUnidad2Cargo');
+      if (u2Nom) u2Nom.value = '';
+      if (u2Car) u2Car.value = '';
+      if (typeof gestionarAlertaVacanteGenerales === 'function') gestionarAlertaVacanteGenerales('titular2', false);
+    } else if (selectId === 'selectTitularArea') {
+      const aNom = document.getElementById('titularAreaNombre');
+      const aCar = document.getElementById('titularAreaCargo');
+      if (aNom) aNom.value = '';
+      if (aCar) aCar.value = '';
+      if (typeof gestionarAlertaVacanteGenerales === 'function') gestionarAlertaVacanteGenerales('area1', false);
+    } else if (selectId === 'selectTitularUnidad1') {
+      const u1Nom = document.getElementById('titularUnidad1Nombre');
+      const u1Car = document.getElementById('titularUnidad1Cargo');
+      if (u1Nom) u1Nom.value = '';
+      if (u1Car) u1Car.value = '';
+      if (typeof gestionarAlertaVacanteGenerales === 'function') gestionarAlertaVacanteGenerales('titular1', false);
+    } else if (selectId === 'selectTitularArea2') {
+      const a2Nom = document.getElementById('titularArea2Nombre');
+      const a2Car = document.getElementById('titularArea2Cargo');
+      if (a2Nom) a2Nom.value = '';
+      if (a2Car) a2Car.value = '';
+    } else if (selectId === 'selectAreaBaja' || selectId === 'selectAreaCambioNombre' || selectId === 'selectAreaCambioDep') {
+      const nd = document.getElementById('nuevaDenominacion');
+      if (nd) nd.value = '';
+    }
+
     syncInputFromSelect();
     select.dispatchEvent(new Event('change', { bubbles: true }));
     input.focus();
@@ -1160,6 +1209,18 @@ function initAllSearchableComboboxes() {
   initSearchableCombobox('selectUnidadDestinoCambioDep', 'Buscar unidad administrativa de destino...');
   initSearchableCombobox('selectTestigo1', 'Buscar puesto o persona del Testigo 1...');
   initSearchableCombobox('selectTestigo2', 'Buscar puesto o persona del Testigo 2...');
+
+  // Sincronizar visibilidad del botón de vaciado (X) al editar manualmente los campos de titulares
+  ['titularUnidad1Nombre', 'titularUnidad1Cargo', 'titularUnidad2Nombre', 'titularUnidad2Cargo', 'titularAreaNombre', 'titularAreaCargo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', () => {
+        if (id.startsWith('titularUnidad1')) syncComboboxFromSelect('selectTitularUnidad1');
+        if (id.startsWith('titularUnidad2')) syncComboboxFromSelect('selectTitularUnidad2');
+        if (id.startsWith('titularArea')) syncComboboxFromSelect('selectTitularArea');
+      });
+    }
+  });
 }
 
 /**
@@ -4392,6 +4453,15 @@ function handleTitularUnidad1Select(selectElem) {
   const u1Nom = document.getElementById('titularUnidad1Nombre');
   const u1Car = document.getElementById('titularUnidad1Cargo');
 
+  if (!val) {
+    gestionarAlertaVacanteGenerales('titular1', false);
+    if (u1Nom) u1Nom.value = '';
+    if (u1Car) u1Car.value = '';
+    poblarSelectTestigos();
+    renderDocument(getCurrentFormDataForPreview());
+    return;
+  }
+
   if (val === '__MANUAL__') {
     gestionarAlertaVacanteGenerales('titular1', false);
     if (u1Nom) { u1Nom.value = ''; u1Nom.focus(); }
@@ -4419,13 +4489,18 @@ function handleTitularUnidad1Select(selectElem) {
 function handleTitularUnidad2Select(selectElem) {
   if (!selectElem) return;
   const val = selectElem.value;
-  if (!val) {
-    gestionarAlertaVacanteGenerales('titular2', false);
-    return;
-  }
   const opt = selectElem.options[selectElem.selectedIndex];
   const u2Nom = document.getElementById('titularUnidad2Nombre');
   const u2Car = document.getElementById('titularUnidad2Cargo');
+
+  if (!val) {
+    gestionarAlertaVacanteGenerales('titular2', false);
+    if (u2Nom) u2Nom.value = '';
+    if (u2Car) u2Car.value = '';
+    poblarSelectTestigos();
+    renderDocument(getCurrentFormDataForPreview());
+    return;
+  }
 
   const selectedRadio = document.querySelector('input[name="tipoMovimiento"]:checked');
   const tipo = selectedRadio ? selectedRadio.value : 'Alta';
@@ -4475,13 +4550,17 @@ function handleTitularUnidad2Select(selectElem) {
 function handleTitularAreaSelect(selectElem) {
   if (!selectElem) return;
   const val = selectElem.value;
+  const aNom = document.getElementById('titularAreaNombre');
+  const aCar = document.getElementById('titularAreaCargo');
+
   if (!val) {
     gestionarAlertaVacanteGenerales('area1', false);
+    if (aNom) aNom.value = '';
+    if (aCar) aCar.value = '';
+    renderDocument(getCurrentFormDataForPreview());
     return;
   }
   const selectedOption = selectElem.options[selectElem.selectedIndex];
-  const aNom = document.getElementById('titularAreaNombre');
-  const aCar = document.getElementById('titularAreaCargo');
 
   if (val === '__MANUAL__') {
     gestionarAlertaVacanteGenerales('area1', false);
