@@ -8631,6 +8631,80 @@ function viewRecord(id) {
   switchTab('tab-preview', true);
 }
 
+/**
+ * Parsea y estandariza cadenas de fecha a formato YYYY-MM-DD para <input type="date">
+ */
+function parseToInputDateFormat(val) {
+  if (!val) return '';
+  val = String(val).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+  if (val.includes('T')) return val.split('T')[0];
+  const dmMatch = val.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (dmMatch) {
+    return `${dmMatch[3]}-${dmMatch[2].padStart(2, '0')}-${dmMatch[1].padStart(2, '0')}`;
+  }
+  const parsed = new Date(val);
+  if (!isNaN(parsed.getTime())) {
+    const y = parsed.getFullYear();
+    const m = String(parsed.getMonth() + 1).padStart(2, '0');
+    const d = String(parsed.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  return '';
+}
+
+/**
+ * Parsea y estandariza cadenas de hora a formato HH:MM para <input type="time">
+ */
+function parseToInputTimeFormat(val) {
+  if (!val) return '10:00';
+  val = String(val).trim();
+  if (/^\d{2}:\d{2}$/.test(val)) return val;
+  const match = val.match(/(\d{1,2}):(\d{2})/);
+  if (match) {
+    return `${match[1].padStart(2, '0')}:${match[2]}`;
+  }
+  const parsed = new Date(val);
+  if (!isNaN(parsed.getTime())) {
+    const h = String(parsed.getHours()).padStart(2, '0');
+    const m = String(parsed.getMinutes()).padStart(2, '0');
+    return `${h}:${m}`;
+  }
+  return '10:00';
+}
+
+/**
+ * Descompone inteligentemente registros donde el nombre y cargo vinieron juntos
+ * (ej. "C. Edilberto Pech May - Auxiliar Administrativo (C)" o "Directora... — Nombre")
+ */
+function separateNombreAndCargo(nombreRaw, cargoRaw, compuestoRaw) {
+  let nom = (nombreRaw || '').trim();
+  let car = (cargoRaw || '').trim();
+  const comp = (compuestoRaw || '').trim();
+
+  // Si nom contiene separador " — " o " - " y cargo está vacío:
+  if (!car && nom && (nom.includes(' — ') || nom.includes(' - '))) {
+    const sep = nom.includes(' — ') ? ' — ' : ' - ';
+    const parts = nom.split(sep);
+    nom = parts[0].trim();
+    car = parts.slice(1).join(sep).trim();
+  }
+
+  // Si después de eso falta nom o car, y tenemos compuestoRaw:
+  if ((!nom || !car) && comp) {
+    const sep = comp.includes(' — ') ? ' — ' : (comp.includes(' - ') ? ' - ' : null);
+    if (sep) {
+      const parts = comp.split(sep);
+      if (!nom) nom = parts[0].trim();
+      if (!car) car = parts.slice(1).join(sep).trim();
+    } else {
+      if (!nom) nom = comp;
+    }
+  }
+
+  return { nombre: nom, cargo: car };
+}
+
 function editRecord(id, allowCapturista = false) {
   const record = records.find(r => r.id === id);
   if (!record) return;
@@ -8648,40 +8722,26 @@ function editRecord(id, allowCapturista = false) {
 
   editingRecordId = record.id;
 
+  // 1. ÁREA NOTIFICADORA Y RESPONSABLE DE CAPTURA
   setAreaNotificadoraValue(record.areaNotificadora || '');
   setResponsableCapturaValue(record.responsableCaptura || '');
   document.getElementById('folioControl').value = record.folio || '';
 
+  // 2. DATOS GENERALES (Municipio, Fechas, Inmueble)
   document.getElementById('municipio').value = record.municipio || 'Mérida';
-  document.getElementById('fechaActa').value = record.fechaConstancia || record.fechaActa || '';
-  document.getElementById('horaActa').value = record.horaActa || '';
+  document.getElementById('fechaActa').value = parseToInputDateFormat(record.fechaConstancia || record.fechaActa || record.fechaRegistro || '');
+  document.getElementById('horaActa').value = parseToInputTimeFormat(record.horaActa || '');
   document.getElementById('inmueble').value = record.inmueble || 'el Edificio Central de la Secretaría de Educación';
 
-  document.getElementById('titularUnidad1Nombre').value = record.titularUnidad1Nombre || record.titularUnidad1 || '';
-  document.getElementById('titularUnidad1Cargo').value = record.titularUnidad1Cargo || '';
-
-  document.getElementById('titularUnidad2Nombre').value = record.titularUnidad2Nombre || record.titularUnidad2 || '';
-  document.getElementById('titularUnidad2Cargo').value = record.titularUnidad2Cargo || '';
-
-  document.getElementById('titularAreaNombre').value = record.titularAreaNombre || record.titularArea || '';
-  document.getElementById('titularAreaCargo').value = record.titularAreaCargo || '';
-
-  document.getElementById('testigo1Nombre').value = record.testigo1Nombre || record.testigo1 || '';
-  document.getElementById('testigo1Cargo').value = record.testigo1Cargo || '';
-
-  document.getElementById('testigo2Nombre').value = record.testigo2Nombre || record.testigo2 || '';
-  document.getElementById('testigo2Cargo').value = record.testigo2Cargo || '';
-
+  // 3. TIPO DE MOVIMIENTO
   const radio = document.querySelector(`input[name="tipoMovimiento"][value="${record.tipoMovimiento}"]`);
-  if (radio) radio.checked = true;
-  handleTipoMovimientoChange();
-  if (record.titularUnidad2Nombre) {
-    document.getElementById('titularUnidad2Nombre').value = record.titularUnidad2Nombre;
+  if (radio) {
+    radio.checked = true;
+    handleTipoMovimientoChange();
   }
-  if (record.titularUnidad2Cargo) {
-    document.getElementById('titularUnidad2Cargo').value = record.titularUnidad2Cargo;
-  }
+  const isJefeInmediato = (record.tipoMovimiento === 'Alta' || record.tipoMovimiento === 'Baja' || record.tipoMovimiento === 'Cambio de nombre');
 
+  // 4. DENOMINACIÓN / PUESTO
   if (record.tipoMovimiento === 'Cambio de nombre') {
     let nomAct = record.nombreActual || record.nuevaDenominacion || '';
     let nomNew = record.nuevoNombre || '';
@@ -8703,83 +8763,196 @@ function editRecord(id, allowCapturista = false) {
     if (nnEl) nnEl.value = '';
   }
 
+  // 5. EXTRACT DE FIRMANTES (Nombre y Cargo limpios)
+  const t1 = separateNombreAndCargo(record.titularUnidad1Nombre, record.titularUnidad1Cargo, record.titularUnidad1);
+  document.getElementById('titularUnidad1Nombre').value = t1.nombre;
+  document.getElementById('titularUnidad1Cargo').value = t1.cargo;
+
+  let rawU2Nom = record.titularUnidad2Nombre;
+  let rawU2Car = record.titularUnidad2Cargo;
+  let rawU2Comp = record.titularUnidad2;
+  if (isJefeInmediato) {
+    if (!rawU2Nom && record.jefeInmediatoNombre) rawU2Nom = record.jefeInmediatoNombre;
+    if (!rawU2Car && record.jefeInmediatoCargo) rawU2Car = record.jefeInmediatoCargo;
+    if (!rawU2Comp && record.jefeInmediato) rawU2Comp = record.jefeInmediato;
+  }
+  const t2 = separateNombreAndCargo(rawU2Nom, rawU2Car, rawU2Comp);
+  document.getElementById('titularUnidad2Nombre').value = t2.nombre;
+  document.getElementById('titularUnidad2Cargo').value = t2.cargo;
+
+  const ta = separateNombreAndCargo(record.titularAreaNombre, record.titularAreaCargo, record.titularArea);
+  document.getElementById('titularAreaNombre').value = ta.nombre;
+  document.getElementById('titularAreaCargo').value = ta.cargo;
+
+  const ta2 = separateNombreAndCargo(record.titularArea2Nombre, record.titularArea2Cargo, record.titularArea2);
+  const a2NomEl = document.getElementById('titularArea2Nombre');
+  const a2CarEl = document.getElementById('titularArea2Cargo');
+  if (a2NomEl) a2NomEl.value = ta2.nombre;
+  if (a2CarEl) a2CarEl.value = ta2.cargo;
+
+  const test1 = separateNombreAndCargo(record.testigo1Nombre, record.testigo1Cargo, record.testigo1);
+  document.getElementById('testigo1Nombre').value = test1.nombre;
+  document.getElementById('testigo1Cargo').value = test1.cargo;
+
+  const test2 = separateNombreAndCargo(record.testigo2Nombre, record.testigo2Cargo, record.testigo2);
+  document.getElementById('testigo2Nombre').value = test2.nombre;
+  document.getElementById('testigo2Cargo').value = test2.cargo;
+
+  // 6. JUSTIFICACIÓN, ESTATUS Y OBSERVACIONES
   document.getElementById('justificacion').value = record.justificacion || '';
   document.getElementById('estatus').value = record.estatus || 'Generada para Firma';
   document.getElementById('observaciones').value = record.observaciones || '';
 
-  // Sincronizar selectores orgánicos dependientes
-  if (record.areaNotificadora) {
-    setAreaNotificadoraValue(record.areaNotificadora);
-  }
-  if (record.titularUnidad1Nombre) {
-    document.getElementById('titularUnidad1Nombre').value = record.titularUnidad1Nombre;
-  }
-  if (record.titularUnidad1Cargo) {
-    document.getElementById('titularUnidad1Cargo').value = record.titularUnidad1Cargo;
-  }
-  if (record.titularUnidad2Nombre) {
-    document.getElementById('titularUnidad2Nombre').value = record.titularUnidad2Nombre;
-  }
-  if (record.titularUnidad2Cargo) {
-    document.getElementById('titularUnidad2Cargo').value = record.titularUnidad2Cargo;
-  }
-  if (record.titularAreaNombre) {
-    document.getElementById('titularAreaNombre').value = record.titularAreaNombre;
-  }
-  if (record.titularAreaCargo) {
-    document.getElementById('titularAreaCargo').value = record.titularAreaCargo;
-  }
-  if (record.titularArea2Nombre) {
-    const a2Nom = document.getElementById('titularArea2Nombre');
-    if (a2Nom) a2Nom.value = record.titularArea2Nombre;
-  }
-  if (record.titularArea2Cargo) {
-    const a2Car = document.getElementById('titularArea2Cargo');
-    if (a2Car) a2Car.value = record.titularArea2Cargo;
-  }
-  if (record.testigo1Nombre) {
-    const t1Nom = document.getElementById('testigo1Nombre');
-    if (t1Nom) t1Nom.value = record.testigo1Nombre;
-  }
-  if (record.testigo1Cargo) {
-    const t1Car = document.getElementById('testigo1Cargo');
-    if (t1Car) t1Car.value = record.testigo1Cargo;
-  }
-  if (record.testigo2Nombre) {
-    const t2Nom = document.getElementById('testigo2Nombre');
-    if (t2Nom) t2Nom.value = record.testigo2Nombre;
-  }
-  if (record.testigo2Cargo) {
-    const t2Car = document.getElementById('testigo2Cargo');
-    if (t2Car) t2Car.value = record.testigo2Cargo;
-  }
-
-  if (record.tipoMovimiento === 'Baja' && record.nuevaDenominacion) {
+  // 7. POBLAR Y SELECCIONAR COMBOBOXES DE ÁREAS (Apartado I)
+  if (record.tipoMovimiento === 'Baja') {
     const selBaja = document.getElementById('selectAreaBaja');
-    if (selBaja) {
+    const targetArea = (record.nuevaDenominacion || '').trim();
+    if (selBaja && targetArea) {
+      let matched = false;
       for (let i = 0; i < selBaja.options.length; i++) {
-        if (selBaja.options[i].value && selBaja.options[i].value.toUpperCase() === record.nuevaDenominacion.toUpperCase()) {
+        if (selBaja.options[i].value && selBaja.options[i].value.toUpperCase() === targetArea.toUpperCase()) {
           selBaja.selectedIndex = i;
+          matched = true;
           break;
         }
+      }
+      if (!matched) {
+        const opt = document.createElement('option');
+        opt.value = targetArea;
+        opt.textContent = targetArea;
+        if (selBaja.options.length > 1) selBaja.insertBefore(opt, selBaja.options[1]);
+        else selBaja.appendChild(opt);
+        selBaja.selectedIndex = 1;
       }
     }
   }
 
-  if (record.tipoMovimiento === 'Cambio de nombre' && record.nuevaDenominacion) {
+  if (record.tipoMovimiento === 'Cambio de nombre') {
     const selCambio = document.getElementById('selectAreaCambioNombre');
-    if (selCambio) {
+    const targetArea = (document.getElementById('nuevaDenominacion')?.value || '').trim();
+    if (selCambio && targetArea) {
+      let matched = false;
       for (let i = 0; i < selCambio.options.length; i++) {
-        if (selCambio.options[i].value && selCambio.options[i].value.toUpperCase() === record.nuevaDenominacion.toUpperCase()) {
+        if (selCambio.options[i].value && selCambio.options[i].value.toUpperCase() === targetArea.toUpperCase()) {
           selCambio.selectedIndex = i;
+          matched = true;
           break;
         }
+      }
+      if (!matched) {
+        const opt = document.createElement('option');
+        opt.value = targetArea;
+        opt.textContent = targetArea;
+        if (selCambio.options.length > 1) selCambio.insertBefore(opt, selCambio.options[1]);
+        else selCambio.appendChild(opt);
+        selCambio.selectedIndex = 1;
       }
     }
   }
 
-  switchTab('tab-form');
+  // 8. SINCRONIZAR SELECCIONES EN SELECTS DE FIRMANTES (Apartado II)
+  // Titular Unidad 1:
+  const selT1 = document.getElementById('selectTitularUnidad1');
+  if (selT1 && (t1.nombre || t1.cargo)) {
+    const nNom = normalizeText(t1.nombre);
+    const nCar = normalizeText(t1.cargo);
+    let matched = false;
+    for (let i = 0; i < selT1.options.length; i++) {
+      const opt = selT1.options[i];
+      const optNom = normalizeText(opt.dataset?.nombre || '');
+      const optCar = normalizeText(opt.dataset?.cargo || '');
+      const optTxt = normalizeText(opt.textContent || '');
+      if ((nNom && (optNom === nNom || optTxt.includes(nNom))) || (nCar && (optCar === nCar || optTxt.includes(nCar)))) {
+        selT1.selectedIndex = i;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) {
+      const opt = document.createElement('option');
+      opt.value = `t1_rec_${Date.now()}`;
+      opt.textContent = t1.cargo && t1.nombre ? `${t1.cargo} — ${t1.nombre}` : (t1.nombre || t1.cargo);
+      opt.setAttribute('data-nombre', t1.nombre);
+      opt.setAttribute('data-cargo', t1.cargo);
+      if (selT1.options.length > 1) selT1.insertBefore(opt, selT1.options[1]);
+      else selT1.appendChild(opt);
+      selT1.selectedIndex = 1;
+    }
+  }
+
+  // Titular Unidad 2 / Jefe Inmediato:
+  const selT2 = document.getElementById('selectTitularUnidad2');
+  if (selT2) {
+    if (isJefeInmediato && typeof poblarSelectJefeInmediato === 'function') {
+      poblarSelectJefeInmediato(record.areaNotificadora);
+    }
+    if (t2.nombre || t2.cargo) {
+      const nNom = normalizeText(t2.nombre);
+      const nCar = normalizeText(t2.cargo);
+      let matched = false;
+      for (let i = 0; i < selT2.options.length; i++) {
+        const opt = selT2.options[i];
+        const optNom = normalizeText(opt.dataset?.nombre || '');
+        const optCar = normalizeText(opt.dataset?.cargo || '');
+        const optTxt = normalizeText(opt.textContent || '');
+        if ((nNom && (optNom === nNom || (optNom.length > 5 && nNom.includes(optNom)) || optTxt.includes(nNom))) ||
+            (nCar && (optCar === nCar || (optCar.length > 6 && nCar.includes(optCar)) || optTxt.includes(nCar)))) {
+          selT2.selectedIndex = i;
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) {
+        const opt = document.createElement('option');
+        opt.value = `t2_rec_${Date.now()}`;
+        opt.textContent = t2.cargo && t2.nombre ? `${t2.cargo} — ${t2.nombre}` : (t2.nombre || t2.cargo);
+        opt.setAttribute('data-nombre', t2.nombre);
+        opt.setAttribute('data-cargo', t2.cargo);
+        if (selT2.options.length > 1) selT2.insertBefore(opt, selT2.options[1]);
+        else selT2.appendChild(opt);
+        selT2.selectedIndex = 1;
+      }
+    }
+  }
+
+  // Titular de Área:
+  const selArea = document.getElementById('selectTitularArea');
+  if (selArea) {
+    if (t2.cargo || t2.nombre) {
+      actualizarOpcionesTitularAreaPorJefe(t2.cargo, t2.nombre, record.areaNotificadora);
+    }
+    if (ta.nombre || ta.cargo) {
+      const nNom = normalizeText(ta.nombre);
+      const nCar = normalizeText(ta.cargo);
+      let matched = false;
+      for (let i = 0; i < selArea.options.length; i++) {
+        const opt = selArea.options[i];
+        const optNom = normalizeText(opt.dataset?.nombre || '');
+        const optPue = normalizeText(opt.dataset?.puesto || opt.dataset?.cargo || '');
+        const optTxt = normalizeText(opt.textContent || '');
+        if ((nNom && (optNom === nNom || (optNom.length > 5 && nNom.includes(optNom)) || optTxt.includes(nNom))) ||
+            (nCar && (optPue === nCar || (optPue.length > 6 && nCar.includes(optPue)) || optTxt.includes(nCar)))) {
+          selArea.selectedIndex = i;
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) {
+        const opt = document.createElement('option');
+        opt.value = `ta_rec_${Date.now()}`;
+        opt.textContent = ta.cargo && ta.nombre ? `${ta.cargo} — ${ta.nombre}` : (ta.nombre || ta.cargo);
+        opt.setAttribute('data-nombre', ta.nombre);
+        opt.setAttribute('data-puesto', ta.cargo);
+        if (selArea.options.length > 1) selArea.insertBefore(opt, selArea.options[1]);
+        else selArea.appendChild(opt);
+        selArea.selectedIndex = 1;
+      }
+    }
+  }
+
+  // 9. SINCRONIZAR VISUALMENTE TODOS LOS COMBOBOXES BUSCABLES
   if (typeof syncComboboxFromSelect === 'function') {
+    syncComboboxFromSelect('selectTitularUnidad1');
     syncComboboxFromSelect('selectTitularUnidad2');
     syncComboboxFromSelect('selectTitularArea');
     syncComboboxFromSelect('selectAreaBaja');
@@ -8788,6 +8961,7 @@ function editRecord(id, allowCapturista = false) {
     syncComboboxFromSelect('selectUnidadDestinoCambioDep');
   }
 
+  switchTab('tab-form');
   updateEstatusPermissions(isSuperAdmin());
   const banner = document.getElementById('editing-folio-banner');
   if (banner && record) {
@@ -8797,7 +8971,9 @@ function editRecord(id, allowCapturista = false) {
     if (lblSt) lblSt.textContent = record.estatus || 'Generada para Firma';
     banner.classList.remove('hidden');
   }
-  showToast(`Editando constancia ${record.folio}. La opción 'Modificación' ya está disponible en el Apartado IV.`);
+  showToast(`Constancia ${record.folio} cargada en formulario.`);
+  renderDocument(getCurrentFormDataForPreview());
+}
 }
 
 let currentInactivarRecordId = null;
@@ -10556,8 +10732,8 @@ function loadRecordIntoForm(d) {
   if (d.areaNotificadora) setAreaNotificadoraValue(d.areaNotificadora);
   if (d.responsableCaptura) setResponsableCapturaValue(d.responsableCaptura);
   if (d.municipio) document.getElementById('municipio').value = d.municipio;
-  if (d.fechaActa) document.getElementById('fechaActa').value = d.fechaActa;
-  if (d.horaActa) document.getElementById('horaActa').value = d.horaActa;
+  if (d.fechaActa || d.fechaConstancia) document.getElementById('fechaActa').value = parseToInputDateFormat(d.fechaConstancia || d.fechaActa);
+  if (d.horaActa) document.getElementById('horaActa').value = parseToInputTimeFormat(d.horaActa);
   if (d.inmueble) document.getElementById('inmueble').value = d.inmueble;
 
   if (d.tipoMovimiento) {
@@ -10574,16 +10750,33 @@ function loadRecordIntoForm(d) {
   }
   if (d.justificacion) document.getElementById('justificacion').value = d.justificacion;
 
-  if (d.titularUnidad1Nombre) document.getElementById('titularUnidad1Nombre').value = d.titularUnidad1Nombre;
-  if (d.titularUnidad1Cargo) document.getElementById('titularUnidad1Cargo').value = d.titularUnidad1Cargo;
-  if (d.titularUnidad2Nombre) document.getElementById('titularUnidad2Nombre').value = d.titularUnidad2Nombre;
-  if (d.titularUnidad2Cargo) document.getElementById('titularUnidad2Cargo').value = d.titularUnidad2Cargo;
-  if (d.titularAreaNombre) document.getElementById('titularAreaNombre').value = d.titularAreaNombre;
-  if (d.titularAreaCargo) document.getElementById('titularAreaCargo').value = d.titularAreaCargo;
-  if (d.testigo1Nombre) document.getElementById('testigo1Nombre').value = d.testigo1Nombre;
-  if (d.testigo1Cargo) document.getElementById('testigo1Cargo').value = d.testigo1Cargo;
-  if (d.testigo2Nombre) document.getElementById('testigo2Nombre').value = d.testigo2Nombre;
-  if (d.testigo2Cargo) document.getElementById('testigo2Cargo').value = d.testigo2Cargo;
+  const t1 = separateNombreAndCargo(d.titularUnidad1Nombre, d.titularUnidad1Cargo, d.titularUnidad1);
+  if (t1.nombre) document.getElementById('titularUnidad1Nombre').value = t1.nombre;
+  if (t1.cargo) document.getElementById('titularUnidad1Cargo').value = t1.cargo;
+
+  const t2 = separateNombreAndCargo(d.titularUnidad2Nombre, d.titularUnidad2Cargo, d.titularUnidad2 || d.jefeInmediato);
+  if (t2.nombre) document.getElementById('titularUnidad2Nombre').value = t2.nombre;
+  if (t2.cargo) document.getElementById('titularUnidad2Cargo').value = t2.cargo;
+
+  const ta = separateNombreAndCargo(d.titularAreaNombre, d.titularAreaCargo, d.titularArea);
+  if (ta.nombre) document.getElementById('titularAreaNombre').value = ta.nombre;
+  if (ta.cargo) document.getElementById('titularAreaCargo').value = ta.cargo;
+
+  const test1 = separateNombreAndCargo(d.testigo1Nombre, d.testigo1Cargo, d.testigo1);
+  if (test1.nombre) document.getElementById('testigo1Nombre').value = test1.nombre;
+  if (test1.cargo) document.getElementById('testigo1Cargo').value = test1.cargo;
+
+  const test2 = separateNombreAndCargo(d.testigo2Nombre, d.testigo2Cargo, d.testigo2);
+  if (test2.nombre) document.getElementById('testigo2Nombre').value = test2.nombre;
+  if (test2.cargo) document.getElementById('testigo2Cargo').value = test2.cargo;
+
+  if (typeof syncComboboxFromSelect === 'function') {
+    syncComboboxFromSelect('selectTitularUnidad1');
+    syncComboboxFromSelect('selectTitularUnidad2');
+    syncComboboxFromSelect('selectTitularArea');
+    syncComboboxFromSelect('selectAreaBaja');
+    syncComboboxFromSelect('selectAreaCambioNombre');
+  }
 
   renderDocument(getCurrentFormDataForPreview());
 }
