@@ -521,12 +521,12 @@ const DEFAULT_LAYOUT_HTML = `
 <!-- ============================================================== -->
 <!-- CUERPO DEL DOCUMENTO (TEXTO FLUIDO SIN CUADROS)                -->
 <!-- ============================================================== -->
-<div class="official-body text-slate-900 text-justify text-[11pt] leading-relaxed space-y-3" style="font-family: 'Lato', Arial, sans-serif;">
+<div class="official-body text-slate-900 text-justify text-[10pt] leading-relaxed space-y-3" style="font-family: 'Lato', Arial, sans-serif;">
 
   <!-- APARTADO I. TIPO DE CAMBIO QUE DETERMINA LA UNIDAD ADMINISTRATIVA -->
   <div>
-    <div class="font-bold text-[11pt] mb-1 uppercase tracking-wide text-slate-900 text-left">I. TIPO DE CAMBIO QUE DETERMINA LA UNIDAD ADMINISTRATIVA</div>
-    <div class="pl-3 space-y-1 text-[11pt] text-left">
+    <div class="font-bold text-[10pt] mb-1 uppercase tracking-wide text-slate-900 text-left">I. TIPO DE CAMBIO QUE DETERMINA LA UNIDAD ADMINISTRATIVA</div>
+    <div class="pl-3 space-y-1 text-[10pt] text-left">
       <p>Se determinó la modificación conforme a lo siguiente:</p>
       <div class="grid grid-cols-12 gap-1 items-center my-0.5 text-[10pt]">
         <div class="col-span-12 sm:col-span-3 font-bold">• Tipo de movimiento:</div>
@@ -566,13 +566,13 @@ const DEFAULT_LAYOUT_HTML = `
 
   <!-- APARTADO II. GENERALES -->
   <div>
-    <div class="font-bold text-[11pt] mb-1 uppercase tracking-wide text-slate-900 text-left">II. GENERALES</div>
+    <div class="font-bold text-[10pt] mb-1 uppercase tracking-wide text-slate-900 text-left">II. GENERALES</div>
     <p class="text-justify mb-2 leading-relaxed">
       En el municipio de <span class="font-bold">{{municipio}}</span>, del Estado de Yucatán, siendo las <span class="font-bold">{{horas}}</span> horas con <span class="font-bold">{{minutos}}</span> minutos del día <span class="font-bold">{{dia}}</span> del mes de <span class="font-bold">{{mes}}</span> del año <span class="font-bold">20{{anio}}</span>, constituidos en el inmueble que ocupa <span class="font-bold">{{inmueble}}</span> ubicada en domicilio conocido, se encuentran reunidos los siguientes representantes de la Secretaría de Educación involucrados:
     </p>
 
     <!-- Comparecientes -->
-    <div class="my-2 space-y-1 text-[11pt] pl-3 text-left">
+    <div class="my-2 space-y-1 text-[10pt] pl-3 text-left">
       <div class="grid grid-cols-12 gap-2 items-start">
         <div class="col-span-5 font-bold text-slate-800">{{etiquetaTitular1Y2}}:</div>
         <div class="col-span-7 space-y-0.5 font-normal text-slate-900">
@@ -604,8 +604,8 @@ const DEFAULT_LAYOUT_HTML = `
 
   <!-- APARTADO III. JUSTIFICACIÓN Y MOTIVOS DEL CAMBIO -->
   <div>
-    <div class="font-bold text-[11pt] mb-1 uppercase tracking-wide text-slate-900 text-left">III. JUSTIFICACIÓN Y MOTIVOS DEL CAMBIO</div>
-    <div class="pl-3 space-y-1 text-[11pt]">
+    <div class="font-bold text-[10pt] mb-1 uppercase tracking-wide text-slate-900 text-left">III. JUSTIFICACIÓN Y MOTIVOS DEL CAMBIO</div>
+    <div class="pl-3 space-y-1 text-[10pt]">
       <p class="italic text-[10.5pt] text-slate-700">Se hace constar los siguientes movimientos de carácter administrativo…</p>
       <div class="text-justify leading-relaxed whitespace-pre-wrap font-normal text-slate-900 uppercase">
         {{justificacion}}
@@ -615,8 +615,8 @@ const DEFAULT_LAYOUT_HTML = `
 
   <!-- APARTADO IV. CIERRE Y FIRMAS -->
   <div class="page-break-avoid">
-    <div class="font-bold text-[11pt] mb-1 uppercase tracking-wide text-slate-900 text-left">IV. CIERRE</div>
-    <p class="text-justify mb-4 leading-relaxed text-[11pt]">
+    <div class="font-bold text-[10pt] mb-1 uppercase tracking-wide text-slate-900 text-left">IV. CIERRE</div>
+    <p class="text-justify mb-4 leading-relaxed text-[10pt]">
       Una vez expresado lo anterior y al no haber más hechos que hacer constar, se da por concluida la presente, firmando al calce para su debida constancia y manifestando su entera conformidad los involucrados, siendo el mismo día y año.
     </p>
 
