@@ -621,7 +621,7 @@ const DEFAULT_LAYOUT_HTML = `
     </p>
 
     <!-- ESPACIO DE FIRMAS CON ESPACIO AMPLIO Y RAZONABLE PARA FIRMAR -->
-    <div class="mt-8 space-y-6 font-sans">
+    <div class="firmas-container mt-8 space-y-6 font-sans">
       <div class="grid grid-cols-2 gap-8 text-center pt-2">
         <div>
           <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
@@ -7919,7 +7919,7 @@ async function generateClientSidePDF(element, filename) {
       format: 'letter',
       orientation: 'portrait'
     },
-    pagebreak: { mode: [] }
+    pagebreak: { mode: ['css', 'legacy'] }
   };
 
   try {
