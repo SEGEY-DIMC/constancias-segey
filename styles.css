@@ -57,7 +57,7 @@ body {
   color: #111827;
   margin: 0 auto;
   box-sizing: border-box;
-  padding: 35px 32px 28px 32px;
+  padding: 35px 44px 28px 44px;
 }
 
 .official-body {
@@ -131,11 +131,12 @@ body {
   width: 100% !important;
   max-width: 100% !important;
   min-width: 100% !important;
-  padding: 0 6px !important;
+  padding: 0 16px !important;
   margin: 0 auto !important;
   box-sizing: border-box !important;
   box-shadow: none !important;
   background-color: #ffffff !important;
+  overflow-x: hidden !important;
 }
 
 .official-sheet.generating-pdf .official-sheet {
@@ -144,11 +145,12 @@ body {
   width: 100% !important;
   max-width: 100% !important;
   min-width: 100% !important;
-  padding: 0 6px !important;
+  padding: 0 16px !important;
   margin: 0 auto !important;
   box-sizing: border-box !important;
   box-shadow: none !important;
   background-color: #ffffff !important;
+  overflow-x: hidden !important;
 }
 
 .official-sheet.generating-pdf table {
