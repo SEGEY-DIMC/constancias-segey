@@ -698,6 +698,9 @@ document.addEventListener('DOMContentLoaded', () => {
   updateShareLink();
   renderDocument(getCurrentFormDataForPreview());
   poblarSelectJustificaciones('Alta');
+  if (typeof syncJustificacionesFromGoogleSheets === 'function') {
+    syncJustificacionesFromGoogleSheets(false);
+  }
   initAllSearchableComboboxes();
 });
 
@@ -5085,7 +5088,7 @@ function formatearInmueble(texto) {
  * Categorizado por Tipo de Movimiento (Alta, Baja, Cambio de nombre, Dependencia jerárquica)
  * =========================================================================
  */
-const JUSTIFICACIONES_STORAGE_KEY = 'segey_constancias_justificaciones_v1';
+const JUSTIFICACIONES_STORAGE_KEY = 'segey_constancias_justificaciones_v2';
 
 const CATALOGO_JUSTIFICACIONES_DEFAULT = {
   'Alta': [
@@ -5097,7 +5100,6 @@ const CATALOGO_JUSTIFICACIONES_DEFAULT = {
     'Por cambios en la Normatividad',
     'Por redistribución de recursos',
     'Por conclusión de actividades',
-    'Por transferencia a otra Unidad Administrativa',
     'Por unificación con otra Área'
   ],
   'Cambio de nombre': [
@@ -10301,32 +10303,125 @@ async function syncResponsablesFromGoogleSheets(forceToast = false) {
   }
 }
 
-async function syncJustificacionesFromGoogleSheets(forceToast = false) {
-  const webhook = localStorage.getItem(WEBHOOK_KEY) || DEFAULT_WEBHOOK_URL;
-  if (!webhook) {
-    if (forceToast) showToast('Configure primero la URL del Webhook de Google Sheets.', 'error');
-    return false;
+const BITACORA_SPREADSHEET_ID = '1biuFH4b4x12bslKafsEE0OeOypk6ub1ukkxLlo3eVSA';
+
+/**
+ * Consulta la hoja de Google Sheets en tiempo real vía Google Visualization JSONP (sin CORS, 0 dependencias).
+ */
+function fetchGoogleSheetsGVizJSONP(sheetName, timeoutMs = 7000) {
+  return new Promise((resolve, reject) => {
+    const callbackName = 'gviz_jsonp_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+    const script = document.createElement('script');
+    script.id = callbackName;
+
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error('Timeout de conexión con Google Sheets'));
+    }, timeoutMs);
+
+    function cleanup() {
+      clearTimeout(timer);
+      try { delete window[callbackName]; } catch (e) { window[callbackName] = undefined; }
+      const el = document.getElementById(callbackName);
+      if (el) el.remove();
+    }
+
+    window[callbackName] = function(response) {
+      cleanup();
+      resolve(response);
+    };
+
+    script.onerror = function(err) {
+      cleanup();
+      reject(new Error('Error de red al consultar Google Sheets'));
+    };
+
+    script.src = `https://docs.google.com/spreadsheets/d/${BITACORA_SPREADSHEET_ID}/gviz/tq?tqx=responseHandler:${callbackName}&sheet=${encodeURIComponent(sheetName)}&t=${Date.now()}`;
+    document.head.appendChild(script);
+  });
+}
+
+function parseGVizResponseToJustificaciones(res) {
+  if (!res || !res.table || !res.table.rows || !Array.isArray(res.table.rows)) return null;
+  const rows = res.table.rows;
+  if (rows.length === 0) return null;
+
+  const catalog = {
+    'Alta': [],
+    'Baja': [],
+    'Cambio de nombre': [],
+    'Cambio de dependencia jerárquica': []
+  };
+
+  let startIdx = 0;
+  const first0 = (rows[0].c && rows[0].c[0] && rows[0].c[0].v !== undefined && rows[0].c[0].v !== null) ? String(rows[0].c[0].v).toLowerCase() : '';
+  if (first0.includes('tipo') || first0.includes('movimiento')) {
+    startIdx = 1;
   }
 
+  for (let i = startIdx; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r.c || r.c.length < 2) continue;
+    const rawTipo = (r.c[0] && r.c[0].v !== undefined && r.c[0].v !== null) ? String(r.c[0].v).trim() : '';
+    const rawMotivo = (r.c[1] && r.c[1].v !== undefined && r.c[1].v !== null) ? String(r.c[1].v).trim() : '';
+    if (!rawTipo || !rawMotivo) continue;
+
+    let tipoKey = rawTipo;
+    const lower = rawTipo.toLowerCase();
+    if (lower.includes('alta')) tipoKey = 'Alta';
+    else if (lower.includes('baja')) tipoKey = 'Baja';
+    else if (lower.includes('nombre')) tipoKey = 'Cambio de nombre';
+    else if (lower.includes('dependencia') || lower.includes('jerárquica') || lower.includes('jerarquica')) tipoKey = 'Cambio de dependencia jerárquica';
+
+    if (!catalog[tipoKey]) catalog[tipoKey] = [];
+    if (!catalog[tipoKey].includes(rawMotivo)) {
+      catalog[tipoKey].push(rawMotivo);
+    }
+  }
+
+  const total = Object.values(catalog).reduce((acc, arr) => acc + arr.length, 0);
+  return total > 0 ? catalog : null;
+}
+
+async function syncJustificacionesFromGoogleSheets(forceToast = false) {
   const icon = document.getElementById('icon-sync-justificaciones');
   if (icon) icon.classList.add('fa-spin');
 
+  let newCatalog = null;
+
+  // 1. Intentar lectura directa en tiempo real vía Google Visualization (JSONP - respuesta inmediata sin requerir Apps Script)
   try {
-    const fetchUrl = `${webhook}?action=getJustificaciones&t=${Date.now()}`;
-    const resp = await fetch(fetchUrl);
-    const result = await resp.json();
+    const gvizRes = await fetchGoogleSheetsGVizJSONP('Justificaciones');
+    newCatalog = parseGVizResponseToJustificaciones(gvizRes);
+    if (newCatalog) {
+      console.log('[SYNC] Justificaciones sincronizadas directamente desde Google Sheets (GViz):', newCatalog);
+    }
+  } catch (eGviz) {
+    console.log('[SYNC] Consulta directa JSONP no disponible, probando Webhook de Apps Script...', eGviz);
+  }
 
-    if (result && result.status === 'success' && result.justificaciones && typeof result.justificaciones === 'object') {
-      const keys = Object.keys(result.justificaciones);
-      let total = 0;
-      keys.forEach(k => {
-        if (Array.isArray(result.justificaciones[k])) {
-          total += result.justificaciones[k].length;
+  // 2. Si falló la consulta directa, intentar vía Webhook de Apps Script
+  if (!newCatalog) {
+    const webhook = localStorage.getItem(WEBHOOK_KEY) || DEFAULT_WEBHOOK_URL;
+    if (webhook) {
+      try {
+        const fetchUrl = `${webhook}?action=getJustificaciones&t=${Date.now()}`;
+        const resp = await fetch(fetchUrl);
+        const result = await resp.json();
+        if (result && result.status === 'success' && result.justificaciones && typeof result.justificaciones === 'object') {
+          newCatalog = result.justificaciones;
         }
-      });
+      } catch (eWebhook) {
+        console.warn('[SYNC] Error en Webhook getJustificaciones:', eWebhook);
+      }
+    }
+  }
 
+  try {
+    if (newCatalog) {
+      const total = Object.values(newCatalog).reduce((acc, arr) => acc + (Array.isArray(arr) ? arr.length : 0), 0);
       if (total > 0) {
-        saveJustificacionesCatalog(result.justificaciones);
+        saveJustificacionesCatalog(newCatalog);
 
         const selectedRadio = document.querySelector('input[name="tipoMovimiento"]:checked');
         if (selectedRadio) {
@@ -10337,18 +10432,15 @@ async function syncJustificacionesFromGoogleSheets(forceToast = false) {
         }
 
         if (forceToast) {
-          showToast(`✨ Justificaciones sincronizadas desde Google Sheets (${total} motivos).`, 'success');
+          showToast(`✨ Justificaciones sincronizadas desde Google Sheets (${total} motivos cargados).`, 'success');
         }
         return true;
-      } else {
-        if (forceToast) showToast('No se encontraron motivos en la hoja "Justificaciones" de Google Sheets.', 'warning');
       }
-    } else if (result && result.status === 'not_found') {
-      if (forceToast) showToast('Hoja "Justificaciones" no encontrada en Google Sheets.', 'warning');
     }
-  } catch (e) {
-    console.warn('Error sincronizando justificaciones desde Google Sheets:', e);
-    if (forceToast) showToast('No se pudo conectar con Google Sheets para sincronizar justificaciones.', 'error');
+
+    if (forceToast) {
+      showToast('No se pudieron obtener las justificaciones de Google Sheets.', 'warning');
+    }
   } finally {
     if (icon) icon.classList.remove('fa-spin');
   }
