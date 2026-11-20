@@ -6526,6 +6526,7 @@ function handleFormSubmit(event) {
 
   isSubmittingForm = true;
 
+  try {
   const areaNotificadora = document.getElementById('areaNotificadora').value.trim();
   const areaSelect = document.getElementById('areaNotificadoraSelect');
   if (areaSelect && areaSelect.value === '__OTRA__' && !areaNotificadora) {
@@ -6624,11 +6625,22 @@ function handleFormSubmit(event) {
   }
 
   const justificacion = document.getElementById('justificacion').value.trim().toUpperCase();
-  const estatus = document.getElementById('estatus').value;
+  let estatus = document.getElementById('estatus')?.value || 'Generada para Firma';
 
   // Control de Estatus y Trazabilidad al Guardar
   if (editingRecordId) {
-    if (estatus !== 'Modificación' && estatus !== 'Borrador' && estatus !== 'Firmada y Concluida') {
+    if (estatus === 'Generada para Firma') {
+      const estSelect = document.getElementById('estatus');
+      if (estSelect) {
+        estSelect.value = 'Modificación';
+        estSelect.classList.add('ring-4', 'ring-amber-500', 'bg-amber-50');
+        setTimeout(() => estSelect.classList.remove('ring-4', 'ring-amber-500', 'bg-amber-50'), 4000);
+        estSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      showToast('Atención: Al editar una constancia existente, debe actualizar el estatus a "Modificación". Se ha seleccionado "Modificación", haga clic nuevamente en "Guardar Constancia" para confirmar.', 'warning', 6000);
+      isSubmittingForm = false;
+      return;
+    } else if (estatus !== 'Modificación' && estatus !== 'Borrador' && estatus !== 'Firmada y Concluida') {
       estatus = 'Modificación';
       const estSelect = document.getElementById('estatus');
       if (estSelect) estSelect.value = 'Modificación';
@@ -6816,6 +6828,11 @@ function handleFormSubmit(event) {
   if (editingBanner) editingBanner.classList.add('hidden');
 
   showToast(`Constancia ${folio} guardada con éxito (${recordData.estatus}). Puede descargar el PDF oficial desde este visor.`);
+  } catch (err) {
+    isSubmittingForm = false;
+    console.error('Error al guardar la constancia:', err);
+    showToast('Error al guardar la constancia: ' + (err.message || err), 'error');
+  }
 }
 
 function getCurrentFormDataForPreview() {
@@ -7586,9 +7603,9 @@ async function generateClientSidePDF(element, filename) {
   element.classList.add('generating-pdf');
 
   // Dimensiones estándar Carta (Letter): 215.9mm x 279.4mm
-  // Márgenes: Arriba: 6mm, Izquierda/Derecha: 8mm, Abajo: 12mm (reserva limpia para pie de página)
+  // Márgenes: Arriba: 6mm, Izquierda/Derecha: 10mm, Abajo: 10mm (reserva limpia para pie de página)
   const opt = {
-    margin: [6, 8, 12, 8],
+    margin: [6, 10, 10, 10],
     filename: filename,
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: {
@@ -7597,7 +7614,8 @@ async function generateClientSidePDF(element, filename) {
       letterRendering: true,
       backgroundColor: '#ffffff',
       scrollY: 0,
-      scrollX: 0
+      scrollX: 0,
+      windowWidth: 1280
     },
     jsPDF: {
       unit: 'mm',
@@ -7667,8 +7685,7 @@ async function generateClientSidePDF(element, filename) {
       const totalPages = pdf.internal.getNumberOfPages();
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const marginX = 8; // mm (alineado con los márgenes del documento)
-      const lineY = pageHeight - 9.5; // 9.5mm arriba del borde inferior
+      const marginX = 10; // mm (alineado con los 10mm de margen del documento)
       const textY = pageHeight - 5.5; // 5.5mm arriba del borde inferior
 
       for (let p = 1; p <= totalPages; p++) {
@@ -7676,20 +7693,17 @@ async function generateClientSidePDF(element, filename) {
 
         // 1. Franja de protección con fondo blanco limpio al pie de la página
         pdf.setFillColor(255, 255, 255);
-        pdf.rect(0, pageHeight - 11.5, pageWidth, 11.5, 'F');
+        pdf.rect(0, pageHeight - 9, pageWidth, 9, 'F');
 
-        // 2. Línea divisoria gris oficial (#cbd5e1)
-        pdf.setDrawColor(203, 213, 225);
-        pdf.setLineWidth(0.25);
-        pdf.line(marginX, lineY, pageWidth - marginX, lineY);
+        // Se elimina la línea divisoria horizontal gris según el formato oficial SEGEY
 
-        // 3. Código oficial del formato institucional a la izquierda
+        // 2. Código oficial del formato institucional a la izquierda
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(8);
         pdf.setTextColor(71, 85, 105); // #475569
         pdf.text('F-PR-EAO-03  R01', marginX, textY);
 
-        // 4. Paginación continua y dinámica a la derecha (ej. Página 1 de 2, Página 2 de 2, etc.)
+        // 3. Paginación continua y dinámica a la derecha (ej. Página 1 de 2, Página 2 de 2, etc.)
         pdf.setFont('helvetica', 'normal');
         pdf.text(`Página ${p} de ${totalPages}`, pageWidth - marginX, textY, { align: 'right' });
       }
@@ -8408,6 +8422,14 @@ function editRecord(id, allowCapturista = false) {
   }
 
   updateEstatusPermissions(isSuperAdmin());
+  const banner = document.getElementById('editing-folio-banner');
+  if (banner && record) {
+    const lblFol = document.getElementById('lbl-editing-folio');
+    const lblSt = document.getElementById('lbl-editing-status');
+    if (lblFol) lblFol.textContent = record.folio || '';
+    if (lblSt) lblSt.textContent = record.estatus || 'Generada para Firma';
+    banner.classList.remove('hidden');
+  }
   showToast(`Editando constancia ${record.folio}. La opción 'Modificación' ya está disponible en el Apartado IV.`);
 }
 
