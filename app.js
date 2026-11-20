@@ -909,20 +909,81 @@ function initSearchableCombobox(selectId, placeholderText = 'Escriba o seleccion
   }
 
   function syncInputFromSelect() {
-    const selIdx = select.selectedIndex;
+    let selIdx = select.selectedIndex;
     let hasLinkedData = false;
+    let linkedNom = '';
+    let linkedCar = '';
     if (selectId === 'selectTitularUnidad2') {
       const u2Nom = document.getElementById('titularUnidad2Nombre');
       const u2Car = document.getElementById('titularUnidad2Cargo');
-      hasLinkedData = Boolean((u2Nom && u2Nom.value.trim()) || (u2Car && u2Car.value.trim()));
+      linkedNom = (u2Nom?.value || '').trim();
+      linkedCar = (u2Car?.value || '').trim();
+      hasLinkedData = Boolean(linkedNom || linkedCar);
     } else if (selectId === 'selectTitularArea') {
       const aNom = document.getElementById('titularAreaNombre');
       const aCar = document.getElementById('titularAreaCargo');
-      hasLinkedData = Boolean((aNom && aNom.value.trim()) || (aCar && aCar.value.trim()));
+      linkedNom = (aNom?.value || '').trim();
+      linkedCar = (aCar?.value || '').trim();
+      hasLinkedData = Boolean(linkedNom || linkedCar);
     } else if (selectId === 'selectTitularUnidad1') {
       const u1Nom = document.getElementById('titularUnidad1Nombre');
       const u1Car = document.getElementById('titularUnidad1Cargo');
-      hasLinkedData = Boolean((u1Nom && u1Nom.value.trim()) || (u1Car && u1Car.value.trim()));
+      linkedNom = (u1Nom?.value || '').trim();
+      linkedCar = (u1Car?.value || '').trim();
+      hasLinkedData = Boolean(linkedNom || linkedCar);
+    } else if (selectId === 'selectTitularArea2') {
+      const a2Nom = document.getElementById('titularArea2Nombre');
+      const a2Car = document.getElementById('titularArea2Cargo');
+      linkedNom = (a2Nom?.value || '').trim();
+      linkedCar = (a2Car?.value || '').trim();
+      hasLinkedData = Boolean(linkedNom || linkedCar);
+    }
+
+    // Si los inputs inferiores tienen información pero el select aún no tiene una opción válida seleccionada:
+    if ((selIdx <= 0 || !select.options[selIdx] || !select.options[selIdx].value) && hasLinkedData) {
+      const norm = (s) => (s || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\b(c\.p\.|ing\.|lic\.|mtro\.|mtra\.|dr\.|dra\.|br\.|c\.)\b/g, "").replace(/[^a-z0-9 ]/g, " ").trim();
+      const nNom = norm(linkedNom);
+      const nCar = norm(linkedCar);
+      let matchIdx = -1;
+
+      for (let i = 1; i < select.options.length; i++) {
+        const opt = select.options[i];
+        if (opt.value === '__MANUAL__') continue;
+        const optNom = norm(opt.dataset?.nombre || '');
+        const optCar = norm(opt.dataset?.cargo || opt.dataset?.puesto || '');
+        const optTxt = norm(opt.textContent || '');
+
+        if (nNom && (optNom === nNom || (optNom.length > 5 && (nNom.includes(optNom) || optNom.includes(nNom))) || (optTxt.length > 5 && (optTxt.includes(nNom) || nNom.includes(optTxt))))) {
+          matchIdx = i;
+          break;
+        }
+        if (nCar && (optCar === nCar || (optCar.length > 6 && (nCar.includes(optCar) || optCar.includes(nCar))) || (optTxt.length > 6 && (optTxt.includes(nCar) || nCar.includes(optTxt))))) {
+          matchIdx = i;
+          break;
+        }
+      }
+
+      if (matchIdx !== -1) {
+        select.selectedIndex = matchIdx;
+      } else {
+        // Insertar la opción vinculada para que el combobox y el select siempre reflejen la información precargada
+        const newOpt = document.createElement('option');
+        newOpt.value = `opt_linked_${Date.now()}`;
+        const label = (linkedCar && linkedNom) ? `${linkedCar} — ${linkedNom}` : (linkedNom || linkedCar);
+        newOpt.textContent = label;
+        if (linkedNom) newOpt.setAttribute('data-nombre', linkedNom);
+        if (linkedCar) {
+          newOpt.setAttribute('data-cargo', linkedCar);
+          newOpt.setAttribute('data-puesto', linkedCar);
+        }
+        if (select.options.length > 1) {
+          select.insertBefore(newOpt, select.options[1]);
+        } else {
+          select.appendChild(newOpt);
+        }
+        select.selectedIndex = 1;
+      }
+      selIdx = select.selectedIndex;
     }
 
     if (selIdx >= 0 && select.options[selIdx] && select.options[selIdx].value) {
@@ -931,6 +992,7 @@ function initSearchableCombobox(selectId, placeholderText = 'Escriba o seleccion
     } else {
       input.value = '';
       if (hasLinkedData) {
+        input.value = (linkedCar && linkedNom) ? `${linkedCar} — ${linkedNom}` : (linkedNom || linkedCar);
         clearBtn.classList.remove('hidden');
       } else {
         clearBtn.classList.add('hidden');
@@ -4597,17 +4659,9 @@ function handleTitularAreaSelect(selectElem) {
 
   // Asegurar que el Jefe Inmediato conserve su opción y combobox sincronizado
   const u2NomVal = (document.getElementById('titularUnidad2Nombre')?.value || '').trim();
+  const u2CarVal = (document.getElementById('titularUnidad2Cargo')?.value || '').trim();
   const selectT2 = document.getElementById('selectTitularUnidad2');
-  if (selectT2 && u2NomVal) {
-    if (selectT2.selectedIndex <= 0 || !selectT2.value) {
-      for (let i = 1; i < selectT2.options.length; i++) {
-        const opt = selectT2.options[i];
-        if (opt.dataset && opt.dataset.nombre && opt.dataset.nombre.toLowerCase().includes(u2NomVal.toLowerCase())) {
-          selectT2.selectedIndex = i;
-          break;
-        }
-      }
-    }
+  if (selectT2 && (u2NomVal || u2CarVal)) {
     if (typeof syncComboboxFromSelect === 'function') {
       syncComboboxFromSelect('selectTitularUnidad2');
     }
