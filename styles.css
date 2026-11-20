@@ -93,11 +93,20 @@ body {
 .official-sheet.generating-pdf {
   min-height: auto !important;
   height: auto !important;
-  max-width: 750px !important;
-  padding: 0 2px 0 2px !important;
+  width: 710px !important;
+  max-width: 710px !important;
+  min-width: 710px !important;
+  padding: 8px 18px !important;
   margin: 0 auto !important;
+  box-sizing: border-box !important;
   box-shadow: none !important;
   background-color: #ffffff !important;
+}
+
+.official-sheet.generating-pdf table {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .official-sheet.generating-pdf .official-header {
