@@ -5800,7 +5800,6 @@ function initFormDefaults() {
   }
 
   // Auto-verificación de artículo en Inmueble que Ocupa (ej: 'Edificio...' -> 'el Edificio...')
-  const inmInput = document.getElementById('inmueble');
   if (inmInput) {
     inmInput.addEventListener('blur', () => {
       if (inmInput.value.trim()) {
@@ -6694,10 +6693,10 @@ function handleFormSubmit(event) {
   let estatus = document.getElementById('estatus')?.value || 'Generada para Firma';
 
   // Control de Estatus y Trazabilidad al Guardar
+  const estSelect = document.getElementById('estatus');
   if (editingRecordId) {
     if (estatus === 'Generada para Firma') {
       estatus = 'Modificación';
-      const estSelect = document.getElementById('estatus');
       if (estSelect) {
         estSelect.value = 'Modificación';
         estSelect.classList.add('ring-4', 'ring-amber-500', 'bg-amber-50');
@@ -6706,13 +6705,11 @@ function handleFormSubmit(event) {
       showToast('Constancia en edición: El estatus se actualizó automáticamente a "Modificación".', 'info', 4000);
     } else if (estatus !== 'Modificación' && estatus !== 'Borrador' && estatus !== 'Firmada y Concluida') {
       estatus = 'Modificación';
-      const estSelect = document.getElementById('estatus');
       if (estSelect) estSelect.value = 'Modificación';
     }
   } else {
     if (!isAdminLoggedIn() && estatus === 'Modificación') {
       estatus = 'Generada para Firma';
-      const estSelect = document.getElementById('estatus');
       if (estSelect) estSelect.value = 'Generada para Firma';
     }
   }
