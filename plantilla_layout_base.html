@@ -139,8 +139,17 @@
       <div class="font-bold text-[10pt] mb-1 uppercase tracking-wide text-slate-900 text-left">III. JUSTIFICACIÓN Y MOTIVOS DEL CAMBIO</div>
       <div class="pl-3 space-y-1 text-[10pt]">
         <p class="italic text-[10.5pt] text-slate-700">Se hace constar los siguientes movimientos de carácter administrativo…</p>
-        <div class="text-justify leading-relaxed whitespace-pre-wrap font-normal text-slate-900 uppercase">
-          {{justificacion}}
+        <!-- Cuadro invisible delimitador para forzar división de línea hacia abajo y justificación perfecta sin desbordes -->
+        <div class="cuadro-invisible-justificacion" style="width: 100%; max-width: 100%; box-sizing: border-box;">
+          <table style="width: 100%; border-collapse: collapse; border: none; table-layout: fixed; margin: 0; padding: 0;">
+            <tbody>
+              <tr>
+                <td style="border: none; padding: 0; width: 100%; vertical-align: top; text-align: justify; text-justify: inter-word; overflow-wrap: break-word; word-break: break-word; hyphens: auto;">
+                  <div class="text-justify leading-relaxed whitespace-pre-wrap font-normal text-slate-900 uppercase" style="text-align: justify; text-justify: inter-word; overflow-wrap: break-word; word-break: break-word; line-height: 1.35; margin: 0; padding: 0;">{{justificacion}}</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
