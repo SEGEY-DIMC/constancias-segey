@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Constancias de Cambios - Secretaría de Educación</title>
+  <title>Sistema de Constancias de Cambios - SecretarÃ­a de EducaciÃ³n</title>
   <!-- Tailwind CSS CDN y Paleta Institucional SEGEY -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -31,7 +31,7 @@
               300: '#7cc3fe',
               400: '#44ace1',
               500: '#118cd9',
-              600: '#034ea1', /* Azul Institucional Gobierno Yucatán */
+              600: '#034ea1', /* Azul Institucional Gobierno YucatÃ¡n */
               700: '#023d80',
               800: '#05346a',
               900: '#0a2c58',
@@ -43,32 +43,32 @@
   </script>
   <!-- FontAwesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <!-- Google Fonts: Inter & Tinos (Tipografía oficial) -->
+  <!-- Google Fonts: Inter & Tinos (TipografÃ­a oficial) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lato:ital,wght@0,300;0,400;0,700;1,400&family=Tinos:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-  <!-- Librería para generar y descargar PDF directamente -->
+  <!-- LibrerÃ­a para generar y descargar PDF directamente -->
   <script src="assets/logos_base64.js"></script>
   <script src="html2pdf.bundle.min.js"></script>
-  <link rel="stylesheet" href="styles.css?v=2.9.12">
+  <link rel="stylesheet" href="styles.css?v=2.9.13">
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen font-sans flex flex-col">
 
-  <!-- BARRA DE NAVEGACIÓN SUPERIOR -->
+  <!-- BARRA DE NAVEGACIÃ“N SUPERIOR -->
   <header id="main-header" class="bg-segey-700 text-white shadow-md sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
-        <!-- Logo y Título -->
+        <!-- Logo y TÃ­tulo -->
         <div class="flex items-center space-x-3">
           <div class="w-10 h-10 rounded-lg bg-segey-800 flex items-center justify-center text-white font-bold text-xl shadow">
             <i class="fa-solid fa-file-signature"></i>
           </div>
           <div>
-            <h1 class="text-base sm:text-lg font-bold tracking-tight leading-tight">Secretaría de Educación del Gobierno del Estado de Yucatán</h1>
+            <h1 class="text-base sm:text-lg font-bold tracking-tight leading-tight">SecretarÃ­a de EducaciÃ³n del Gobierno del Estado de YucatÃ¡n</h1>
           </div>
         </div>
 
-        <!-- Pestañas de Navegación -->
+        <!-- PestaÃ±as de NavegaciÃ³n -->
         <nav class="hidden md:flex space-x-1 items-center" id="nav-tabs">
           <button onclick="switchTab('tab-form')" id="btn-tab-form" class="nav-btn active px-3.5 py-2 rounded-md text-sm font-medium transition flex items-center gap-2">
             <i class="fa-solid fa-pen-to-square"></i> Llenar Formato
@@ -76,9 +76,9 @@
           <button onclick="switchTab('tab-preview')" id="btn-tab-preview" class="nav-btn px-3.5 py-2 rounded-md text-sm font-medium transition flex items-center gap-2">
             <i class="fa-solid fa-file-lines"></i> Vista del Documento
           </button>
-          <!-- Bitácora y Control (Exclusivo Administrador) -->
+          <!-- BitÃ¡cora y Control (Exclusivo Administrador) -->
           <button onclick="switchTab('tab-registry')" id="btn-tab-registry" class="nav-btn hidden px-3.5 py-2 rounded-md text-sm font-medium transition flex items-center gap-2">
-            <i class="fa-solid fa-table-list"></i> Bitácora y Control
+            <i class="fa-solid fa-table-list"></i> BitÃ¡cora y Control
             <span id="badge-total-records" class="bg-segey-500 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
           </button>
 
@@ -94,12 +94,12 @@
               <i class="fa-solid fa-lock"></i> Acceso Admin
             </button>
             <div id="admin-logged-in-badge" class="hidden flex items-center gap-2">
-              <span class="text-xs bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 px-2.5 py-1 rounded-md flex items-center gap-1.5 font-semibold" title="Sesión activa">
+              <span class="text-xs bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 px-2.5 py-1 rounded-md flex items-center gap-1.5 font-semibold" title="SesiÃ³n activa">
                 <i class="fa-solid fa-user-shield text-emerald-300"></i>
                 <span id="user-badge-name">Admin</span>
                 <span id="user-badge-role" class="text-[10px] bg-emerald-700/60 text-white px-1.5 py-0.5 rounded font-normal">Admin</span>
               </span>
-              <button onclick="adminLogout()" title="Cerrar sesión" class="px-2.5 py-1 text-xs rounded-lg bg-rose-600/80 hover:bg-rose-700 text-white transition flex items-center gap-1 shadow-xs">
+              <button onclick="adminLogout()" title="Cerrar sesiÃ³n" class="px-2.5 py-1 text-xs rounded-lg bg-rose-600/80 hover:bg-rose-700 text-white transition flex items-center gap-1 shadow-xs">
                 <i class="fa-solid fa-right-from-bracket"></i> Salir
               </button>
             </div>
@@ -108,7 +108,7 @@
       </div>
     </div>
 
-    <!-- Navegación móvil -->
+    <!-- NavegaciÃ³n mÃ³vil -->
     <div class="md:hidden border-t border-emerald-800 bg-[#0a2b31] px-2 py-1.5 flex justify-around items-center text-xs">
       <button onclick="switchTab('tab-form')" id="btn-tab-form-mobile" class="p-2 text-center text-slate-200 hover:text-white">
         <i class="fa-solid fa-pen-to-square block text-base mb-1"></i> Formato
@@ -117,7 +117,7 @@
         <i class="fa-solid fa-file-lines block text-base mb-1"></i> Documento
       </button>
       <button onclick="switchTab('tab-registry')" id="btn-tab-registry-mobile" class="hidden p-2 text-center text-slate-200 hover:text-white">
-        <i class="fa-solid fa-table-list block text-base mb-1"></i> Bitácora
+        <i class="fa-solid fa-table-list block text-base mb-1"></i> BitÃ¡cora
       </button>
       <a href="assets/manual_usuario_constancias.pdf" target="_blank" download="Manual_de_Usuario_Constancias_SEGEY.pdf" class="p-2 text-center text-amber-300 hover:text-white" title="Descargar Instructivo en PDF">
         <i class="fa-solid fa-book-open block text-base mb-1"></i> Manual
@@ -140,8 +140,8 @@
         <div class="flex items-center gap-3">
           <i class="fa-solid fa-circle-info text-blue-600 text-xl"></i>
           <div>
-            <p class="font-semibold text-blue-900 text-sm">Modo de Captura para Áreas</p>
-            <p class="text-xs text-blue-700">Por favor ingrese todos los datos correspondientes. Al guardar, se generará y descargará directamente el archivo PDF oficial listo para su firma.</p>
+            <p class="font-semibold text-blue-900 text-sm">Modo de Captura para Ãreas</p>
+            <p class="text-xs text-blue-700">Por favor ingrese todos los datos correspondientes. Al guardar, se generarÃ¡ y descargarÃ¡ directamente el archivo PDF oficial listo para su firma.</p>
           </div>
         </div>
       </div>
@@ -156,10 +156,10 @@
         <div class="bg-gradient-to-r from-segey-950 via-segey-900 to-yucatan-900 p-6 text-white flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div class="inline-block bg-segey-500/30 text-rose-100 text-xs font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider mb-2">
-              Departamento de Innovación y Mejora Continua
+              Departamento de InnovaciÃ³n y Mejora Continua
             </div>
-            <h2 class="text-xl sm:text-2xl font-bold">Elaboración de Constancia de Cambios</h2>
-            <p class="text-sm text-slate-200 mt-1">Llene la información requerida. Los datos se guardarán en la bitácora institucional y se generará el documento en formato PDF listo para descargar y firmar.</p>
+            <h2 class="text-xl sm:text-2xl font-bold">ElaboraciÃ³n de Constancia de Cambios</h2>
+            <p class="text-sm text-slate-200 mt-1">Llene la informaciÃ³n requerida. Los datos se guardarÃ¡n en la bitÃ¡cora institucional y se generarÃ¡ el documento en formato PDF listo para descargar y firmar.</p>
           </div>
           <div class="flex flex-wrap gap-2">
             <button type="button" onclick="loadSampleData()" class="bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-2 rounded-lg border border-white/20 transition flex items-center gap-1.5">
@@ -178,7 +178,7 @@
         </div>
 
         <form id="constancia-form" onsubmit="event.preventDefault(); return false;" novalidate class="p-6 sm:p-8 space-y-8">
-        <!-- BANNER DE RECUPERACIÓN DE BORRADOR NO GUARDADO -->
+        <!-- BANNER DE RECUPERACIÃ“N DE BORRADOR NO GUARDADO -->
         <div id="draft-recovery-banner" class="hidden bg-sky-50 border-2 border-sky-400 p-4 rounded-xl shadow-xs transition-all mb-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div class="flex items-start gap-3">
@@ -191,7 +191,7 @@
                   <span id="lbl-draft-time" class="text-[11px] font-normal text-sky-700 bg-sky-100 border border-sky-200 px-2 py-0.5 rounded-full">Reciente</span>
                 </p>
                 <p class="text-xs text-sky-800 mt-1" id="lbl-draft-details">
-                  Se detectaron datos no guardados previamente en este navegador. ¿Deseas restaurar la información para continuar capturando?
+                  Se detectaron datos no guardados previamente en este navegador. Â¿Deseas restaurar la informaciÃ³n para continuar capturando?
                 </p>
               </div>
             </div>
@@ -207,7 +207,7 @@
         </div>
 
 
-          <!-- BANNER DE CONSULTA / EDICIÓN DE FOLIO EXISTENTE -->
+          <!-- BANNER DE CONSULTA / EDICIÃ“N DE FOLIO EXISTENTE -->
           <div id="editing-folio-banner" class="hidden bg-amber-50 border-2 border-amber-400 p-4 rounded-xl shadow-sm">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div class="flex items-start gap-3">
@@ -222,8 +222,8 @@
                     </span>
                   </p>
                   <p class="text-xs text-amber-800 mt-1">
-                    • Al modificar cualquier dato del formulario (fecha, hora, áreas, comparecientes, etc.), el estatus cambia automáticamente a <strong>Modificación</strong>.<br>
-                    • Para generar o descargar el PDF oficial, se validará que no haya campos vacíos y se guardará la modificación de forma inmediata.
+                    â€¢ Al modificar cualquier dato del formulario (fecha, hora, Ã¡reas, comparecientes, etc.), el estatus cambia automÃ¡ticamente a <strong>ModificaciÃ³n</strong>.<br>
+                    â€¢ Para generar o descargar el PDF oficial, se validarÃ¡ que no haya campos vacÃ­os y se guardarÃ¡ la modificaciÃ³n de forma inmediata.
                   </p>
                 </div>
               </div>
@@ -232,7 +232,7 @@
                   <i class="fa-solid fa-file-lines"></i> Ver / Reimprimir PDF
                 </button>
                 <button type="button" onclick="cancelarEdicionFolio()" title="Cancelar y volver a nuevo folio libre" class="px-3 py-2 bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-semibold rounded-lg transition flex items-center gap-1">
-                  <i class="fa-solid fa-xmark"></i> Salir de Edición
+                  <i class="fa-solid fa-xmark"></i> Salir de EdiciÃ³n
                 </button>
               </div>
             </div>
@@ -242,26 +242,26 @@
           <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-5">
             <div class="flex items-center gap-2 mb-3">
               <span class="w-7 h-7 rounded-full bg-amber-600 text-white flex items-center justify-center text-xs font-bold">0</span>
-              <h3 class="text-base font-bold text-amber-950">Registro y Control del Área Notificadora</h3>
+              <h3 class="text-base font-bold text-amber-950">Registro y Control del Ãrea Notificadora</h3>
             </div>
             <p class="text-xs text-amber-800 mb-4">
-              Esta sección permite registrar qué departamento o coordinación está solicitando la constancia para el control administrativo de la bitácora.
+              Esta secciÃ³n permite registrar quÃ© departamento o coordinaciÃ³n estÃ¡ solicitando la constancia para el control administrativo de la bitÃ¡cora.
             </p>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Área que Notifica o Elabora <span class="text-red-500">*</span>
+                  Ãrea que Notifica o Elabora <span class="text-red-500">*</span>
                 </label>
                 <select id="areaNotificadoraSelect" onchange="handleAreaSelectChange(this)" required
                   class="w-full text-sm rounded-lg border-slate-300 border p-2.5 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-white">
-                  <option value="" disabled selected>-- Seleccione un área oficial --</option>
-                  <!-- Poblado dinámicamente con catálogo -->
+                  <option value="" disabled selected>-- Seleccione un Ã¡rea oficial --</option>
+                  <!-- Poblado dinÃ¡micamente con catÃ¡logo -->
                 </select>
                 <div id="areaNotificadoraCustomWrapper" class="hidden mt-2">
-                  <input type="text" id="areaNotificadoraCustom" oninput="handleAreaCustomInput(this)" placeholder="Especifique el nombre del área..."
+                  <input type="text" id="areaNotificadoraCustom" oninput="handleAreaCustomInput(this)" placeholder="Especifique el nombre del Ã¡rea..."
                     class="w-full text-xs rounded-lg border-amber-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-amber-50/50">
-                  <p class="text-[10px] text-amber-700 mt-1"><i class="fa-solid fa-circle-info mr-1"></i>Escriba el nombre exacto de la dirección, departamento o coordinación.</p>
+                  <p class="text-[10px] text-amber-700 mt-1"><i class="fa-solid fa-circle-info mr-1"></i>Escriba el nombre exacto de la direcciÃ³n, departamento o coordinaciÃ³n.</p>
                 </div>
                 <input type="hidden" id="areaNotificadora">
               </div>
@@ -275,7 +275,7 @@
                     Enlaces oficiales
                   </span>
                 </div>
-                <!-- Menú desplegable con los Enlaces Oficiales de la Unidad ordenados alfabéticamente -->
+                <!-- MenÃº desplegable con los Enlaces Oficiales de la Unidad ordenados alfabÃ©ticamente -->
                 <select id="selectResponsableCaptura" onchange="handleResponsableCapturaSelect(this)" required
                   class="w-full text-sm rounded-lg border-slate-300 border p-2.5 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-white text-slate-800 font-medium">
                   <option value="" disabled selected>-- Seleccione un Enlace oficial de la Unidad --</option>
@@ -286,7 +286,7 @@
                     class="w-full text-xs rounded-lg border-amber-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-amber-50/50">
                   <p class="text-[10px] text-amber-700 mt-1"><i class="fa-solid fa-circle-info mr-1"></i>Escriba el nombre de quien elabora la solicitud.</p>
                 </div>
-                <!-- Campo con el valor real para el formulario / bitácora -->
+                <!-- Campo con el valor real para el formulario / bitÃ¡cora -->
                 <input type="hidden" id="responsableCaptura">
               </div>
 
@@ -294,7 +294,7 @@
                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                   Folio de Control
                 </label>
-                <input type="text" id="folioControl" placeholder="Se genera automáticamente" readonly
+                <input type="text" id="folioControl" placeholder="Se genera automÃ¡ticamente" readonly
                   class="w-full text-sm rounded-lg border-slate-200 border p-2.5 bg-slate-100 text-slate-600 font-mono font-bold">
               </div>
             </div>
@@ -325,86 +325,86 @@
                   <span class="ml-3 text-sm font-semibold text-slate-800">Cambio de nombre</span>
                 </label>
                 <label class="movimiento-option flex items-center p-3 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-segey-50/50 cursor-pointer transition">
-                  <input type="radio" name="tipoMovimiento" value="Cambio de dependencia jerárquica" class="h-4 w-4 text-segey-700 focus:ring-segey-700">
-                  <span class="ml-3 text-sm font-semibold text-slate-800">Cambio de dependencia jerárquica</span>
+                  <input type="radio" name="tipoMovimiento" value="Cambio de dependencia jerÃ¡rquica" class="h-4 w-4 text-segey-700 focus:ring-segey-700">
+                  <span class="ml-3 text-sm font-semibold text-slate-800">Cambio de dependencia jerÃ¡rquica</span>
                 </label>
               </div>
             </div>
 
             <div>
               <label id="lblNuevaDenominacion" class="block text-xs font-semibold text-slate-700 mb-1">
-                Nombre del Área o Adscripción <span class="text-red-500">*</span>
+                Nombre del Ãrea o AdscripciÃ³n <span class="text-red-500">*</span>
               </label>
 
-              <!-- Menú desplegable dependiente con las áreas vinculadas cuando se elige 'Baja' -->
+              <!-- MenÃº desplegable dependiente con las Ã¡reas vinculadas cuando se elige 'Baja' -->
               <div id="containerSelectAreaBaja" class="hidden mb-2.5 p-3 rounded-xl bg-rose-50/50 border border-rose-200 space-y-1.5 transition-all">
                 <div class="flex items-center justify-between">
                   <label for="selectAreaBaja" class="block text-[11px] font-bold text-rose-800 flex items-center gap-1.5">
-                    <i class="fa-solid fa-folder-minus text-rose-600"></i> Seleccionar Área Oficial a dar de Baja:
+                    <i class="fa-solid fa-folder-minus text-rose-600"></i> Seleccionar Ãrea Oficial a dar de Baja:
                   </label>
                   <span id="badgeAreasBaja" class="text-[10px] bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full font-semibold border border-rose-300">
-                    Áreas vinculadas
+                    Ãreas vinculadas
                   </span>
                 </div>
                 <select id="selectAreaBaja" onchange="handleSelectAreaBaja(this)"
                   class="w-full text-xs rounded-lg border-rose-300 border p-2 focus:ring-2 focus:ring-rose-500 focus:outline-none bg-white text-slate-800 font-semibold">
-                  <option value="">-- Seleccione el Área o Departamento a dar de baja --</option>
+                  <option value="">-- Seleccione el Ãrea o Departamento a dar de baja --</option>
                 </select>
                 <p class="text-[10.5px] text-rose-800 flex items-center gap-1">
-                  <i class="fa-solid fa-circle-info"></i> Al elegir el área, se precarga en la denominación y se vincula automáticamente su Jefe Inmediato en el Apartado II (puedes cambiarlo o editarlo libremente).
+                  <i class="fa-solid fa-circle-info"></i> Al elegir el Ã¡rea, se precarga en la denominaciÃ³n y se vincula automÃ¡ticamente su Jefe Inmediato en el Apartado II (puedes cambiarlo o editarlo libremente).
                 </p>
               </div>
 
-              <!-- Menú desplegable dependiente con las áreas vinculadas cuando se elige 'Cambio de nombre' -->
+              <!-- MenÃº desplegable dependiente con las Ã¡reas vinculadas cuando se elige 'Cambio de nombre' -->
               <div id="containerSelectAreaCambioNombre" class="hidden mb-2.5 p-3 rounded-xl bg-amber-50/50 border border-amber-200 space-y-1.5 transition-all">
                 <div class="flex items-center justify-between">
                   <label for="selectAreaCambioNombre" class="block text-[11px] font-bold text-amber-900 flex items-center gap-1.5">
-                    <i class="fa-solid fa-pen-to-square text-amber-600"></i> Seleccionar Área Oficial que Cambia de Nombre (Nombre Actual):
+                    <i class="fa-solid fa-pen-to-square text-amber-600"></i> Seleccionar Ãrea Oficial que Cambia de Nombre (Nombre Actual):
                   </label>
                   <span id="badgeAreasCambioNombre" class="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold border border-amber-300">
-                    Áreas vinculadas
+                    Ãreas vinculadas
                   </span>
                 </div>
                 <select id="selectAreaCambioNombre" onchange="handleSelectAreaCambioNombre(this)"
                   class="w-full text-xs rounded-lg border-amber-300 border p-2 focus:ring-2 focus:ring-amber-500 focus:outline-none bg-white text-slate-800 font-semibold">
-                  <option value="">-- Primero seleccione el Área que Notifica o Elabora arriba --</option>
+                  <option value="">-- Primero seleccione el Ãrea que Notifica o Elabora arriba --</option>
                 </select>
                 <p class="text-[10.5px] text-amber-800 flex items-center gap-1">
-                  <i class="fa-solid fa-circle-info"></i> Al elegir el área, se asigna como Nombre Actual y se vincula su Jefe Inmediato en el Apartado II (editable libremente).
+                  <i class="fa-solid fa-circle-info"></i> Al elegir el Ã¡rea, se asigna como Nombre Actual y se vincula su Jefe Inmediato en el Apartado II (editable libremente).
                 </p>
               </div>
 
-              <!-- Menú desplegable dependiente con las áreas vinculadas cuando se elige 'Cambio de dependencia jerárquica' -->
+              <!-- MenÃº desplegable dependiente con las Ã¡reas vinculadas cuando se elige 'Cambio de dependencia jerÃ¡rquica' -->
               <div id="containerSelectAreaCambioDep" class="hidden mb-2.5 p-3 rounded-xl bg-purple-50/50 border border-purple-200 space-y-1.5 transition-all">
                 <div class="flex items-center justify-between">
                   <label for="selectAreaCambioDep" class="block text-[11px] font-bold text-purple-900 flex items-center gap-1.5">
-                    <i class="fa-solid fa-arrows-split-up-and-left text-purple-700"></i> Seleccionar Área Oficial a Transferir / Reubicar:
+                    <i class="fa-solid fa-arrows-split-up-and-left text-purple-700"></i> Seleccionar Ãrea Oficial a Transferir / Reubicar:
                   </label>
                   <span id="badgeAreasCambioDep" class="text-[10px] bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full font-semibold border border-purple-300">
-                    Áreas vinculadas
+                    Ãreas vinculadas
                   </span>
                 </div>
                 <select id="selectAreaCambioDep" onchange="handleSelectAreaCambioDep(this)"
                   class="w-full text-xs rounded-lg border-purple-300 border p-2 focus:ring-2 focus:ring-purple-500 focus:outline-none bg-white text-slate-800 font-semibold">
-                  <option value="">-- Primero seleccione el Área que Notifica o Elabora arriba --</option>
+                  <option value="">-- Primero seleccione el Ãrea que Notifica o Elabora arriba --</option>
                 </select>
                 <p class="text-[10.5px] text-purple-800 flex items-center gap-1">
-                  <i class="fa-solid fa-circle-info"></i> Al elegir el área, se asigna como el área a transferir y se vincula su Titular en el Apartado II (editable libremente).
+                  <i class="fa-solid fa-circle-info"></i> Al elegir el Ã¡rea, se asigna como el Ã¡rea a transferir y se vincula su Titular en el Apartado II (editable libremente).
                 </p>
               </div>
 
-              <!-- Primer cuadro de texto: Nombre del Área o Nombre Actual si es Cambio de Nombre -->
+              <!-- Primer cuadro de texto: Nombre del Ãrea o Nombre Actual si es Cambio de Nombre -->
               <textarea id="nuevaDenominacion" rows="2" disabled
-                placeholder="PRIMERO SELECCIONE UN TIPO DE MOVIMIENTO ARRIBA (ALTA, BAJA, CAMBIO DE NOMBRE O CAMBIO DE DEPENDENCIA JERÁRQUICA)..."
+                placeholder="PRIMERO SELECCIONE UN TIPO DE MOVIMIENTO ARRIBA (ALTA, BAJA, CAMBIO DE NOMBRE O CAMBIO DE DEPENDENCIA JERÃRQUICA)..."
                 style="text-transform: uppercase;"
                 oninput="this.value = this.value.toUpperCase();"
                 class="w-full text-sm rounded-lg border-slate-200 border p-3 focus:outline-none uppercase bg-slate-100 text-slate-400 cursor-not-allowed select-none transition-all"></textarea>
 
-              <!-- Menú desplegable de Unidad Administrativa de Destino (exclusivo para 'Cambio de dependencia jerárquica') -->
+              <!-- MenÃº desplegable de Unidad Administrativa de Destino (exclusivo para 'Cambio de dependencia jerÃ¡rquica') -->
               <div id="containerSelectUnidadDestinoCambioDep" class="hidden mt-3 p-3.5 rounded-xl bg-purple-50/60 border border-purple-200 space-y-1.5 transition-all">
                 <div class="flex items-center justify-between">
                   <label for="selectUnidadDestinoCambioDep" class="block text-xs font-bold text-purple-950 flex items-center gap-1.5">
-                    <i class="fa-solid fa-sitemap text-purple-700"></i> Seleccionar Dependencia Jerárquica de Destino (Unidad Administrativa a donde se transfiere): <span class="text-red-500">*</span>
+                    <i class="fa-solid fa-sitemap text-purple-700"></i> Seleccionar Dependencia JerÃ¡rquica de Destino (Unidad Administrativa a donde se transfiere): <span class="text-red-500">*</span>
                   </label>
                   <span id="badgeUnidadDestinoCambioDep" class="text-[10px] bg-purple-100 text-purple-800 font-semibold px-2 py-0.5 rounded-full border border-purple-300">
                     32 Unidades oficiales
@@ -412,10 +412,10 @@
                 </div>
                 <select id="selectUnidadDestinoCambioDep" onchange="handleSelectUnidadDestinoCambioDep(this)"
                   class="w-full text-xs rounded-lg border-purple-300 border p-2.5 focus:ring-2 focus:ring-purple-600 focus:outline-none bg-white text-slate-800 font-semibold">
-                  <option value="" disabled selected>-- Seleccione la Unidad Administrativa a la que se transfiere el Área --</option>
+                  <option value="" disabled selected>-- Seleccione la Unidad Administrativa a la que se transfiere el Ãrea --</option>
                 </select>
                 <p class="text-[10.5px] text-purple-800 flex items-center gap-1">
-                  <i class="fa-solid fa-circle-info"></i> Al elegir la Dependencia de Destino, se vincula automáticamente su Titular en el Apartado II como Titular de Unidad (2) y se actualiza el documento.
+                  <i class="fa-solid fa-circle-info"></i> Al elegir la Dependencia de Destino, se vincula automÃ¡ticamente su Titular en el Apartado II como Titular de Unidad (2) y se actualiza el documento.
                 </p>
               </div>
 
@@ -423,19 +423,19 @@
               <div id="containerNuevoNombre" class="hidden mt-3 space-y-1.5 transition-all">
                 <div class="flex items-center justify-between">
                   <label for="nuevoNombre" class="block text-xs font-bold text-amber-900 flex items-center gap-1.5">
-                    <i class="fa-solid fa-signature text-amber-600"></i> Nuevo Nombre o Denominación Propuesta: <span class="text-red-500">*</span>
+                    <i class="fa-solid fa-signature text-amber-600"></i> Nuevo Nombre o DenominaciÃ³n Propuesta: <span class="text-red-500">*</span>
                   </label>
                   <span class="text-[10px] bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded-full border border-amber-300">
                     Nuevo Nombre
                   </span>
                 </div>
                 <textarea id="nuevoNombre" rows="2"
-                  placeholder="ESPECIFIQUE EL NUEVO NOMBRE O DENOMINACIÓN QUE ADOPTARÁ EL ÁREA..."
+                  placeholder="ESPECIFIQUE EL NUEVO NOMBRE O DENOMINACIÃ“N QUE ADOPTARÃ EL ÃREA..."
                   style="text-transform: uppercase;"
                   oninput="this.value = this.value.toUpperCase();"
                   class="w-full text-sm rounded-lg border-amber-300 border p-3 focus:ring-2 focus:ring-amber-500 focus:outline-none uppercase bg-white"></textarea>
                 <p class="text-[10.5px] text-amber-800 flex items-center gap-1">
-                  <i class="fa-solid fa-circle-info"></i> El nuevo nombre aparecerá en el visualizador y en el PDF oficial justo debajo del nombre actual.
+                  <i class="fa-solid fa-circle-info"></i> El nuevo nombre aparecerÃ¡ en el visualizador y en el PDF oficial justo debajo del nombre actual.
                 </p>
               </div>
             </div>
@@ -450,8 +450,8 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1">Municipio de Yucatán <span class="text-red-500">*</span></label>
-                <input type="text" id="municipio" required placeholder="Ej. Mérida" value="Mérida"
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Municipio de YucatÃ¡n <span class="text-red-500">*</span></label>
+                <input type="text" id="municipio" required placeholder="Ej. MÃ©rida" value="MÃ©rida"
                   class="w-full text-sm rounded-lg border-slate-300 border p-2.5 focus:ring-2 focus:ring-segey-700 focus:outline-none">
               </div>
 
@@ -469,7 +469,7 @@
 
               <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1">Inmueble que Ocupa <span class="text-red-500">*</span></label>
-                <input type="text" id="inmueble" required placeholder="Ej. el Edificio Central de la Secretaría de Educación" value="el Edificio Central de la Secretaría de Educación"
+                <input type="text" id="inmueble" required placeholder="Ej. el Edificio Central de la SecretarÃ­a de EducaciÃ³n" value="el Edificio Central de la SecretarÃ­a de EducaciÃ³n"
                   class="w-full text-sm rounded-lg border-slate-300 border p-2.5 focus:ring-2 focus:ring-segey-700 focus:outline-none">
               </div>
             </div>
@@ -478,7 +478,7 @@
             <div class="mt-4 bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-5">
               <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-2.5 gap-1">
                 <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <i class="fa-solid fa-users text-segey-700"></i> Representantes de la Secretaría de Educación involucrados
+                  <i class="fa-solid fa-users text-segey-700"></i> Representantes de la SecretarÃ­a de EducaciÃ³n involucrados
                 </h4>
                 <span class="text-[11px] text-slate-500 font-medium">Capture el nombre y su cargo en los recuadros correspondientes</span>
               </div>
@@ -492,7 +492,7 @@
                       Titular de Unidad Administrativa (1) <span class="text-red-500">*</span>
                     </label>
                     <span id="badgeTitular1" class="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-semibold border border-emerald-200">
-                      <i class="fa-solid fa-link mr-1"></i>Según Área que Notifica
+                      <i class="fa-solid fa-link mr-1"></i>SegÃºn Ãrea que Notifica
                     </span>
                   </div>
                   <div>
@@ -501,7 +501,7 @@
                     </label>
                     <select id="selectTitularUnidad1" onchange="handleTitularUnidad1Select(this)"
                       class="w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-white text-slate-800 font-medium">
-                      <option value="">-- Seleccione primero el Área que Notifica o Elabora arriba --</option>
+                      <option value="">-- Seleccione primero el Ãrea que Notifica o Elabora arriba --</option>
                     </select>
                   </div>
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-100">
@@ -514,6 +514,7 @@
                       <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">2. Cargo o Puesto:</label>
                       <input type="text" id="titularUnidad1Cargo" required placeholder="Cargo o puesto del Titular 1"
                         class="w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-white text-slate-800">
+                      <p id="msgCargoTitular1" class="hidden"></p>
                     </div>
                   </div>
                   <!-- Alerta de Vacante Titular 1 -->
@@ -521,7 +522,7 @@
                     <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5 text-sm shrink-0"></i>
                     <div>
                       <span class="font-bold">Puesto vacante detectado:</span>
-                      Se detectó vacante el puesto oficial en el catálogo. Especifique el nombre completo y confirme el puesto de la persona en funciones para la firma.
+                      Se detectÃ³ vacante el puesto oficial en el catÃ¡logo. Especifique el nombre completo y confirme el puesto de la persona en funciones para la firma.
                     </div>
                   </div>
                 </div>
@@ -555,6 +556,7 @@
                       <label id="lblTitularUnidad2Cargo" class="block text-[11px] text-slate-500 mb-0.5 font-medium">2. Cargo o Puesto:</label>
                       <input type="text" id="titularUnidad2Cargo" placeholder="Cargo o puesto del Jefe Inmediato"
                         class="w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-white text-slate-800">
+                      <p id="msgCargoTitular2" class="hidden"></p>
                     </div>
                   </div>
                   <!-- Alerta de Vacante Titular 2 / Jefe Inmediato -->
@@ -562,63 +564,64 @@
                     <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5 text-sm shrink-0"></i>
                     <div>
                       <span class="font-bold">Puesto vacante detectado:</span>
-                      Se detectó vacante el puesto oficial en el catálogo. Especifique el nombre completo y confirme el puesto de la persona en funciones para la firma.
+                      Se detectÃ³ vacante el puesto oficial en el catÃ¡logo. Especifique el nombre completo y confirme el puesto de la persona en funciones para la firma.
                     </div>
                   </div>
                 </div>
               </div>
 
-              <!-- Contenedor de Titulares de Área (dinámico: 1 titular o 2 si es Cambio de dependencia jerárquica) -->
+              <!-- Contenedor de Titulares de Ãrea (dinÃ¡mico: 1 titular o 2 si es Cambio de dependencia jerÃ¡rquica) -->
               <div id="wrapperTitularesArea" class="space-y-4">
-                <!-- Titular de Área (1) -->
+                <!-- Titular de Ãrea (1) -->
                 <div id="containerTitularArea1" class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-3 shadow-xs">
                   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                     <label id="lblTitularArea1" class="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                      <i class="fa-solid fa-user-tie text-segey-700"></i> Titular de Área <span class="text-red-500">*</span>
+                      <i class="fa-solid fa-user-tie text-segey-700"></i> Titular de Ãrea <span class="text-red-500">*</span>
                     </label>
                     <span id="badgeAreaSubordinados" class="text-[10.5px] bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full font-medium">
-                      <i class="fa-solid fa-filter text-slate-400 mr-1"></i>Seleccione el Área que Notifica o Elabora arriba
+                      <i class="fa-solid fa-filter text-slate-400 mr-1"></i>Seleccione el Ãrea que Notifica o Elabora arriba
                     </span>
                   </div>
 
-                  <!-- Menú desplegable dependiente (se oculta automáticamente si el movimiento es Alta) -->
+                  <!-- MenÃº desplegable dependiente (se oculta automÃ¡ticamente si el movimiento es Alta) -->
                   <div id="containerSelectTitularArea">
                     <label for="selectTitularArea" class="block text-[11px] text-slate-600 mb-1 font-semibold flex items-center gap-1">
-                      <i class="fa-solid fa-list-check text-segey-700"></i> Seleccionar Puesto y Subordinado del Área:
+                      <i class="fa-solid fa-list-check text-segey-700"></i> Seleccionar Puesto y Subordinado del Ãrea:
                     </label>
                     <select id="selectTitularArea" onchange="handleTitularAreaSelect(this)" disabled
                       class="w-full text-xs rounded-lg border-slate-300 border p-2.5 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-slate-50 text-slate-700 font-medium">
-                      <option value="">-- Primero elija el Área que Notifica o Elabora arriba --</option>
+                      <option value="">-- Primero elija el Ãrea que Notifica o Elabora arriba --</option>
                     </select>
                   </div>
 
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 border-t border-slate-100">
                     <div>
                       <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">1. Nombre Completo:</label>
-                      <input type="text" id="titularAreaNombre" required placeholder="Nombre completo del Titular del Área"
+                      <input type="text" id="titularAreaNombre" required placeholder="Nombre completo del Titular del Ãrea"
                         class="w-full text-sm rounded-lg border-slate-300 border p-2.5 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-white">
                     </div>
                     <div>
                       <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">2. Cargo o Puesto:</label>
-                      <input type="text" id="titularAreaCargo" required placeholder="Cargo o puesto del Titular del Área"
+                      <input type="text" id="titularAreaCargo" required placeholder="Cargo o puesto del Titular del Ãrea"
                         class="w-full text-xs rounded-lg border-slate-300 border p-2.5 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-white text-slate-800">
+                      <p id="msgCargoArea1" class="hidden"></p>
                     </div>
                   </div>
-                  <!-- Alerta de Vacante Titular de Área -->
+                  <!-- Alerta de Vacante Titular de Ãrea -->
                   <div id="alertaVacanteArea" class="hidden bg-amber-50 border border-amber-300 text-amber-900 p-2.5 rounded-lg text-xs flex items-start gap-2 shadow-2xs transition-all">
                     <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5 text-sm shrink-0"></i>
                     <div>
                       <span class="font-bold">Puesto vacante detectado:</span>
-                      Se detectó vacante el puesto oficial en el catálogo. Especifique el nombre completo y confirme el puesto de la persona en funciones para la firma.
+                      Se detectÃ³ vacante el puesto oficial en el catÃ¡logo. Especifique el nombre completo y confirme el puesto de la persona en funciones para la firma.
                     </div>
                   </div>
                 </div>
 
-                <!-- Titular de Área (2) - Exclusivo para 'Cambio de dependencia jerárquica' -->
+                <!-- Titular de Ãrea (2) - Exclusivo para 'Cambio de dependencia jerÃ¡rquica' -->
                 <div id="containerTitularArea2" class="hidden bg-emerald-50/40 p-3.5 rounded-xl border border-emerald-300 space-y-3 shadow-xs transition-all ring-1 ring-emerald-200">
                   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                     <label id="lblTitularArea2" class="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                      <i class="fa-solid fa-user-tie text-emerald-700"></i> Titular de Área (2) <span class="text-red-500">*</span>
+                      <i class="fa-solid fa-user-tie text-emerald-700"></i> Titular de Ãrea (2) <span class="text-red-500">*</span>
                     </label>
                     <span id="badgeAreaSubordinados2" class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold shadow-2xs">
                       <i class="fa-solid fa-arrow-right-arrow-left mr-1"></i>Dependencia de Destino (2)
@@ -631,28 +634,29 @@
                     </label>
                     <select id="selectTitularArea2" onchange="handleTitularArea2Select(this)"
                       class="w-full text-xs rounded-lg border-emerald-300 border p-2.5 focus:ring-2 focus:ring-emerald-600 focus:outline-none bg-white text-slate-800 font-medium">
-                      <option value="">-- Primero elija la Dependencia Jerárquica de Destino arriba --</option>
+                      <option value="">-- Primero elija la Dependencia JerÃ¡rquica de Destino arriba --</option>
                     </select>
                   </div>
 
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 border-t border-emerald-100">
                     <div>
                       <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">1. Nombre Completo:</label>
-                      <input type="text" id="titularArea2Nombre" placeholder="Nombre completo del Titular del Área de Destino"
+                      <input type="text" id="titularArea2Nombre" placeholder="Nombre completo del Titular del Ãrea de Destino"
                         class="w-full text-sm rounded-lg border-slate-300 border p-2.5 focus:ring-2 focus:ring-emerald-600 focus:outline-none bg-white">
                     </div>
                     <div>
                       <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">2. Cargo o Puesto:</label>
-                      <input type="text" id="titularArea2Cargo" placeholder="Cargo o puesto del Titular del Área de Destino"
+                      <input type="text" id="titularArea2Cargo" placeholder="Cargo o puesto del Titular del Ãrea de Destino"
                         class="w-full text-xs rounded-lg border-slate-300 border p-2.5 focus:ring-2 focus:ring-emerald-600 focus:outline-none bg-white text-slate-800">
+                      <p id="msgCargoArea2" class="hidden"></p>
                     </div>
                   </div>
-                  <!-- Alerta de Vacante Titular de Área (2) -->
+                  <!-- Alerta de Vacante Titular de Ãrea (2) -->
                   <div id="alertaVacanteArea2" class="hidden bg-amber-50 border border-amber-300 text-amber-900 p-2.5 rounded-lg text-xs flex items-start gap-2 shadow-2xs transition-all">
                     <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5 text-sm shrink-0"></i>
                     <div>
                       <span class="font-bold">Puesto vacante detectado:</span>
-                      Se detectó vacante el puesto oficial en el catálogo. Especifique el nombre completo y confirme el puesto de la persona en funciones para la firma.
+                      Se detectÃ³ vacante el puesto oficial en el catÃ¡logo. Especifique el nombre completo y confirme el puesto de la persona en funciones para la firma.
                     </div>
                   </div>
                 </div>
@@ -667,16 +671,16 @@
                       <i class="fa-solid fa-users text-segey-700"></i> Testigo (1) <span class="text-red-500">*</span>
                     </label>
                     <span id="badgeTestigo1" class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
-                      <i class="fa-solid fa-filter text-slate-400 mr-1"></i>Según Área que Notifica
+                      <i class="fa-solid fa-filter text-slate-400 mr-1"></i>SegÃºn Ãrea que Notifica
                     </span>
                   </div>
                   <div>
                     <label for="selectTestigo1" class="block text-[11px] text-slate-600 mb-0.5 font-semibold">
-                      Seleccionar Testigo (1) del Área:
+                      Seleccionar Testigo (1) del Ãrea:
                     </label>
                     <select id="selectTestigo1" onchange="handleTestigoSelect(this, 1)"
                       class="w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-white text-slate-800 font-medium">
-                      <option value="">-- Primero elija el Área que Notifica o Elabora arriba --</option>
+                      <option value="">-- Primero elija el Ãrea que Notifica o Elabora arriba --</option>
                     </select>
                   </div>
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-100">
@@ -686,9 +690,10 @@
                         class="w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-white">
                     </div>
                     <div>
-                      <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">2. Cargo o Adscripción:</label>
-                      <input type="text" id="testigo1Cargo" required placeholder="Cargo o función institucional"
+                      <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">2. Cargo o AdscripciÃ³n:</label>
+                      <input type="text" id="testigo1Cargo" required placeholder="Cargo o funciÃ³n institucional"
                         class="w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-slate-50 text-slate-700">
+                      <p id="msgCargoTestigo1" class="hidden"></p>
                     </div>
                   </div>
                 </div>
@@ -700,7 +705,7 @@
                       <i class="fa-solid fa-users text-segey-700"></i> Testigo (2) <span class="text-red-500">*</span>
                     </label>
                     <span id="badgeTestigo2" class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
-                      <i class="fa-solid fa-filter text-slate-400 mr-1"></i>Según Área / Destino
+                      <i class="fa-solid fa-filter text-slate-400 mr-1"></i>SegÃºn Ãrea / Destino
                     </span>
                   </div>
                   <div>
@@ -709,7 +714,7 @@
                     </label>
                     <select id="selectTestigo2" onchange="handleTestigoSelect(this, 2)"
                       class="w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-white text-slate-800 font-medium">
-                      <option value="">-- Primero elija el Área que Notifica o Elabora arriba --</option>
+                      <option value="">-- Primero elija el Ãrea que Notifica o Elabora arriba --</option>
                     </select>
                   </div>
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-100">
@@ -719,9 +724,10 @@
                         class="w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-white">
                     </div>
                     <div>
-                      <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">2. Cargo o Adscripción:</label>
-                      <input type="text" id="testigo2Cargo" placeholder="Cargo o función institucional"
+                      <label class="block text-[11px] text-slate-500 mb-0.5 font-medium">2. Cargo o AdscripciÃ³n:</label>
+                      <input type="text" id="testigo2Cargo" placeholder="Cargo o funciÃ³n institucional"
                         class="w-full text-xs rounded-lg border-slate-300 border p-2 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-slate-50 text-slate-700">
+                      <p id="msgCargoTestigo2" class="hidden"></p>
                     </div>
                   </div>
                 </div>
@@ -729,26 +735,26 @@
             </div>
           </div>
 
-          <!-- III. JUSTIFICACIÓN Y MOTIVOS DEL CAMBIO -->
+          <!-- III. JUSTIFICACIÃ“N Y MOTIVOS DEL CAMBIO -->
           <div class="space-y-4">
             <div class="flex items-center gap-2 pb-2 border-b border-slate-200">
               <span class="w-7 h-7 rounded-full bg-segey-700 text-white flex items-center justify-center text-xs font-bold">III</span>
-              <h3 class="text-lg font-bold text-slate-900">III. JUSTIFICACIÓN Y MOTIVOS DEL CAMBIO</h3>
+              <h3 class="text-lg font-bold text-slate-900">III. JUSTIFICACIÃ“N Y MOTIVOS DEL CAMBIO</h3>
             </div>
 
             <div>
               <label class="block text-xs font-semibold text-slate-700 mb-1">
-                Movimientos de carácter administrativo <span class="text-red-500">*</span>
+                Movimientos de carÃ¡cter administrativo <span class="text-red-500">*</span>
               </label>
               <p class="text-xs text-slate-500 mb-2">
-                Detalle las razones operativas, normativas, estructurales o presupuestales que motivan y sustentan la modificación de la unidad administrativa:
+                Detalle las razones operativas, normativas, estructurales o presupuestales que motivan y sustentan la modificaciÃ³n de la unidad administrativa:
               </p>
 
-              <!-- Menú desplegable con opciones predefinidas según Tipo de Movimiento -->
+              <!-- MenÃº desplegable con opciones predefinidas segÃºn Tipo de Movimiento -->
               <div id="containerJustificacionesPredefinidas" class="mb-3 p-3 rounded-xl bg-purple-50/50 border border-purple-200 space-y-1.5 transition-all">
                 <div class="flex items-center justify-between">
                   <label for="selectJustificacionPredefinida" class="block text-[11px] font-bold text-purple-900 flex items-center gap-1.5">
-                    <i class="fa-solid fa-wand-magic-sparkles text-purple-600"></i> Seleccionar Motivo o Justificación Predefinida:
+                    <i class="fa-solid fa-wand-magic-sparkles text-purple-600"></i> Seleccionar Motivo o JustificaciÃ³n Predefinida:
                   </label>
                   <span id="badgeTotalJustificaciones" class="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-semibold border border-purple-300">
                     Opciones predefinidas
@@ -756,23 +762,23 @@
                 </div>
                 <select id="selectJustificacionPredefinida" onchange="handleSelectJustificacionPredefinida(this)"
                   class="w-full text-xs rounded-lg border-purple-300 border p-2 focus:ring-2 focus:ring-purple-500 focus:outline-none bg-white text-slate-800 font-semibold">
-                  <option value="">-- Seleccione una opción predefinida para autocompletar --</option>
-                  <option value="__OTRO__">✏️ Otros (describir manualmente en el cuadro inferior)...</option>
+                  <option value="">-- Seleccione una opciÃ³n predefinida para autocompletar --</option>
+                  <option value="__OTRO__">âœï¸ Otros (describir manualmente en el cuadro inferior)...</option>
                 </select>
                 <p id="hintJustificacionPredefinida" class="text-[10.5px] text-purple-700 flex items-center gap-1">
-                  <i class="fa-solid fa-circle-info"></i> Al elegir una opción, se copia al cuadro inferior y se deberá justificar la selección. Seleccione "Otros" para describir libremente si no encuentra la que aplique.
+                  <i class="fa-solid fa-circle-info"></i> Al elegir una opciÃ³n, se copia al cuadro inferior y se deberÃ¡ justificar la selecciÃ³n. Seleccione "Otros" para describir libremente si no encuentra la que aplique.
                 </p>
               </div>
 
               <div class="relative space-y-1">
                 <textarea id="justificacion" rows="4" required maxlength="350" disabled
-                  placeholder="🔒 Seleccione primero una opción del menú superior (o elija 'Otros') para escribir la justificación..."
+                  placeholder="ðŸ”’ Seleccione primero una opciÃ³n del menÃº superior (o elija 'Otros') para escribir la justificaciÃ³n..."
                   style="text-transform: uppercase;"
                   oninput="this.value = this.value.toUpperCase(); if (window.updateJustificacionCharCounter) window.updateJustificacionCharCounter();"
                   class="w-full text-sm rounded-lg border-slate-300 border p-3 focus:ring-2 focus:ring-segey-700 focus:outline-none leading-relaxed uppercase transition-colors bg-slate-100 cursor-not-allowed text-slate-400 border-dashed"></textarea>
                 <div class="flex items-center justify-between text-[11px] px-1 text-slate-500">
                   <span id="hint-justificacion-chars" class="flex items-center gap-1 text-slate-500">
-                    <i class="fa-solid fa-align-left text-slate-400"></i> Límite establecido: máximo 350 caracteres
+                    <i class="fa-solid fa-align-left text-slate-400"></i> LÃ­mite establecido: mÃ¡ximo 350 caracteres
                   </span>
                   <span id="badge-justificacion-chars" class="font-mono text-xs font-semibold px-2 py-0.5 rounded border transition-colors bg-slate-100 text-slate-600 border-slate-200">
                     <span id="count-justificacion-chars">0</span> / 350 caracteres
@@ -790,26 +796,26 @@
             </div>
 
             <div class="bg-slate-100 p-4 rounded-xl text-xs text-slate-600 italic">
-              "Una vez expresado lo anterior y al no haber más hechos que hacer constar, se da por concluida la presente, firmando al calce para su debida constancia y manifestando su entera conformidad los involucrados, siendo el mismo día y año."
+              "Una vez expresado lo anterior y al no haber mÃ¡s hechos que hacer constar, se da por concluida la presente, firmando al calce para su debida constancia y manifestando su entera conformidad los involucrados, siendo el mismo dÃ­a y aÃ±o."
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <div class="flex items-center justify-between mb-1">
-                  <label class="block text-xs font-semibold text-slate-700">Estatus del Trámite <span class="text-red-500">*</span></label>
+                  <label class="block text-xs font-semibold text-slate-700">Estatus del TrÃ¡mite <span class="text-red-500">*</span></label>
                   <span id="badge-estatus-rol" class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
                     <i class="fa-solid fa-user-pen mr-1"></i>Capturista
                   </span>
                 </div>
                 <select id="estatus" class="w-full text-sm rounded-lg border-slate-300 border p-2.5 focus:ring-2 focus:ring-segey-700 focus:outline-none bg-white font-medium">
                   <option value="Generada para Firma" selected>Generada (Listo para Firmar)</option>
-                  <option value="Modificación" disabled class="text-slate-400 bg-slate-50 italic">🔒 Modificación (Disponible solo al cargar un folio guardado)</option>
-                  <option value="Borrador">Borrador (En proceso de integración)</option>
-                  <option value="Firmada y Concluida" disabled class="text-slate-400 bg-slate-50">🔒 Firmada y Concluida (Exclusivo Administrador tras firmas físicas)</option>
-                  <option value="Inactivo" disabled class="text-slate-400 bg-slate-50">🔒 Inactivo (Exclusivo Administrador para cancelar/reactivar)</option>
+                  <option value="ModificaciÃ³n" disabled class="text-slate-400 bg-slate-50 italic">ðŸ”’ ModificaciÃ³n (Disponible solo al cargar un folio guardado)</option>
+                  <option value="Borrador">Borrador (En proceso de integraciÃ³n)</option>
+                  <option value="Firmada y Concluida" disabled class="text-slate-400 bg-slate-50">ðŸ”’ Firmada y Concluida (Exclusivo Administrador tras firmas fÃ­sicas)</option>
+                  <option value="Inactivo" disabled class="text-slate-400 bg-slate-50">ðŸ”’ Inactivo (Exclusivo Administrador para cancelar/reactivar)</option>
                 </select>
                 <p id="estatus-admin-hint" class="text-[10px] text-slate-500 mt-1">
-                  <i class="fa-solid fa-circle-info mr-1"></i>Trámites nuevos inician como <strong>Generada (Listo para Firmar)</strong>. Si edita un folio existente, seleccione <strong>Modificación</strong>.
+                  <i class="fa-solid fa-circle-info mr-1"></i>TrÃ¡mites nuevos inician como <strong>Generada (Listo para Firmar)</strong>. Si edita un folio existente, seleccione <strong>ModificaciÃ³n</strong>.
                 </p>
               </div>
 
@@ -821,7 +827,7 @@
             </div>
           </div>
 
-          <!-- BOTONES DE ACCIÓN -->
+          <!-- BOTONES DE ACCIÃ“N -->
           <div class="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-end gap-3">
             
           <div class="flex items-center gap-2 text-xs text-slate-500 order-last sm:order-first mt-3 sm:mt-0" id="autosave-status-container">
@@ -841,7 +847,7 @@
     </section>
 
     <!-- ============================================================= -->
-    <!-- TAB 2: VISTA DEL DOCUMENTO (SIN CUADROS NI LÍNEAS DE TABLA)   -->
+    <!-- TAB 2: VISTA DEL DOCUMENTO (SIN CUADROS NI LÃNEAS DE TABLA)   -->
     <!-- ============================================================= -->
     <section id="tab-preview" class="tab-content hidden">
 
@@ -853,7 +859,7 @@
           </div>
           <div>
             <h3 class="text-sm font-bold text-slate-800">Vista del Documento Oficial</h3>
-            <p class="text-xs text-slate-500">Diseño institucional sin cuadros ni líneas de tabla, listo para descarga directa en PDF.</p>
+            <p class="text-xs text-slate-500">DiseÃ±o institucional sin cuadros ni lÃ­neas de tabla, listo para descarga directa en PDF.</p>
           </div>
         </div>
 
@@ -876,13 +882,13 @@
           <div>
             <span class="font-bold text-rose-900 block sm:inline">Formulario incompleto:</span>
             <span id="banner-preview-incompleto-texto" class="text-rose-800">
-              Hay campos obligatorios vacíos en el formulario. La descarga del PDF oficial está bloqueada hasta completarlos.
+              Hay campos obligatorios vacÃ­os en el formulario. La descarga del PDF oficial estÃ¡ bloqueada hasta completarlos.
             </span>
           </div>
         </div>
         <div class="flex items-center gap-2 self-end sm:self-auto shrink-0">
           <button type="button" onclick="mostrarModalCamposVacios(obtenerCamposVaciosFormulario())" class="px-3 py-1.5 bg-white border border-rose-300 hover:bg-rose-100 text-rose-800 font-bold rounded-lg transition text-xs shadow-2xs flex items-center gap-1.5">
-            <i class="fa-solid fa-list-check"></i> Ver campos vacíos
+            <i class="fa-solid fa-list-check"></i> Ver campos vacÃ­os
           </button>
           <button type="button" onclick="irACompletarCamposVacios()" class="px-3 py-1.5 bg-rose-700 hover:bg-rose-800 text-white font-bold rounded-lg transition text-xs shadow-xs flex items-center gap-1.5">
             <i class="fa-solid fa-pen-to-square"></i> Completar formulario
@@ -895,22 +901,22 @@
         <div id="print-sheet" class="official-sheet">
 
           <!-- ============================================================== -->
-          <!-- ENCABEZADO OFICIAL SEGEY (IDÉNTICO AL FORMATO WORD)           -->
+          <!-- ENCABEZADO OFICIAL SEGEY (IDÃ‰NTICO AL FORMATO WORD)           -->
           <!-- ============================================================== -->
           <div class="official-header mb-3">
             <table style="width: 100%; border-collapse: collapse; border: 1px solid #A6A6A6; font-family: 'Lato', Arial, sans-serif;">
               <tr>
-                <!-- Columna 1: Escudo de Yucatán -->
+                <!-- Columna 1: Escudo de YucatÃ¡n -->
                 <td style="width: 25%; text-align: center; vertical-align: middle; padding: 6px 8px; border-right: 1px solid #A6A6A6; border-bottom: 1px solid #A6A6A6;">
-                  <img src="data:image/png;base64,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" alt="Gobierno del Estado de Yucatán" style="max-height: 48px; max-width: 135px; margin: 0 auto; display: block;" />
+                  <img src="data:image/png;base64,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" alt="Gobierno del Estado de YucatÃ¡n" style="max-height: 48px; max-width: 135px; margin: 0 auto; display: block;" />
                 </td>
                 <!-- Columna 2: Textos Institucionales -->
                 <td style="width: 53%; text-align: center; vertical-align: middle; padding: 6px 10px; border-right: 1px solid #A6A6A6; border-bottom: 1px solid #A6A6A6;">
                   <div style="font-size: 13px; font-weight: bold; color: #111827; letter-spacing: 0.3px; line-height: 1.25; font-family: 'Lato', Arial, sans-serif; text-transform: uppercase;">
-                    SECRETARÍA DE EDUCACIÓN
+                    SECRETARÃA DE EDUCACIÃ“N
                   </div>
                   <div style="font-size: 10.5px; color: #374151; margin-top: 2px; font-family: 'Lato', Arial, sans-serif;">
-                    Dirección de Administración y Finanzas
+                    DirecciÃ³n de AdministraciÃ³n y Finanzas
                   </div>
                 </td>
                 <!-- Columna 3: Logo SEGEY -->
@@ -919,9 +925,9 @@
                 </td>
               </tr>
               <tr>
-                <!-- Fila 2: Título Oficial de la Constancia -->
+                <!-- Fila 2: TÃ­tulo Oficial de la Constancia -->
                 <td colspan="3" style="text-align: center; vertical-align: middle; padding: 6px 10px; font-size: 11px; font-weight: bold; color: #111827; background-color: #ffffff; font-family: 'Lato', Arial, sans-serif;">
-                  Constancia de cambios de denominación o dependencia jerárquica en las unidades administrativas
+                  Constancia de cambios de denominaciÃ³n o dependencia jerÃ¡rquica en las unidades administrativas
                 </td>
               </tr>
             </table>
@@ -941,9 +947,9 @@
             <div>
               <div class="font-bold text-[10pt] mb-1 uppercase tracking-wide text-slate-900 text-left">I. TIPO DE CAMBIO QUE DETERMINA LA UNIDAD ADMINISTRATIVA</div>
               <div class="pl-3 space-y-1 text-[10pt] text-left">
-                <p>Se determinó la modificación conforme a lo siguiente:</p>
+                <p>Se determinÃ³ la modificaciÃ³n conforme a lo siguiente:</p>
                 <div class="grid grid-cols-12 gap-1 items-center my-0.5 text-[10pt]">
-                  <div class="col-span-12 sm:col-span-3 font-bold">• Tipo de movimiento:</div>
+                  <div class="col-span-12 sm:col-span-3 font-bold">â€¢ Tipo de movimiento:</div>
                   <div class="col-span-12 sm:col-span-9 flex flex-wrap gap-x-4 gap-y-1 items-center">
                     <span style="white-space: nowrap; display: inline-block;">
                       <span id="chk-alta" class="font-mono font-bold" style="white-space: pre;">[ &nbsp; ]</span>&nbsp;Alta
@@ -955,13 +961,13 @@
                       <span id="chk-nombre" class="font-mono font-bold" style="white-space: pre;">[ &nbsp; ]</span>&nbsp;Cambio de nombre
                     </span>
                     <span style="white-space: nowrap; display: inline-block;">
-                      <span id="chk-jerarquica" class="font-mono font-bold" style="white-space: pre;">[ &nbsp; ]</span>&nbsp;Cambio de dependencia jerárquica
+                      <span id="chk-jerarquica" class="font-mono font-bold" style="white-space: pre;">[ &nbsp; ]</span>&nbsp;Cambio de dependencia jerÃ¡rquica
                     </span>
                   </div>
                 </div>
                 <div>
-                  <span class="font-bold">• Nombre del área o adscripción:</span>
-                  <span id="doc-nueva-denominacion" class="inline font-normal ml-1 text-slate-900 uppercase">Nombre del área o adscripción determinada...</span>
+                  <span class="font-bold">â€¢ Nombre del Ã¡rea o adscripciÃ³n:</span>
+                  <span id="doc-nueva-denominacion" class="inline font-normal ml-1 text-slate-900 uppercase">Nombre del Ã¡rea o adscripciÃ³n determinada...</span>
                 </div>
               </div>
             </div>
@@ -970,7 +976,7 @@
             <div>
               <div class="font-bold text-[10pt] mb-1 uppercase tracking-wide text-slate-900 text-left">II. GENERALES</div>
               <p class="text-justify mb-2 leading-relaxed">
-                En el municipio de <span id="doc-municipio" class="font-bold">Mérida</span>, del Estado de Yucatán, siendo las <span id="doc-hora" class="font-bold">10</span> horas con <span id="doc-minutos" class="font-bold">00</span> minutos del día <span id="doc-dia" class="font-bold">15</span> del mes de <span id="doc-mes" class="font-bold">Noviembre</span> del año <span id="doc-anio" class="font-bold">2026</span>, constituidos en el inmueble que ocupa <span id="doc-inmueble" class="font-bold">el Edificio Central de la Secretaría de Educación</span> ubicada en domicilio conocido, se encuentran reunidos los siguientes representantes de la Secretaría de Educación involucrados:
+                En el municipio de <span id="doc-municipio" class="font-bold">MÃ©rida</span>, del Estado de YucatÃ¡n, siendo las <span id="doc-hora" class="font-bold">10</span> horas con <span id="doc-minutos" class="font-bold">00</span> minutos del dÃ­a <span id="doc-dia" class="font-bold">15</span> del mes de <span id="doc-mes" class="font-bold">Noviembre</span> del aÃ±o <span id="doc-anio" class="font-bold">2026</span>, constituidos en el inmueble que ocupa <span id="doc-inmueble" class="font-bold">el Edificio Central de la SecretarÃ­a de EducaciÃ³n</span> ubicada en domicilio conocido, se encuentran reunidos los siguientes representantes de la SecretarÃ­a de EducaciÃ³n involucrados:
               </p>
 
               <!-- Comparecientes con Nombre y Cargo capturados por separado -->
@@ -984,9 +990,9 @@
                 </div>
 
                 <div class="grid grid-cols-12 gap-2 items-start">
-                  <div class="col-span-5 font-bold text-slate-800">Titular de Área:</div>
+                  <div class="col-span-5 font-bold text-slate-800">Titular de Ãrea:</div>
                   <div class="col-span-7 font-normal text-slate-900">
-                    <span id="doc-titular-area" class="font-normal text-slate-900">Nombre del Titular del Área</span>
+                    <span id="doc-titular-area" class="font-normal text-slate-900">Nombre del Titular del Ãrea</span>
                   </div>
                 </div>
 
@@ -1000,13 +1006,13 @@
               </div>
             </div>
 
-            <!-- APARTADO III. JUSTIFICACIÓN Y MOTIVOS DEL CAMBIO -->
+            <!-- APARTADO III. JUSTIFICACIÃ“N Y MOTIVOS DEL CAMBIO -->
             <div>
-              <div class="font-bold text-[10pt] mb-1 uppercase tracking-wide text-slate-900 text-left">III. JUSTIFICACIÓN Y MOTIVOS DEL CAMBIO</div>
+              <div class="font-bold text-[10pt] mb-1 uppercase tracking-wide text-slate-900 text-left">III. JUSTIFICACIÃ“N Y MOTIVOS DEL CAMBIO</div>
               <div class="pl-3 space-y-1 text-[10pt]">
-                <p class="italic text-[10.5pt] text-slate-700">Se hace constar los siguientes movimientos de carácter administrativo…</p>
+                <p class="italic text-[10.5pt] text-slate-700">Se hace constar los siguientes movimientos de carÃ¡cter administrativoâ€¦</p>
                 <div id="doc-justificacion" class="text-justify leading-relaxed whitespace-pre-wrap font-normal text-slate-900 uppercase">
-                  Texto explicativo de la justificación administrativa...
+                  Texto explicativo de la justificaciÃ³n administrativa...
                 </div>
               </div>
             </div>
@@ -1015,7 +1021,7 @@
             <div class="page-break-avoid">
               <div class="font-bold text-[10pt] mb-1 uppercase tracking-wide text-slate-900 text-left">IV. CIERRE</div>
               <p class="text-justify mb-4 leading-relaxed text-[10pt]">
-                Una vez expresado lo anterior y al no haber más hechos que hacer constar, se da por concluida la presente, firmando al calce para su debida constancia y manifestando su entera conformidad los involucrados, siendo el mismo día y año.
+                Una vez expresado lo anterior y al no haber mÃ¡s hechos que hacer constar, se da por concluida la presente, firmando al calce para su debida constancia y manifestando su entera conformidad los involucrados, siendo el mismo dÃ­a y aÃ±o.
               </p>
 
               <!-- ESPACIO DE FIRMAS CON ESPACIO AMPLIO Y RAZONABLE PARA FIRMAR -->
@@ -1038,24 +1044,24 @@
                   </div>
                 </div>
 
-                <!-- Fila 2: Titular de Área al centro (visible solo en Cambio de Dependencia Jerárquica) -->
+                <!-- Fila 2: Titular de Ãrea al centro (visible solo en Cambio de Dependencia JerÃ¡rquica) -->
                 <div id="sign-row-titular-area-center" class="text-center pt-2 hidden">
                   <div class="w-72 mx-auto border-t border-slate-900 pt-1.5">
-                    <div class="font-bold uppercase text-[10.5px] tracking-tight">Titular de Área</div>
-                    <div id="sign-titular-area-nombre" class="text-slate-900 text-[10.5px] mt-0.5 font-bold">Nombre Titular Área</div>
-                    <div id="sign-titular-area-cargo" class="text-slate-600 text-[9.5px] leading-tight mt-0.5">Cargo Titular Área</div>
+                    <div class="font-bold uppercase text-[10.5px] tracking-tight">Titular de Ãrea</div>
+                    <div id="sign-titular-area-nombre" class="text-slate-900 text-[10.5px] mt-0.5 font-bold">Nombre Titular Ãrea</div>
+                    <div id="sign-titular-area-cargo" class="text-slate-600 text-[9.5px] leading-tight mt-0.5">Cargo Titular Ãrea</div>
                   </div>
                 </div>
 
                 <!-- Fila inferior: 2 columnas -->
-                <!-- En Alta/Baja/Cambio de nombre: Izq: Titular de Área | Der: Testigo (1) -->
-                <!-- En Cambio de dependencia jerárquica: Izq: Testigo (1) | Der: Testigo (2) -->
+                <!-- En Alta/Baja/Cambio de nombre: Izq: Titular de Ãrea | Der: Testigo (1) -->
+                <!-- En Cambio de dependencia jerÃ¡rquica: Izq: Testigo (1) | Der: Testigo (2) -->
                 <div class="grid grid-cols-2 gap-8 text-center pt-2">
                   <div>
                     <div class="w-11/12 mx-auto border-t border-slate-900 pt-1.5">
-                      <div id="sign-bottom-left-header" class="font-bold uppercase text-[10.5px] tracking-tight">Titular de Área</div>
-                      <div id="sign-titular-area-bottom-nombre" class="text-slate-900 text-[10.5px] mt-0.5 font-bold">Nombre Titular Área</div>
-                      <div id="sign-titular-area-bottom-cargo" class="text-slate-600 text-[9.5px] leading-tight mt-0.5">Cargo Titular Área</div>
+                      <div id="sign-bottom-left-header" class="font-bold uppercase text-[10.5px] tracking-tight">Titular de Ãrea</div>
+                      <div id="sign-titular-area-bottom-nombre" class="text-slate-900 text-[10.5px] mt-0.5 font-bold">Nombre Titular Ãrea</div>
+                      <div id="sign-titular-area-bottom-cargo" class="text-slate-600 text-[9.5px] leading-tight mt-0.5">Cargo Titular Ãrea</div>
                     </div>
                   </div>
                   <div>
@@ -1070,7 +1076,7 @@
             </div>
 
             <!-- ============================================================== -->
-            <!-- PIE DE PÁGINA OFICIAL SEGEY (IDÉNTICO AL FORMATO WORD)        -->
+            <!-- PIE DE PÃGINA OFICIAL SEGEY (IDÃ‰NTICO AL FORMATO WORD)        -->
             <!-- ============================================================== -->
             <div class="official-footer mt-7 pt-2.5" style="font-family: 'Lato', Arial, sans-serif; font-size: 10px; color: #475569; border-top: none;">
               <table style="width: 100%; border-collapse: collapse; border: none;">
@@ -1079,7 +1085,7 @@
                     <span style="letter-spacing: 0.5px; font-weight: 600;">F-PR-EAO-03 &nbsp;R01</span>
                   </td>
                   <td style="text-align: right; vertical-align: middle; padding: 2px 0;">
-                    <span>Página 1 de 1</span>
+                    <span>PÃ¡gina 1 de 1</span>
                   </td>
                 </tr>
               </table>
@@ -1092,7 +1098,7 @@
     </section>
 
     <!-- ============================================================= -->
-    <!-- TAB 3: BITÁCORA Y REGISTRO DE CONTROL                         -->
+    <!-- TAB 3: BITÃCORA Y REGISTRO DE CONTROL                         -->
     <!-- ============================================================= -->
         <section id="tab-registry" class="tab-content hidden">
 
@@ -1100,7 +1106,7 @@
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
         <!-- ========================================================= -->
-        <!-- CONTROL LATERAL (Sidebar de Navegación del Administrador) -->
+        <!-- CONTROL LATERAL (Sidebar de NavegaciÃ³n del Administrador) -->
         <!-- ========================================================= -->
         <aside class="lg:col-span-3 lg:sticky lg:top-4 space-y-4">
           <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
@@ -1111,7 +1117,7 @@
                 </div>
                 <div>
                   <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wide">Panel de Control</h4>
-                  <p class="text-[10px] text-slate-500">Bitácora y Modificaciones</p>
+                  <p class="text-[10px] text-slate-500">BitÃ¡cora y Modificaciones</p>
                 </div>
               </div>
               <span class="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
@@ -1119,10 +1125,10 @@
               </span>
             </div>
 
-            <!-- Menú de Selección de Secciones -->
+            <!-- MenÃº de SelecciÃ³n de Secciones -->
             <nav class="space-y-1.5" id="registry-sidebar-nav">
               <div class="px-1 pb-1">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Visualización Principal</p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">VisualizaciÃ³n Principal</p>
               </div>
 
               <!-- 1. REGISTROS DE CONSTANCIAS (Primero en verse) -->
@@ -1140,12 +1146,12 @@
                   <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Opciones para Modificar</p>
                 </div>
 
-              <!-- 2. ÁREAS NOTIFICADORAS -->
+              <!-- 2. ÃREAS NOTIFICADORAS -->
               <button type="button" onclick="switchRegistrySection('areas')" id="btn-reg-sec-areas"
                 class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-between transition-all">
                 <span class="flex items-center gap-2.5">
                   <i class="fa-solid fa-sitemap text-amber-600 text-sm"></i>
-                  <span>Áreas Notificadoras</span>
+                  <span>Ãreas Notificadoras</span>
                 </span>
                 <span id="sidebar-badge-areas" class="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-mono font-semibold">0</span>
               </button>
@@ -1191,18 +1197,18 @@
               </button>
             </div>
 
-            <!-- Banner Informativo Perfil de Auditoría -->
+            <!-- Banner Informativo Perfil de AuditorÃ­a -->
             <div id="registry-sidebar-auditoria-banner" class="hidden mt-3 p-3 rounded-xl bg-purple-50 border border-purple-200 text-left space-y-1.5 shadow-2xs">
               <div class="flex items-center gap-1.5 text-purple-900 font-bold text-xs uppercase tracking-wide">
-                <i class="fa-solid fa-file-waveform text-purple-600"></i> Perfil de Auditoría
+                <i class="fa-solid fa-file-waveform text-purple-600"></i> Perfil de AuditorÃ­a
               </div>
               <p class="text-[11px] text-purple-800 leading-relaxed font-normal">
-                Acceso de consulta de bitácora y descarga de reportes oficiales. Las configuraciones y modificaciones al catálogo están reservadas a Administrador.
+                Acceso de consulta de bitÃ¡cora y descarga de reportes oficiales. Las configuraciones y modificaciones al catÃ¡logo estÃ¡n reservadas a Administrador.
               </p>
             </div>
           </nav>
 
-          <!-- Acciones rápidas -->
+          <!-- Acciones rÃ¡pidas -->
           <div id="registry-sidebar-quick-actions" class="pt-3 border-t border-slate-100 space-y-1.5">
             <button type="button" onclick="syncRecordsFromGoogleSheets(true)" id="btn-sync-gsheets-sidebar" title="Descargar y sincronizar todos los folios emitidos desde Google Sheets"
               class="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-blue-900 bg-blue-50 hover:bg-blue-100 border border-blue-200 flex items-center justify-between transition group shadow-2xs">
@@ -1225,13 +1231,13 @@
         </aside>
 
         <!-- ========================================================= -->
-        <!-- CONTENIDO PRINCIPAL SEGÚN SECCIÓN SELECCIONADA           -->
+        <!-- CONTENIDO PRINCIPAL SEGÃšN SECCIÃ“N SELECCIONADA           -->
         <!-- ========================================================= -->
         <div class="lg:col-span-9 space-y-6">
 
-          <!-- 1. SECCIÓN: REGISTROS DE CONSTANCIAS (Primero en verse) -->
+          <!-- 1. SECCIÃ“N: REGISTROS DE CONSTANCIAS (Primero en verse) -->
           <div id="sec-registry-constancias" class="space-y-6">
-<!-- Tarjetas de Resumen / Métricas -->
+<!-- Tarjetas de Resumen / MÃ©tricas -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
@@ -1256,7 +1262,7 @@
 
         <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Cambios de Nombre / Jerarquía</p>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Cambios de Nombre / JerarquÃ­a</p>
             <h4 id="stat-cambios" class="text-2xl font-bold text-amber-600 mt-1">0</h4>
           </div>
           <div class="w-12 h-12 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
@@ -1275,12 +1281,12 @@
         </div>
       </div>
 
-<!-- Barra de Filtros y Búsqueda -->
+<!-- Barra de Filtros y BÃºsqueda -->
       <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm mb-6 space-y-4">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h3 class="text-base font-bold text-slate-900">Bitácora Central de Solicitudes y Constancias</h3>
-            <p class="text-xs text-slate-500">Historial completo con registro de qué área notificó, tipo de cambio y justificación.</p>
+            <h3 class="text-base font-bold text-slate-900">BitÃ¡cora Central de Solicitudes y Constancias</h3>
+            <p class="text-xs text-slate-500">Historial completo con registro de quÃ© Ã¡rea notificÃ³, tipo de cambio y justificaciÃ³n.</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <button id="btn-eliminar-seleccionados" onclick="abrirModalEliminarSeleccionados()"
@@ -1294,8 +1300,8 @@
             <button type="button" id="btn-sync-gsheets" onclick="syncRecordsFromGoogleSheets(true)" class="px-3.5 py-2 text-xs font-semibold rounded-lg bg-blue-50 text-blue-800 border border-blue-300 hover:bg-blue-100 transition flex items-center gap-1.5 shadow-2xs" title="Sincronizar constancias y folios emitidos desde Google Sheets">
               <i class="fa-solid fa-cloud-arrow-down text-blue-600"></i> Sincronizar Folios
             </button>
-            <button type="button" id="btn-sync-catalogo-gsheets" onclick="sincronizarCatalogoDesdeGoogleSheets()" class="px-3.5 py-2 text-xs font-semibold rounded-lg bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 transition flex items-center gap-1.5 shadow-2xs" title="Actualizar catálogo de titulares y enlaces desde Google Sheets">
-              <i class="fa-solid fa-arrows-rotate text-amber-600"></i> Sincronizar Catálogo
+            <button type="button" id="btn-sync-catalogo-gsheets" onclick="sincronizarCatalogoDesdeGoogleSheets()" class="px-3.5 py-2 text-xs font-semibold rounded-lg bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 transition flex items-center gap-1.5 shadow-2xs" title="Actualizar catÃ¡logo de titulares y enlaces desde Google Sheets">
+              <i class="fa-solid fa-arrows-rotate text-amber-600"></i> Sincronizar CatÃ¡logo
             </button>
             
             <button type="button" id="btn-reporte-ejecutivo" onclick="abrirModalReporteEjecutivo()" class="px-3.5 py-2 text-xs font-semibold rounded-lg bg-emerald-700 text-white hover:bg-emerald-800 transition flex items-center gap-1.5 shadow-2xs" title="Generar informe ejecutivo en PDF de movimientos y estatus">
@@ -1321,15 +1327,15 @@
             <label class="block text-xs font-semibold text-slate-600 mb-1">Buscar por texto libre:</label>
             <div class="relative">
               <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-              <input type="text" id="filter-search" oninput="renderTable()" placeholder="Folio, área, persona o justificación..."
+              <input type="text" id="filter-search" oninput="renderTable()" placeholder="Folio, Ã¡rea, persona o justificaciÃ³n..."
                 class="w-full text-xs pl-8 pr-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-segey-700">
             </div>
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Filtrar por Área Notificadora:</label>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Filtrar por Ãrea Notificadora:</label>
             <select id="filter-area" onchange="renderTable()" class="w-full text-xs p-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-segey-700 bg-white">
-              <option value="">Todas las áreas</option>
+              <option value="">Todas las Ã¡reas</option>
             </select>
           </div>
 
@@ -1340,19 +1346,19 @@
               <option value="Alta">Alta</option>
               <option value="Baja">Baja</option>
               <option value="Cambio de nombre">Cambio de nombre</option>
-              <option value="Cambio de dependencia jerárquica">Cambio de dependencia jerárquica</option>
+              <option value="Cambio de dependencia jerÃ¡rquica">Cambio de dependencia jerÃ¡rquica</option>
             </select>
           </div>
 
           
               <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Semáforo de Firmas:</label>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">SemÃ¡foro de Firmas:</label>
                 <select id="filter-semaforo" onchange="renderTable()" class="w-full text-xs p-2 rounded-lg border border-slate-300 focus:outline-none bg-white">
                   <option value="">Todos los tiempos</option>
-                  <option value="verde">🟢 En tiempo (≤ 5 días)</option>
-                  <option value="amarillo">🟡 Pendiente (6 a 14 días)</option>
-                  <option value="rojo">🔴 Demorada (≥ 15 días)</option>
-                  <option value="concluido">✅ Concluida / Firmada</option>
+                  <option value="verde">ðŸŸ¢ En tiempo (â‰¤ 5 dÃ­as)</option>
+                  <option value="amarillo">ðŸŸ¡ Pendiente (6 a 14 dÃ­as)</option>
+                  <option value="rojo">ðŸ”´ Demorada (â‰¥ 15 dÃ­as)</option>
+                  <option value="concluido">âœ… Concluida / Firmada</option>
                 </select>
               </div>
               <div>
@@ -1382,37 +1388,37 @@
                 </th>
                 <th class="py-3 px-4">Folio</th>
                 <th class="py-3 px-4">Fecha Registro</th>
-                <th class="py-3 px-4">Área Notificadora</th>
+                <th class="py-3 px-4">Ãrea Notificadora</th>
                 <th class="py-3 px-4">Tipo Movimiento</th>
-                <th class="py-3 px-4">Nombre del Área o Adscripción</th>
-                <th class="py-3 px-4">Titular de Área</th>
-                <th class="py-3 px-4">Estatus y Semáforo</th>
+                <th class="py-3 px-4">Nombre del Ãrea o AdscripciÃ³n</th>
+                <th class="py-3 px-4">Titular de Ãrea</th>
+                <th class="py-3 px-4">Estatus y SemÃ¡foro</th>
                   <th class="py-3 px-3 text-center">Expediente</th>
                 <th class="py-3 px-4 text-center">Acciones</th>
               </tr>
             </thead>
             <tbody id="registry-table-body" class="divide-y divide-slate-200">
-              <!-- Se genera dinámicamente con app.js -->
+              <!-- Se genera dinÃ¡micamente con app.js -->
             </tbody>
           </table>
         </div>
       </div>
           </div>
 
-          <!-- 2. SECCIÓN: ÁREAS NOTIFICADORAS -->
+          <!-- 2. SECCIÃ“N: ÃREAS NOTIFICADORAS -->
           <div id="sec-registry-areas" class="hidden space-y-4">
             <div class="flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-slate-200 shadow-2xs">
               <div class="flex items-center gap-2 text-xs text-slate-500 font-medium">
                 <i class="fa-solid fa-sliders text-segey-700"></i>
                 <span>Panel de Control</span>
                 <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
-                <span class="text-slate-800 font-bold">Catálogo de Áreas Notificadoras Predefinidas</span>
+                <span class="text-slate-800 font-bold">CatÃ¡logo de Ãreas Notificadoras Predefinidas</span>
               </div>
               <button type="button" onclick="switchRegistrySection('constancias')" class="text-xs text-segey-700 hover:text-segey-900 font-semibold flex items-center gap-1.5 transition">
                 <i class="fa-solid fa-arrow-left"></i> Volver a Registros
               </button>
             </div>
-<!-- Catálogo de Áreas Predefinidas (Control Administrador) -->
+<!-- CatÃ¡logo de Ãreas Predefinidas (Control Administrador) -->
       <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-5 rounded-xl border border-slate-700 shadow-md mb-6">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-700">
           <div class="flex items-center gap-3">
@@ -1421,17 +1427,17 @@
             </div>
             <div>
               <div class="flex items-center gap-2">
-                <h3 class="text-sm sm:text-base font-bold text-white">Catálogo de Áreas Notificadoras Predefinidas</h3>
-                <span id="badge-total-areas" class="text-[10px] bg-amber-500/30 text-amber-200 border border-amber-400/40 px-2 py-0.5 rounded-full font-mono font-semibold">0 áreas</span>
+                <h3 class="text-sm sm:text-base font-bold text-white">CatÃ¡logo de Ãreas Notificadoras Predefinidas</h3>
+                <span id="badge-total-areas" class="text-[10px] bg-amber-500/30 text-amber-200 border border-amber-400/40 px-2 py-0.5 rounded-full font-mono font-semibold">0 Ã¡reas</span>
               </div>
               <p class="text-xs text-slate-300 mt-0.5">
-                Configure las áreas institucionales que los usuarios podrán seleccionar al capturar una constancia.
+                Configure las Ã¡reas institucionales que los usuarios podrÃ¡n seleccionar al capturar una constancia.
               </p>
             </div>
           </div>
           <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap">
             <a href="https://docs.google.com/spreadsheets/d/1mhJMtK_3-S1YzBzqkEq5C-nzumCba5_KHWRPmH_uZRA/edit" target="_blank"
-              title="Abrir hoja de cálculo oficial en Google Drive"
+              title="Abrir hoja de cÃ¡lculo oficial en Google Drive"
               class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-500/30 transition flex items-center gap-1.5">
               <i class="fa-solid fa-file-excel text-emerald-400"></i> Abrir en Google Sheets
             </a>
@@ -1439,52 +1445,52 @@
               class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 border border-blue-500/30 transition flex items-center gap-1.5">
               <i class="fa-solid fa-arrows-rotate text-blue-400"></i> Sincronizar
             </button>
-            <button onclick="restoreDefaultAreas()" title="Restablecer catálogo oficial predeterminado de la SEGEY" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white border border-white/15 transition flex items-center gap-1.5">
+            <button onclick="restoreDefaultAreas()" title="Restablecer catÃ¡logo oficial predeterminado de la SEGEY" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white border border-white/15 transition flex items-center gap-1.5">
               <i class="fa-solid fa-arrow-rotate-left"></i> Restablecer Oficiales
             </button>
           </div>
         </div>
 
-        <!-- Formulario para agregar nueva área -->
+        <!-- Formulario para agregar nueva Ã¡rea -->
         <div class="mt-4 flex flex-col sm:flex-row gap-2">
           <div class="relative flex-1">
             <i class="fa-solid fa-plus absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-            <input type="text" id="new-area-name-input" placeholder="Nombre de la nueva área, ej: Dirección de Educación Indígena..."
+            <input type="text" id="new-area-name-input" placeholder="Nombre de la nueva Ã¡rea, ej: DirecciÃ³n de EducaciÃ³n IndÃ­gena..."
               class="w-full text-xs pl-8 pr-3 py-2 rounded-lg bg-slate-800 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
               onkeydown="if(event.key==='Enter'){event.preventDefault();addNewAreaFromAdmin();}">
           </div>
           <button onclick="addNewAreaFromAdmin()" class="px-4 py-2 text-xs font-bold rounded-lg bg-amber-600 hover:bg-amber-500 text-white transition flex items-center justify-center gap-1.5 shadow">
-            <i class="fa-solid fa-floppy-disk"></i> Agregar Área al Catálogo
+            <i class="fa-solid fa-floppy-disk"></i> Agregar Ãrea al CatÃ¡logo
           </button>
         </div>
 
-        <!-- Lista de áreas existentes -->
+        <!-- Lista de Ã¡reas existentes -->
         <div class="mt-4">
           <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
-            <span>Áreas disponibles en el selector del formulario:</span>
+            <span>Ãreas disponibles en el selector del formulario:</span>
             <span class="text-[10px] lowercase text-slate-500">(haga clic en la x para eliminar)</span>
           </div>
           <div id="admin-areas-list" class="flex flex-wrap gap-2 max-h-52 overflow-y-auto p-2 bg-slate-950/40 rounded-lg border border-slate-800">
-            <!-- Renderizado dinámicamente desde app.js -->
+            <!-- Renderizado dinÃ¡micamente desde app.js -->
           </div>
         </div>
       </div>
           </div>
 
-          <!-- 3. SECCIÓN: RESPONSABLES DE CAPTURA -->
+          <!-- 3. SECCIÃ“N: RESPONSABLES DE CAPTURA -->
           <div id="sec-registry-responsables" class="hidden space-y-4">
             <div class="flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-slate-200 shadow-2xs">
               <div class="flex items-center gap-2 text-xs text-slate-500 font-medium">
                 <i class="fa-solid fa-sliders text-segey-700"></i>
                 <span>Panel de Control</span>
                 <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
-                <span class="text-slate-800 font-bold">Gestión de Responsables de Captura por Área</span>
+                <span class="text-slate-800 font-bold">GestiÃ³n de Responsables de Captura por Ãrea</span>
               </div>
               <button type="button" onclick="switchRegistrySection('constancias')" class="text-xs text-segey-700 hover:text-segey-900 font-semibold flex items-center gap-1.5 transition">
                 <i class="fa-solid fa-arrow-left"></i> Volver a Registros
               </button>
             </div>
-<!-- Panel de Administración: Gestión de Responsables de Captura por Área Notificadora -->
+<!-- Panel de AdministraciÃ³n: GestiÃ³n de Responsables de Captura por Ãrea Notificadora -->
       <div class="bg-gradient-to-r from-slate-900 to-slate-800 p-5 rounded-xl border border-slate-700 text-white shadow-sm mb-6">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-700">
           <div class="flex items-center gap-3">
@@ -1493,17 +1499,17 @@
             </div>
             <div>
               <div class="flex items-center gap-2">
-                <h3 class="text-sm sm:text-base font-bold text-white">Gestión de Responsables de Captura por Área</h3>
-                <span id="badge-total-responsables-admin" class="text-[10px] bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 px-2 py-0.5 rounded-full font-mono font-semibold">58 áreas (1 por área)</span>
+                <h3 class="text-sm sm:text-base font-bold text-white">GestiÃ³n de Responsables de Captura por Ãrea</h3>
+                <span id="badge-total-responsables-admin" class="text-[10px] bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 px-2 py-0.5 rounded-full font-mono font-semibold">58 Ã¡reas (1 por Ã¡rea)</span>
               </div>
               <p class="text-xs text-slate-300 mt-0.5">
-                Asigne o modifique el Responsable de Captura único para cada Área Notificadora (evita mezclar enlaces de diferentes áreas).
+                Asigne o modifique el Responsable de Captura Ãºnico para cada Ãrea Notificadora (evita mezclar enlaces de diferentes Ã¡reas).
               </p>
             </div>
           </div>
           <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap">
             <a href="https://docs.google.com/spreadsheets/d/1mhJMtK_3-S1YzBzqkEq5C-nzumCba5_KHWRPmH_uZRA/edit" target="_blank"
-              title="Abrir hoja de cálculo oficial en Google Drive"
+              title="Abrir hoja de cÃ¡lculo oficial en Google Drive"
               class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-500/30 transition flex items-center gap-1.5">
               <i class="fa-solid fa-file-excel text-emerald-400"></i> Abrir en Google Sheets
             </a>
@@ -1517,42 +1523,42 @@
           </div>
         </div>
 
-        <!-- Buscador de áreas y responsables -->
+        <!-- Buscador de Ã¡reas y responsables -->
         <div class="mt-4 flex flex-col sm:flex-row gap-2">
           <div class="relative flex-1">
             <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-            <input type="text" id="filter-admin-responsables" oninput="renderAdminResponsablesList(this.value)" placeholder="Buscar por nombre de área o persona responsable..."
+            <input type="text" id="filter-admin-responsables" oninput="renderAdminResponsablesList(this.value)" placeholder="Buscar por nombre de Ã¡rea o persona responsable..."
               class="w-full text-xs pl-8 pr-3 py-2 rounded-lg bg-slate-800 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500">
           </div>
         </div>
 
-        <!-- Lista de áreas con su responsable asignado y botón de guardado -->
+        <!-- Lista de Ã¡reas con su responsable asignado y botÃ³n de guardado -->
         <div class="mt-4">
           <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
-            <span>Listado de Áreas y Responsables Asignados:</span>
+            <span>Listado de Ãreas y Responsables Asignados:</span>
             <span class="text-[10px] lowercase text-slate-500">(edite el nombre y haga clic en Guardar)</span>
           </div>
           <div id="admin-responsables-list" class="flex flex-col gap-2 max-h-72 overflow-y-auto p-2 bg-slate-950/40 rounded-lg border border-slate-800">
-            <!-- Renderizado dinámicamente desde app.js -->
+            <!-- Renderizado dinÃ¡micamente desde app.js -->
           </div>
         </div>
       </div>
           </div>
 
-          <!-- 4. SECCIÓN: JUSTIFICACIONES Y MOTIVOS -->
+          <!-- 4. SECCIÃ“N: JUSTIFICACIONES Y MOTIVOS -->
           <div id="sec-registry-justificaciones" class="hidden space-y-4">
             <div class="flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-slate-200 shadow-2xs">
               <div class="flex items-center gap-2 text-xs text-slate-500 font-medium">
                 <i class="fa-solid fa-sliders text-segey-700"></i>
                 <span>Panel de Control</span>
                 <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
-                <span class="text-slate-800 font-bold">Catálogo de Justificaciones y Motivos Predefinidos</span>
+                <span class="text-slate-800 font-bold">CatÃ¡logo de Justificaciones y Motivos Predefinidos</span>
               </div>
               <button type="button" onclick="switchRegistrySection('constancias')" class="text-xs text-segey-700 hover:text-segey-900 font-semibold flex items-center gap-1.5 transition">
                 <i class="fa-solid fa-arrow-left"></i> Volver a Registros
               </button>
             </div>
-<!-- Panel de Administración: Catálogo de Justificaciones y Motivos Predefinidos -->
+<!-- Panel de AdministraciÃ³n: CatÃ¡logo de Justificaciones y Motivos Predefinidos -->
       <div class="bg-gradient-to-r from-slate-900 to-slate-800 p-5 rounded-xl border border-slate-700 text-white shadow-sm mb-6">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-700">
           <div class="flex items-center gap-3">
@@ -1561,11 +1567,11 @@
             </div>
             <div>
               <div class="flex items-center gap-2">
-                <h3 class="text-sm sm:text-base font-bold text-white">Catálogo de Justificaciones y Motivos Predefinidos</h3>
+                <h3 class="text-sm sm:text-base font-bold text-white">CatÃ¡logo de Justificaciones y Motivos Predefinidos</h3>
                 <span id="badge-admin-total-motivos" class="text-[10px] bg-purple-500/30 text-purple-200 border border-purple-400/40 px-2 py-0.5 rounded-full font-mono font-semibold">15 opciones</span>
               </div>
               <p class="text-xs text-slate-300 mt-0.5">
-                Configure los motivos predefinidos que los capturistas podrán seleccionar al justificar un trámite según su tipo de movimiento.
+                Configure los motivos predefinidos que los capturistas podrÃ¡n seleccionar al justificar un trÃ¡mite segÃºn su tipo de movimiento.
               </p>
             </div>
           </div>
@@ -1579,7 +1585,7 @@
           </div>
         </div>
 
-        <!-- Pestañas por Categoría (Tipo de Movimiento) -->
+        <!-- PestaÃ±as por CategorÃ­a (Tipo de Movimiento) -->
         <div class="flex flex-wrap border-b border-slate-700 gap-1 mt-4" id="admin-justificaciones-tabs">
           <button onclick="switchAdminJustificacionesTab('Alta')" class="admin-just-tab active px-3 py-2 text-xs font-bold border-b-2 border-purple-400 text-purple-300" data-cat="Alta">
             Alta (<span id="admin-count-alta">3</span>)
@@ -1590,8 +1596,8 @@
           <button onclick="switchAdminJustificacionesTab('Cambio de nombre')" class="admin-just-tab px-3 py-2 text-xs font-semibold text-slate-400 hover:text-white border-b-2 border-transparent" data-cat="Cambio de nombre">
             Cambio de nombre (<span id="admin-count-nombre">2</span>)
           </button>
-          <button onclick="switchAdminJustificacionesTab('Cambio de dependencia jerárquica')" class="admin-just-tab px-3 py-2 text-xs font-semibold text-slate-400 hover:text-white border-b-2 border-transparent" data-cat="Cambio de dependencia jerárquica">
-            Dependencia jerárquica (<span id="admin-count-dep">5</span>)
+          <button onclick="switchAdminJustificacionesTab('Cambio de dependencia jerÃ¡rquica')" class="admin-just-tab px-3 py-2 text-xs font-semibold text-slate-400 hover:text-white border-b-2 border-transparent" data-cat="Cambio de dependencia jerÃ¡rquica">
+            Dependencia jerÃ¡rquica (<span id="admin-count-dep">5</span>)
           </button>
         </div>
 
@@ -1599,7 +1605,7 @@
         <div class="mt-4 flex flex-col sm:flex-row gap-2">
           <div class="relative flex-1">
             <i class="fa-solid fa-pen absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-            <input type="text" id="new-justificacion-input" placeholder="Escriba un nuevo motivo para la categoría seleccionada..."
+            <input type="text" id="new-justificacion-input" placeholder="Escriba un nuevo motivo para la categorÃ­a seleccionada..."
               class="w-full text-xs pl-8 pr-3 py-2 rounded-lg bg-slate-800 border border-slate-600 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
               onkeydown="if(event.key==='Enter'){event.preventDefault();addNewJustificacionFromAdmin();}">
           </div>
@@ -1608,20 +1614,20 @@
           </button>
         </div>
 
-        <!-- Lista de motivos de la categoría activa -->
+        <!-- Lista de motivos de la categorÃ­a activa -->
         <div class="mt-4">
           <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
             <span>Motivos predefinidos para: <strong id="admin-just-current-cat" class="text-purple-300">Alta</strong></span>
             <span class="text-[10px] lowercase text-slate-500">(haga clic en la x para eliminar)</span>
           </div>
           <div id="admin-justificaciones-list" class="flex flex-col gap-1.5 max-h-56 overflow-y-auto p-2 bg-slate-950/40 rounded-lg border border-slate-800">
-            <!-- Renderizado dinámicamente desde app.js -->
+            <!-- Renderizado dinÃ¡micamente desde app.js -->
           </div>
         </div>
       </div>
           </div>
 
-          <!-- 5. SECCIÓN: FORMATOS Y LAYOUTS -->
+          <!-- 5. SECCIÃ“N: FORMATOS Y LAYOUTS -->
           <div id="sec-registry-layouts" class="hidden space-y-4">
             <div class="flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-slate-200 shadow-2xs">
               <div class="flex items-center gap-2 text-xs text-slate-500 font-medium">
@@ -1634,7 +1640,7 @@
                 <i class="fa-solid fa-arrow-left"></i> Volver a Registros
               </button>
             </div>
-<!-- SECCIÓN: GESTOR DE LAYOUTS Y PLANTILLAS DE DOCUMENTO -->
+<!-- SECCIÃ“N: GESTOR DE LAYOUTS Y PLANTILLAS DE DOCUMENTO -->
       <div class="bg-gradient-to-r from-segey-950 via-segey-900 to-yucatan-900 text-white p-5 rounded-2xl shadow-sm mb-6">
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-700/60">
           <div class="flex items-center gap-3">
@@ -1647,24 +1653,24 @@
                 <span id="badge-active-layout" class="text-[10px] bg-segey-500/30 text-rose-200 border border-rose-400/40 px-2 py-0.5 rounded-full font-mono font-semibold">Oficial Activo</span>
               </div>
               <p class="text-xs text-slate-300 mt-0.5">
-                Sube o alterna plantillas personalizadas. Las solicitudes capturadas se regenerarán automáticamente en PDF con el layout seleccionado.
+                Sube o alterna plantillas personalizadas. Las solicitudes capturadas se regenerarÃ¡n automÃ¡ticamente en PDF con el layout seleccionado.
               </p>
             </div>
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
-            <!-- Botón Subir Layout -->
+            <!-- BotÃ³n Subir Layout -->
             <label class="px-3.5 py-2 text-xs font-bold rounded-lg bg-segey-800 hover:bg-segey-500 text-white transition cursor-pointer flex items-center gap-1.5 shadow">
               <i class="fa-solid fa-file-arrow-up"></i> Subir Nuevo Layout (.html)
               <input type="file" id="layout-upload-input" accept=".html,.htm,.txt" onchange="handleLayoutUpload(event)" class="hidden">
             </label>
 
-            <!-- Botón Descargar Layout Base -->
+            <!-- BotÃ³n Descargar Layout Base -->
             <button onclick="downloadCurrentLayoutTemplate()" title="Descargar archivo base editable con todas las etiquetas" class="px-3 py-2 text-xs font-semibold rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white border border-white/15 transition flex items-center gap-1.5">
               <i class="fa-solid fa-file-code"></i> Descargar Plantilla Base
             </button>
 
-            <!-- Botón Ver Etiquetas -->
+            <!-- BotÃ³n Ver Etiquetas -->
             <button onclick="openLayoutTagsModal()" title="Ver lista de variables disponibles como {{folio}}, {{municipio}}, etc." class="px-3 py-2 text-xs font-semibold rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white border border-white/15 transition flex items-center gap-1.5">
               <i class="fa-solid fa-tags"></i> Ver Etiquetas
             </button>
@@ -1677,7 +1683,7 @@
               <i class="fa-solid fa-layer-group text-rose-300 mr-1"></i> Layout en uso:
             </label>
             <select id="layout-selector" onchange="changeActiveLayout(this.value)" class="text-xs bg-slate-800 text-white border border-slate-600 rounded-lg p-2 focus:ring-2 focus:ring-segey-700 max-w-md w-full font-medium">
-              <!-- Se puebla dinámicamente con app.js -->
+              <!-- Se puebla dinÃ¡micamente con app.js -->
             </select>
           </div>
 
@@ -1693,7 +1699,7 @@
       </div>
           </div>
 
-          <!-- 6. SECCIÓN: CONFIGURACIÓN DE NOTIFICACIONES POR CORREO -->
+          <!-- 6. SECCIÃ“N: CONFIGURACIÃ“N DE NOTIFICACIONES POR CORREO -->
           <div id="sec-registry-notificaciones" class="space-y-6 hidden">
             <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
               <div class="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -1703,7 +1709,7 @@
                   </div>
                   <div>
                     <h3 class="text-base font-bold text-slate-900">Avisos y Notificaciones por Correo Institucional</h3>
-                    <p class="text-xs text-slate-500">Configura quiénes recibirán alertas automáticas por correo cuando se genere o modifique una constancia.</p>
+                    <p class="text-xs text-slate-500">Configura quiÃ©nes recibirÃ¡n alertas automÃ¡ticas por correo cuando se genere o modifique una constancia.</p>
                   </div>
                 </div>
               </div>
@@ -1713,11 +1719,11 @@
                   <i class="fa-solid fa-shield-halved text-blue-700"></i> Control Exclusivo de Destinatarios:
                 </p>
                 <p class="text-blue-800 leading-relaxed">
-                  Solo los correos registrados aquí recibirán la alerta automática con el folio, área notificadora, tipo de trámite y enlace oficial. Puedes agregar tu correo institucional y el de las personas que decidas.
+                  Solo los correos registrados aquÃ­ recibirÃ¡n la alerta automÃ¡tica con el folio, Ã¡rea notificadora, tipo de trÃ¡mite y enlace oficial. Puedes agregar tu correo institucional y el de las personas que decidas.
                 </p>
               </div>
 
-              <!-- Formulario de adición de correo -->
+              <!-- Formulario de adiciÃ³n de correo -->
               <div class="space-y-2">
                 <label class="block text-xs font-bold text-slate-700">Agregar Correo para Alertas:</label>
                 <div class="flex flex-col sm:flex-row gap-2">
@@ -1737,13 +1743,13 @@
                   <span id="badge-total-correos-notif" class="text-[10px] font-mono bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-bold">0 correos</span>
                 </div>
                 <div id="lista-correos-notificaciones" class="space-y-2 max-h-56 overflow-y-auto">
-                  <!-- Se puebla dinámicamente -->
+                  <!-- Se puebla dinÃ¡micamente -->
                 </div>
               </div>
 
               <div class="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <p class="text-[11px] text-slate-400 flex items-center gap-1">
-                  <i class="fa-solid fa-circle-check text-emerald-600"></i> Las alertas se envían a través de tu Webhook institucional de Google Apps Script.
+                  <i class="fa-solid fa-circle-check text-emerald-600"></i> Las alertas se envÃ­an a travÃ©s de tu Webhook institucional de Google Apps Script.
                 </p>
                 <button type="button" onclick="guardarCorreosNotificacion()" class="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-xs">
                   <i class="fa-solid fa-floppy-disk"></i> Guardar Lista de Correos
@@ -1755,7 +1761,7 @@
         </div>
       </div>
     </section>  <!-- ============================================================= -->
-    <!-- TAB 4: COMPARTIR ENLACE Y GUÍA DE DESPLIEGUE                  -->
+    <!-- TAB 4: COMPARTIR ENLACE Y GUÃA DE DESPLIEGUE                  -->
     <!-- ============================================================= -->
     <section id="tab-share" class="tab-content hidden space-y-6">
 
@@ -1765,7 +1771,7 @@
             <i class="fa-solid fa-link"></i>
           </div>
           <div>
-            <h3 class="text-lg font-bold text-slate-900">Opciones para Compartir el Enlace en Línea</h3>
+            <h3 class="text-lg font-bold text-slate-900">Opciones para Compartir el Enlace en LÃ­nea</h3>
             <p class="text-xs text-slate-500">Mecanismos sencillos para que cualquier dependencia ingrese, llene el formato y descargue su PDF.</p>
           </div>
         </div>
@@ -1773,7 +1779,7 @@
         <!-- Enlace Directo Actual -->
         <div class="bg-slate-50 rounded-xl p-5 border border-slate-200 space-y-3 mb-6">
           <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-            Enlace Directo de Captura para las Áreas (Modo Formulario):
+            Enlace Directo de Captura para las Ãreas (Modo Formulario):
           </label>
           <div class="flex flex-col sm:flex-row gap-2">
             <input type="text" id="share-link-input" readonly
@@ -1783,7 +1789,7 @@
             </button>
           </div>
           <p class="text-xs text-slate-500">
-            Tip: Al abrir este enlace con el parámetro <code>?mode=form</code>, la página se abre automáticamente en el formulario de captura para los usuarios de las áreas.
+            Tip: Al abrir este enlace con el parÃ¡metro <code>?mode=form</code>, la pÃ¡gina se abre automÃ¡ticamente en el formulario de captura para los usuarios de las Ã¡reas.
           </p>
         </div>
 
@@ -1795,7 +1801,7 @@
 
   </main>
 
-  <!-- MODAL BÚSQUEDA DE FOLIO -->
+  <!-- MODAL BÃšSQUEDA DE FOLIO -->
   <div id="modal-buscar-folio" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
       <div class="flex items-center justify-between pb-3 border-b border-slate-200">
@@ -1809,7 +1815,7 @@
 
       <div class="space-y-3">
         <label class="block text-xs font-semibold text-slate-700">
-          Ingrese el número o texto del folio:
+          Ingrese el nÃºmero o texto del folio:
         </label>
         <div class="flex gap-2">
           <input type="text" id="input-buscar-folio" placeholder="Ej. DIMC-CC-2026-001 o 001..."
@@ -1821,13 +1827,13 @@
           </button>
         </div>
         <p class="text-[11px] text-slate-500">
-          Localice una constancia previa para consultar sus datos, reimprimir su PDF o editarla seleccionando el estatus <strong>Modificación</strong>.
+          Localice una constancia previa para consultar sus datos, reimprimir su PDF o editarla seleccionando el estatus <strong>ModificaciÃ³n</strong>.
         </p>
       </div>
 
-      <!-- Resultados de la búsqueda -->
+      <!-- Resultados de la bÃºsqueda -->
       <div id="resultados-busqueda-folio" class="flex-1 overflow-y-auto space-y-2 max-h-64 pt-2 border-t border-slate-100">
-        <!-- Poblado dinámicamente -->
+        <!-- Poblado dinÃ¡micamente -->
       </div>
 
       <div class="pt-3 border-t border-slate-200 flex justify-end">
@@ -1852,7 +1858,7 @@
       </div>
 
       <div id="modal-content" class="space-y-3 text-xs text-slate-700">
-        <!-- Rellenado dinámicamente -->
+        <!-- Rellenado dinÃ¡micamente -->
       </div>
 
       <div class="pt-4 border-t border-slate-200 flex justify-end gap-2">
@@ -1877,7 +1883,7 @@
           <i class="fa-solid fa-triangle-exclamation"></i>
         </div>
         <div class="flex-1">
-          <h3 class="text-base font-bold text-slate-900">¿Cambiar tipo de movimiento?</h3>
+          <h3 class="text-base font-bold text-slate-900">Â¿Cambiar tipo de movimiento?</h3>
           <p class="text-xs text-slate-500 mt-0.5">Ajuste de formato oficial y limpieza de campos</p>
         </div>
         <button type="button" onclick="cancelarCambioMovimiento()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg transition-colors">
@@ -1887,17 +1893,17 @@
 
       <div class="p-3.5 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-950 space-y-2">
         <p class="font-bold flex items-center gap-1.5 text-amber-900">
-          <i class="fa-solid fa-circle-info text-amber-600"></i> Se ha detectado información capturada en el formulario.
+          <i class="fa-solid fa-circle-info text-amber-600"></i> Se ha detectado informaciÃ³n capturada en el formulario.
         </p>
         <p class="text-slate-700 leading-relaxed">
-          Al cambiar a <strong id="modal-nuevo-movimiento-nombre" class="font-bold text-segey-800 uppercase">otro movimiento</strong>, se borrará la información capturada de las áreas y justificación para ajustar el formato oficial al nuevo trámite y evitar errores o inconsistencias.
+          Al cambiar a <strong id="modal-nuevo-movimiento-nombre" class="font-bold text-segey-800 uppercase">otro movimiento</strong>, se borrarÃ¡ la informaciÃ³n capturada de las Ã¡reas y justificaciÃ³n para ajustar el formato oficial al nuevo trÃ¡mite y evitar errores o inconsistencias.
         </p>
       </div>
 
       <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
         <button type="button" onclick="cancelarCambioMovimiento()"
           class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">
-          Conservar información (Cancelar)
+          Conservar informaciÃ³n (Cancelar)
         </button>
         <button type="button" onclick="confirmarCambioMovimiento()"
           class="px-4 py-2 text-xs font-bold text-white bg-segey-700 hover:bg-segey-800 rounded-xl shadow-xs transition-colors flex items-center gap-1.5">
@@ -1907,7 +1913,7 @@
     </div>
   </div>
 
-  <!-- MODAL DE ADVERTENCIA: CAMPOS VACÍOS EN EL FORMULARIO (BLOQUEO DE DESCARGA PDF) -->
+  <!-- MODAL DE ADVERTENCIA: CAMPOS VACÃOS EN EL FORMULARIO (BLOQUEO DE DESCARGA PDF) -->
   <div id="modal-campos-vacios" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-slate-100 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col">
       <div class="flex items-start gap-3 pb-3 border-b border-slate-100 shrink-0">
@@ -1930,15 +1936,15 @@
         </button>
       </div>
 
-      <!-- Lista con scroll de los campos vacíos detectados -->
+      <!-- Lista con scroll de los campos vacÃ­os detectados -->
       <div class="overflow-y-auto max-h-64 pr-1 space-y-2 custom-scrollbar" id="lista-campos-vacios">
-        <!-- Generado dinámicamente -->
+        <!-- Generado dinÃ¡micamente -->
       </div>
 
       <div class="bg-amber-50 border border-amber-200 text-amber-900 p-3 rounded-xl text-xs flex items-start gap-2.5 shrink-0">
         <i class="fa-solid fa-circle-exclamation text-amber-600 mt-0.5 shrink-0"></i>
         <div class="leading-relaxed">
-          El formato oficial de la SEGEY no permite emitir constancias incompletas con firmas o datos vacíos. Complete la información requerida para habilitar la descarga del PDF.
+          El formato oficial de la SEGEY no permite emitir constancias incompletas con firmas o datos vacÃ­os. Complete la informaciÃ³n requerida para habilitar la descarga del PDF.
         </div>
       </div>
 
@@ -1953,7 +1959,7 @@
     </div>
   </div>
 
-  <!-- MODAL DE INACTIVACIÓN DE CONSTANCIA CON MOTIVO OBLIGATORIO -->
+  <!-- MODAL DE INACTIVACIÃ“N DE CONSTANCIA CON MOTIVO OBLIGATORIO -->
   <div id="modal-inactivar" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
       <div class="flex items-center justify-between pb-3 border-b border-slate-200">
@@ -1963,7 +1969,7 @@
           </div>
           <div>
             <h3 class="text-base font-bold text-slate-900">Inactivar Constancia Institucional</h3>
-            <p class="text-xs text-slate-500">El folio consecutivo permanecerá protegido en la bitácora.</p>
+            <p class="text-xs text-slate-500">El folio consecutivo permanecerÃ¡ protegido en la bitÃ¡cora.</p>
           </div>
         </div>
         <button onclick="closeInactivarModal()" class="text-slate-400 hover:text-slate-700 text-lg">
@@ -1977,37 +1983,37 @@
           <span><strong>Folio:</strong> <span id="inactivar-folio" class="font-mono font-bold text-slate-900 text-sm"></span></span>
           <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">Conserva Folio Consecutivo</span>
         </div>
-        <div><strong>Área Solicitante:</strong> <span id="inactivar-area" class="text-slate-800 font-medium"></span></div>
+        <div><strong>Ãrea Solicitante:</strong> <span id="inactivar-area" class="text-slate-800 font-medium"></span></div>
         <div><strong>Tipo de Movimiento:</strong> <span id="inactivar-movimiento" class="text-slate-800 font-medium"></span></div>
       </div>
 
-      <!-- Motivo de Inactivación -->
+      <!-- Motivo de InactivaciÃ³n -->
       <div class="space-y-2">
         <label class="block text-xs font-bold text-slate-800">
           Motivo por el cual se pasa a estatus Inactivo: <span class="text-rose-600">*</span>
         </label>
         
-        <!-- Opciones rápidas de motivo -->
+        <!-- Opciones rÃ¡pidas de motivo -->
         <div class="text-[10.5px] text-slate-500 font-medium mb-1">Motivos frecuentes (clic para autocompletar):</div>
         <div class="flex flex-wrap gap-1.5 text-[11px]">
           <button type="button" onclick="setMotivoRapido('Error en la captura o datos del compareciente')" class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition font-medium">
             Error en captura
           </button>
-          <button type="button" onclick="setMotivoRapido('Cancelada a solicitud formal del área que notifica')" class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition font-medium">
-            Cancelada por área
+          <button type="button" onclick="setMotivoRapido('Cancelada a solicitud formal del Ã¡rea que notifica')" class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition font-medium">
+            Cancelada por Ã¡rea
           </button>
-          <button type="button" onclick="setMotivoRapido('Duplicado administrativo por reenvío de solicitud')" class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition font-medium">
+          <button type="button" onclick="setMotivoRapido('Duplicado administrativo por reenvÃ­o de solicitud')" class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition font-medium">
             Duplicado
           </button>
-          <button type="button" onclick="setMotivoRapido('Movimiento de adscripción sin efecto legal')" class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition font-medium">
+          <button type="button" onclick="setMotivoRapido('Movimiento de adscripciÃ³n sin efecto legal')" class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition font-medium">
             Sin efecto
           </button>
         </div>
 
-        <textarea id="inactivar-motivo-input" rows="3" placeholder="Escriba detalladamente el motivo o justificación de la baja/inactivación para la bitácora..."
+        <textarea id="inactivar-motivo-input" rows="3" placeholder="Escriba detalladamente el motivo o justificaciÃ³n de la baja/inactivaciÃ³n para la bitÃ¡cora..."
           class="w-full text-xs p-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500 text-slate-800 transition"></textarea>
         <p id="inactivar-error-msg" class="text-[11px] text-rose-600 hidden font-semibold flex items-center gap-1">
-          <i class="fa-solid fa-circle-exclamation"></i> Debe ingresar un motivo para registrar la baja o inactivación.
+          <i class="fa-solid fa-circle-exclamation"></i> Debe ingresar un motivo para registrar la baja o inactivaciÃ³n.
         </p>
       </div>
 
@@ -2022,7 +2028,7 @@
     </div>
   </div>
 
-  <!-- MODAL DE CONFIRMACIÓN DE ELIMINACIÓN DEFINITIVA -->
+  <!-- MODAL DE CONFIRMACIÃ“N DE ELIMINACIÃ“N DEFINITIVA -->
   <div id="modal-eliminar-seleccionados" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
       <div class="flex items-center justify-between pb-3 border-b border-slate-200">
@@ -2031,8 +2037,8 @@
             <i class="fa-solid fa-triangle-exclamation"></i>
           </div>
           <div>
-            <h3 class="text-base font-bold text-slate-900">Confirmar Eliminación Definitiva</h3>
-            <p class="text-xs text-slate-500">Se requiere confirmación explícita para borrar los registros.</p>
+            <h3 class="text-base font-bold text-slate-900">Confirmar EliminaciÃ³n Definitiva</h3>
+            <p class="text-xs text-slate-500">Se requiere confirmaciÃ³n explÃ­cita para borrar los registros.</p>
           </div>
         </div>
         <button onclick="cerrarModalEliminarSeleccionados()" class="text-slate-400 hover:text-slate-700 text-lg">
@@ -2042,12 +2048,12 @@
 
       <div class="space-y-3 text-xs text-slate-700">
         <p class="font-medium text-slate-800">
-          ¿Está seguro de eliminar definitivamente <strong id="modal-eliminar-total" class="text-rose-600 font-bold">0 constancias</strong> seleccionadas?
+          Â¿EstÃ¡ seguro de eliminar definitivamente <strong id="modal-eliminar-total" class="text-rose-600 font-bold">0 constancias</strong> seleccionadas?
         </p>
 
         <!-- Lista scrollable de registros seleccionados -->
         <div id="modal-eliminar-lista" class="max-h-52 overflow-y-auto space-y-1.5 p-2.5 bg-slate-50 rounded-xl border border-slate-200">
-          <!-- Se genera dinámicamente -->
+          <!-- Se genera dinÃ¡micamente -->
         </div>
 
         <div class="bg-rose-50 border border-rose-200 rounded-xl p-3 text-rose-800 space-y-1">
@@ -2055,7 +2061,7 @@
             <i class="fa-solid fa-radiation text-rose-600"></i> Advertencia de Borrado Permanente
           </div>
           <p class="text-[11px] leading-relaxed">
-            Esta acción borrará de manera irreversible las constancias seleccionadas de la bitácora institucional y del almacenamiento del sistema. No podrán recuperarse a menos que cuente con un archivo de respaldo JSON previo.
+            Esta acciÃ³n borrarÃ¡ de manera irreversible las constancias seleccionadas de la bitÃ¡cora institucional y del almacenamiento del sistema. No podrÃ¡n recuperarse a menos que cuente con un archivo de respaldo JSON previo.
           </p>
         </div>
       </div>
@@ -2065,18 +2071,18 @@
           Cancelar
         </button>
         <button type="button" id="btn-confirmar-borrado-definitivo" onclick="confirmarBorradoDefinitivo()" class="px-4 py-2 text-xs font-bold rounded-lg bg-rose-600 hover:bg-rose-700 text-white flex items-center gap-1.5 shadow transition">
-          <i class="fa-solid fa-trash-can"></i> Sí, Eliminar Definitivamente
+          <i class="fa-solid fa-trash-can"></i> SÃ­, Eliminar Definitivamente
         </button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL VINCULACIÓN GOOGLE SHEETS -->
+  <!-- MODAL VINCULACIÃ“N GOOGLE SHEETS -->
   <div id="modal-gsheets" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4">
       <div class="flex items-center justify-between pb-3 border-b border-slate-200">
         <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
-          <i class="fa-solid fa-cloud text-segey-700"></i> Sincronización con Google Sheets
+          <i class="fa-solid fa-cloud text-segey-700"></i> SincronizaciÃ³n con Google Sheets
         </h3>
         <button onclick="closeGoogleSheetsModal()" class="text-slate-400 hover:text-slate-700 text-lg">
           <i class="fa-solid fa-xmark"></i>
@@ -2085,17 +2091,17 @@
 
       <div class="space-y-3 text-xs text-slate-600 leading-relaxed">
         <p>
-          Si desea que cada vez que un área llene el formulario, la información se guarde en una hoja de cálculo compartida en Google Drive:
+          Si desea que cada vez que un Ã¡rea llene el formulario, la informaciÃ³n se guarde en una hoja de cÃ¡lculo compartida en Google Drive:
         </p>
         <ol class="list-decimal pl-5 space-y-1 text-slate-700">
           <li>Cree una hoja de Google Sheets en su cuenta.</li>
-          <li>Vaya a <strong>Extensiones > Apps Script</strong> y pegue el código del archivo <code>google_apps_script.js</code> incluido en esta carpeta.</li>
-          <li>Haga clic en <strong>Implementar > Nueva Implementación > Aplicación Web</strong> con acceso "Cualquier persona".</li>
-          <li>Pegue la URL obtenida a continuación:</li>
+          <li>Vaya a <strong>Extensiones > Apps Script</strong> y pegue el cÃ³digo del archivo <code>google_apps_script.js</code> incluido en esta carpeta.</li>
+          <li>Haga clic en <strong>Implementar > Nueva ImplementaciÃ³n > AplicaciÃ³n Web</strong> con acceso "Cualquier persona".</li>
+          <li>Pegue la URL obtenida a continuaciÃ³n:</li>
         </ol>
 
         <div>
-          <label class="block text-xs font-bold text-slate-800 mb-1">URL de Implementación de Google Apps Script:</label>
+          <label class="block text-xs font-bold text-slate-800 mb-1">URL de ImplementaciÃ³n de Google Apps Script:</label>
           <input type="url" id="gsheets-webhook-url" placeholder="https://script.google.com/macros/s/.../exec"
             class="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-segey-700">
         </div>
@@ -2107,12 +2113,12 @@
           <div class="flex flex-col gap-1.5 text-[11px]">
             <a href="https://docs.google.com/spreadsheets/d/1biuFH4b4x12bslKafsEE0OeOypk6ub1ukkxLlo3eVSA/edit" target="_blank"
               class="text-blue-700 hover:text-blue-900 hover:underline flex items-center justify-between p-1.5 rounded bg-white border border-slate-200">
-              <span class="flex items-center gap-1.5"><i class="fa-solid fa-table text-emerald-600"></i> 1. Bitácora de Registros y Constancias</span>
+              <span class="flex items-center gap-1.5"><i class="fa-solid fa-table text-emerald-600"></i> 1. BitÃ¡cora de Registros y Constancias</span>
               <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-400"></i>
             </a>
             <a href="https://docs.google.com/spreadsheets/d/1mhJMtK_3-S1YzBzqkEq5C-nzumCba5_KHWRPmH_uZRA/edit" target="_blank"
               class="text-blue-700 hover:text-blue-900 hover:underline flex items-center justify-between p-1.5 rounded bg-white border border-slate-200">
-              <span class="flex items-center gap-1.5"><i class="fa-solid fa-sitemap text-amber-600"></i> 2. Catálogo Oficial de Funcionarios y Puestos</span>
+              <span class="flex items-center gap-1.5"><i class="fa-solid fa-sitemap text-amber-600"></i> 2. CatÃ¡logo Oficial de Funcionarios y Puestos</span>
               <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-400"></i>
             </a>
           </div>
@@ -2124,13 +2130,13 @@
           Cancelar
         </button>
         <button onclick="saveGoogleSheetsWebhook()" class="px-4 py-2 text-xs font-bold rounded-lg bg-segey-800 hover:bg-segey-800 text-white">
-          Guardar Configuración
+          Guardar ConfiguraciÃ³n
         </button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL GUÍA DE ETIQUETAS DE LAYOUT -->
+  <!-- MODAL GUÃA DE ETIQUETAS DE LAYOUT -->
   <div id="modal-layout-tags" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-3xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between pb-3 border-b border-slate-200">
@@ -2140,7 +2146,7 @@
           </div>
           <div>
             <h3 class="text-base font-bold text-slate-900">Etiquetas y Variables Disponibles para Layouts</h3>
-            <p class="text-xs text-slate-500">Copia y pega cualquiera de estas etiquetas en tu archivo HTML para que se sustituyan automáticamente con la información capturada.</p>
+            <p class="text-xs text-slate-500">Copia y pega cualquiera de estas etiquetas en tu archivo HTML para que se sustituyan automÃ¡ticamente con la informaciÃ³n capturada.</p>
           </div>
         </div>
         <button onclick="closeLayoutTagsModal()" class="text-slate-400 hover:text-slate-700 text-lg">
@@ -2156,9 +2162,9 @@
           </h4>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px]">
             <div><code>{{folio}}</code> <span class="text-slate-500 font-sans text-xs">- Folio de la constancia</span></div>
-            <div><code>{{areaNotificadora}}</code> <span class="text-slate-500 font-sans text-xs">- Área notificadora</span></div>
+            <div><code>{{areaNotificadora}}</code> <span class="text-slate-500 font-sans text-xs">- Ãrea notificadora</span></div>
             <div><code>{{responsableCaptura}}</code> <span class="text-slate-500 font-sans text-xs">- Responsable de captura</span></div>
-            <div><code>{{estatus}}</code> <span class="text-slate-500 font-sans text-xs">- Estatus del trámite</span></div>
+            <div><code>{{estatus}}</code> <span class="text-slate-500 font-sans text-xs">- Estatus del trÃ¡mite</span></div>
           </div>
         </div>
 
@@ -2168,13 +2174,13 @@
             <i class="fa-solid fa-calendar-day text-blue-700"></i> I. Generales
           </h4>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px]">
-            <div><code>{{municipio}}</code> <span class="text-slate-500 font-sans text-xs">- Municipio de Yucatán</span></div>
+            <div><code>{{municipio}}</code> <span class="text-slate-500 font-sans text-xs">- Municipio de YucatÃ¡n</span></div>
             <div><code>{{fechaConstancia}}</code> <span class="text-slate-500 font-sans text-xs">- Fecha de constancia (AAAA-MM-DD)</span></div>
             <div><code>{{inmueble}}</code> <span class="text-slate-500 font-sans text-xs">- Inmueble que ocupa</span></div>
-            <div><code>{{dia}}</code> <span class="text-slate-500 font-sans text-xs">- Día del mes (ej. 15)</span></div>
+            <div><code>{{dia}}</code> <span class="text-slate-500 font-sans text-xs">- DÃ­a del mes (ej. 15)</span></div>
             <div><code>{{mes}}</code> <span class="text-slate-500 font-sans text-xs">- Mes en prosa (ej. Noviembre)</span></div>
-            <div><code>{{anio}}</code> <span class="text-slate-500 font-sans text-xs">- Año en 2 dígitos (ej. 26)</span></div>
-            <div><code>{{anioCompleto}}</code> <span class="text-slate-500 font-sans text-xs">- Año en 4 dígitos (ej. 2026)</span></div>
+            <div><code>{{anio}}</code> <span class="text-slate-500 font-sans text-xs">- AÃ±o en 2 dÃ­gitos (ej. 26)</span></div>
+            <div><code>{{anioCompleto}}</code> <span class="text-slate-500 font-sans text-xs">- AÃ±o en 4 dÃ­gitos (ej. 2026)</span></div>
             <div><code>{{horas}}</code> <span class="text-slate-500 font-sans text-xs">- Horas (ej. 10)</span></div>
             <div><code>{{minutos}}</code> <span class="text-slate-500 font-sans text-xs">- Minutos (ej. 30)</span></div>
           </div>
@@ -2183,7 +2189,7 @@
         <!-- Grupo 3: Comparecientes -->
         <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
           <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <i class="fa-solid fa-users text-purple-700"></i> Representantes de la Secretaría de Educación involucrados (Nombres y Cargos)
+            <i class="fa-solid fa-users text-purple-700"></i> Representantes de la SecretarÃ­a de EducaciÃ³n involucrados (Nombres y Cargos)
           </h4>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px]">
             <div><code>{{titularUnidad1Nombre}}</code> <span class="text-slate-500 font-sans text-xs">- Nombre Titular Unidad 1</span></div>
@@ -2194,12 +2200,12 @@
             <div><code>{{titularUnidad2Cargo}}</code> <span class="text-slate-500 font-sans text-xs">- Cargo Titular Unidad 2</span></div>
             <div><code>{{titularUnidad2Completo}}</code> <span class="text-slate-500 font-sans text-xs">- "Nombre, Cargo"</span></div>
 
-            <div><code>{{titularAreaNombre}}</code> <span class="text-slate-500 font-sans text-xs">- Nombre Titular de Área (1)</span></div>
-            <div><code>{{titularAreaCargo}}</code> <span class="text-slate-500 font-sans text-xs">- Cargo Titular de Área (1)</span></div>
+            <div><code>{{titularAreaNombre}}</code> <span class="text-slate-500 font-sans text-xs">- Nombre Titular de Ãrea (1)</span></div>
+            <div><code>{{titularAreaCargo}}</code> <span class="text-slate-500 font-sans text-xs">- Cargo Titular de Ãrea (1)</span></div>
             <div><code>{{titularAreaCompleto}}</code> <span class="text-slate-500 font-sans text-xs">- "Nombre, Cargo" (1)</span></div>
 
-            <div><code>{{titularArea2Nombre}}</code> <span class="text-slate-500 font-sans text-xs">- Nombre Titular de Área (2)</span></div>
-            <div><code>{{titularArea2Cargo}}</code> <span class="text-slate-500 font-sans text-xs">- Cargo Titular de Área (2)</span></div>
+            <div><code>{{titularArea2Nombre}}</code> <span class="text-slate-500 font-sans text-xs">- Nombre Titular de Ãrea (2)</span></div>
+            <div><code>{{titularArea2Cargo}}</code> <span class="text-slate-500 font-sans text-xs">- Cargo Titular de Ãrea (2)</span></div>
             <div><code>{{titularArea2Completo}}</code> <span class="text-slate-500 font-sans text-xs">- "Nombre, Cargo" (2)</span></div>
 
             <div><code>{{testigo1Nombre}}</code> <span class="text-slate-500 font-sans text-xs">- Nombre Testigo 1</span></div>
@@ -2212,21 +2218,21 @@
           </div>
         </div>
 
-        <!-- Grupo 4: Determinación y Justificación -->
+        <!-- Grupo 4: DeterminaciÃ³n y JustificaciÃ³n -->
         <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
           <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <i class="fa-solid fa-file-pen text-amber-700"></i> II. Determinación y III. Justificación
+            <i class="fa-solid fa-file-pen text-amber-700"></i> II. DeterminaciÃ³n y III. JustificaciÃ³n
           </h4>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px]">
             <div><code>{{tipoMovimiento}}</code> <span class="text-slate-500 font-sans text-xs">- Nombre del movimiento</span></div>
-            <div><code>{{nuevaDenominacion}}</code> <span class="text-slate-500 font-sans text-xs">- Nombre del área o adscripción</span></div>
+            <div><code>{{nuevaDenominacion}}</code> <span class="text-slate-500 font-sans text-xs">- Nombre del Ã¡rea o adscripciÃ³n</span></div>
             <div><code>{{nombreActual}}</code> <span class="text-slate-500 font-sans text-xs">- Nombre actual (Cambio de nombre)</span></div>
             <div><code>{{nuevoNombre}}</code> <span class="text-slate-500 font-sans text-xs">- Nuevo nombre (Cambio de nombre)</span></div>
             <div><code>{{chkAlta}}</code> <span class="text-slate-500 font-sans text-xs">- Muestra [ X ] o [ &nbsp; ]</span></div>
             <div><code>{{chkBaja}}</code> <span class="text-slate-500 font-sans text-xs">- Muestra [ X ] o [ &nbsp; ]</span></div>
             <div><code>{{chkNombre}}</code> <span class="text-slate-500 font-sans text-xs">- Muestra [ X ] o [ &nbsp; ]</span></div>
             <div><code>{{chkJerarquica}}</code> <span class="text-slate-500 font-sans text-xs">- Muestra [ X ] o [ &nbsp; ]</span></div>
-            <div class="col-span-full"><code>{{justificacion}}</code> <span class="text-slate-500 font-sans text-xs">- Texto íntegro de la justificación administrativa</span></div>
+            <div class="col-span-full"><code>{{justificacion}}</code> <span class="text-slate-500 font-sans text-xs">- Texto Ã­ntegro de la justificaciÃ³n administrativa</span></div>
           </div>
         </div>
 
@@ -2236,7 +2242,7 @@
             <i class="fa-solid fa-code-branch text-amber-700"></i> Secciones Condicionales (Opcionales)
           </h4>
           <p class="text-[11px] text-amber-800 mb-2">
-            Si deseas que un texto o renglón solo aparezca cuando un dato exista (por ejemplo, cuando sí haya Titular de Unidad 2):
+            Si deseas que un texto o renglÃ³n solo aparezca cuando un dato exista (por ejemplo, cuando sÃ­ haya Titular de Unidad 2):
           </p>
           <pre class="bg-white p-2 rounded border border-amber-200 text-[11px] font-mono text-slate-800 leading-relaxed overflow-x-auto">
 {{#if titularUnidad2Nombre}}
@@ -2256,7 +2262,7 @@
     </div>
   </div>
 
-  <!-- FOOTER INSTITUCIONAL OFICIAL (IDÉNTICO A educacion.yucatan.gob.mx) -->
+  <!-- FOOTER INSTITUCIONAL OFICIAL (IDÃ‰NTICO A educacion.yucatan.gob.mx) -->
   <footer class="bg-segey-700 text-white border-t-4 border-yucatan-400 py-8 mt-auto shadow-inner">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="grid grid-cols-1 md:grid-cols-12 gap-8 text-xs">
@@ -2267,18 +2273,18 @@
               <i class="fa-solid fa-graduation-cap"></i>
             </div>
             <div>
-              <h5 class="text-sm font-bold tracking-wider uppercase text-white">Secretaría de Educación</h5>
-              <p class="text-[11px] text-rose-200">Gobierno del Estado de Yucatán</p>
+              <h5 class="text-sm font-bold tracking-wider uppercase text-white">SecretarÃ­a de EducaciÃ³n</h5>
+              <p class="text-[11px] text-rose-200">Gobierno del Estado de YucatÃ¡n</p>
             </div>
           </div>
           <div class="space-y-1.5 text-rose-100 pl-1">
             <p class="flex items-start gap-2">
               <i class="fa-solid fa-location-dot mt-0.5 text-yucatan-300"></i>
-              <span>Calle 25 entre 36 y 38 s/n, Col. García Ginerés, C.P. 97070. Mérida, Yucatán, México.</span>
+              <span>Calle 25 entre 36 y 38 s/n, Col. GarcÃ­a GinerÃ©s, C.P. 97070. MÃ©rida, YucatÃ¡n, MÃ©xico.</span>
             </p>
             <p class="flex items-center gap-2">
               <i class="fa-solid fa-phone text-yucatan-300"></i>
-              <span>Línea institucional: <a href="tel:8008391888" class="underline font-bold text-white hover:text-yucatan-200">800 839 1888</a></span>
+              <span>LÃ­nea institucional: <a href="tel:8008391888" class="underline font-bold text-white hover:text-yucatan-200">800 839 1888</a></span>
             </p>
             <p class="flex items-center gap-2">
               <i class="fa-solid fa-globe text-yucatan-300"></i>
@@ -2289,18 +2295,18 @@
           </div>
         </div>
 
-        <!-- Columna 2: Enlaces Rápidos y Leyenda Institucional -->
+        <!-- Columna 2: Enlaces RÃ¡pidos y Leyenda Institucional -->
         <div class="md:col-span-6 flex flex-col justify-between space-y-3 md:text-right">
           <div>
             <span class="inline-block px-3 py-1 bg-white/10 rounded-full text-[11px] font-semibold text-rose-100 border border-white/15">
               Sistema de Control de Constancias de Cambios
             </span>
             <p class="text-rose-200 text-[11px] mt-2">
-              Dirección de Administración y Finanzas &bull; Departamento de Innovación y Mejora Continua
+              DirecciÃ³n de AdministraciÃ³n y Finanzas &bull; Departamento de InnovaciÃ³n y Mejora Continua
             </p>
           </div>
           <p class="text-[10.5px] text-rose-300">
-            Formato oficial estandarizado conforme a los lineamientos institucionales vigentes del Estado de Yucatán.
+            Formato oficial estandarizado conforme a los lineamientos institucionales vigentes del Estado de YucatÃ¡n.
           </p>
         </div>
       </div>
@@ -2323,7 +2329,7 @@
       </div>
 
       <p class="text-xs text-slate-600 mb-4">
-        Ingrese sus credenciales de administrador para acceder a la Bitácora Central y gestionar las Áreas Oficiales.
+        Ingrese sus credenciales de administrador para acceder a la BitÃ¡cora Central y gestionar las Ãreas Oficiales.
       </p>
 
       <form id="form-admin-login" onsubmit="handleAdminLoginSubmit(event)" class="space-y-4">
@@ -2337,17 +2343,17 @@
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">Contraseña</label>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">ContraseÃ±a</label>
           <div class="relative">
             <i class="fa-solid fa-key absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-            <input type="password" id="admin-password-input" required placeholder="••••••••" autocomplete="current-password"
+            <input type="password" id="admin-password-input" required placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" autocomplete="current-password"
               class="w-full text-xs pl-8 pr-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-segey-700">
           </div>
         </div>
 
         <div id="admin-login-error" class="hidden text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg p-2.5 flex items-center gap-1.5">
           <i class="fa-solid fa-circle-exclamation"></i>
-          <span id="admin-login-error-text">Usuario o contraseña incorrectos.</span>
+          <span id="admin-login-error-text">Usuario o contraseÃ±a incorrectos.</span>
         </div>
 
         <div class="pt-2 flex items-center justify-end gap-2">
@@ -2355,7 +2361,7 @@
             Cancelar
           </button>
           <button type="submit" class="px-4 py-2 text-xs font-bold rounded-lg bg-segey-700 hover:bg-segey-800 text-white transition flex items-center gap-1.5 shadow">
-            <i class="fa-solid fa-right-to-bracket"></i> Iniciar Sesión
+            <i class="fa-solid fa-right-to-bracket"></i> Iniciar SesiÃ³n
           </button>
         </div>
       </form>
@@ -2364,7 +2370,7 @@
 
   
   <!-- ============================================================= -->
-  <!-- MODAL: SUBIR / TOMAR FOTO DE EXPEDIENTE CON FIRMAS FÍSICAS    -->
+  <!-- MODAL: SUBIR / TOMAR FOTO DE EXPEDIENTE CON FIRMAS FÃSICAS    -->
   <!-- ============================================================= -->
   <div id="modal-subir-expediente" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
@@ -2392,8 +2398,8 @@
             <div class="w-12 h-12 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xl shadow-xs group-hover:scale-110 transition-transform">
               <i class="fa-solid fa-camera"></i>
             </div>
-            <span class="font-bold text-xs">Tomar Foto con Cámara</span>
-            <span class="text-[10px] text-emerald-700 text-center">Abre la cámara del celular para escanear</span>
+            <span class="font-bold text-xs">Tomar Foto con CÃ¡mara</span>
+            <span class="text-[10px] text-emerald-700 text-center">Abre la cÃ¡mara del celular para escanear</span>
           </button>
 
           <button type="button" onclick="elegirArchivoExpediente()" class="p-4 rounded-xl border-2 border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-800 flex flex-col items-center justify-center gap-2 transition group shadow-2xs">
@@ -2421,12 +2427,12 @@
           </button>
         </div>
 
-        <!-- Checkbox de actualización de estatus -->
+        <!-- Checkbox de actualizaciÃ³n de estatus -->
         <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs">
           <label class="flex items-start gap-2 cursor-pointer">
             <input type="checkbox" id="chk-marcar-concluida" checked class="mt-0.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
             <span class="text-slate-700 text-[11px] leading-tight">
-              <strong>Marcar como "Firmada y Concluida"</strong> automáticamente al guardar en Google Drive.
+              <strong>Marcar como "Firmada y Concluida"</strong> automÃ¡ticamente al guardar en Google Drive.
             </span>
           </label>
         </div>
@@ -2474,9 +2480,9 @@
         <div class="flex items-center gap-2">
           <label class="text-xs font-bold text-slate-700">Periodo a Informar:</label>
           <select id="select-periodo-reporte" onchange="actualizarVistaReporteEjecutivo()" class="text-xs p-2 rounded-lg border border-slate-300 bg-white font-semibold">
-            <option value="todo_2026" selected>Año 2026 Completo</option>
+            <option value="todo_2026" selected>AÃ±o 2026 Completo</option>
             <option value="mes_actual">Mes Actual (Noviembre 2026)</option>
-            <option value="ultimos_30">Últimos 30 días</option>
+            <option value="ultimos_30">Ãšltimos 30 dÃ­as</option>
           </select>
         </div>
         <button type="button" onclick="descargarReporteEjecutivoPDF()" class="px-4 py-2 bg-segey-700 hover:bg-segey-800 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-2">
@@ -2494,22 +2500,22 @@
                 SEGEY
               </div>
               <div>
-                <h4 class="font-bold text-sm text-segey-950 uppercase tracking-tight">Secretaría de Educación del Gobierno del Estado de Yucatán</h4>
-                <p class="text-[11px] text-slate-600 font-medium">Departamento de Innovación y Mejora Continua</p>
+                <h4 class="font-bold text-sm text-segey-950 uppercase tracking-tight">SecretarÃ­a de EducaciÃ³n del Gobierno del Estado de YucatÃ¡n</h4>
+                <p class="text-[11px] text-slate-600 font-medium">Departamento de InnovaciÃ³n y Mejora Continua</p>
               </div>
             </div>
             <div class="text-right text-[10px] text-slate-500">
-              <p class="font-bold text-slate-700" id="rep-fecha-emision">Emisión: 15/Nov/2026</p>
-              <p id="rep-periodo-label">Periodo: Año 2026</p>
+              <p class="font-bold text-slate-700" id="rep-fecha-emision">EmisiÃ³n: 15/Nov/2026</p>
+              <p id="rep-periodo-label">Periodo: AÃ±o 2026</p>
             </div>
           </div>
 
           <div class="text-center py-2 bg-slate-50 rounded-lg border border-slate-200">
-            <h5 class="text-sm font-bold text-slate-900 uppercase">Informe Ejecutivo de Trámites de Estructura Orgánica</h5>
-            <p class="text-[11px] text-slate-500">Concentrado oficial de constancias de cambios registradas y avance de firmas físicas</p>
+            <h5 class="text-sm font-bold text-slate-900 uppercase">Informe Ejecutivo de TrÃ¡mites de Estructura OrgÃ¡nica</h5>
+            <p class="text-[11px] text-slate-500">Concentrado oficial de constancias de cambios registradas y avance de firmas fÃ­sicas</p>
           </div>
 
-          <!-- Métricas Clave -->
+          <!-- MÃ©tricas Clave -->
           <div class="grid grid-cols-4 gap-3">
             <div class="p-3 rounded-lg border border-slate-200 bg-white text-center">
               <p class="text-[10px] font-bold text-slate-500 uppercase">Total Solicitudes</p>
@@ -2524,22 +2530,22 @@
               <h3 class="text-xl font-black text-amber-700 mt-1" id="rep-metric-proceso">0</h3>
             </div>
             <div class="p-3 rounded-lg border border-rose-200 bg-rose-50/50 text-center">
-              <p class="text-[10px] font-bold text-rose-800 uppercase">Demoradas (>15 días)</p>
+              <p class="text-[10px] font-bold text-rose-800 uppercase">Demoradas (>15 dÃ­as)</p>
               <h3 class="text-xl font-black text-rose-700 mt-1" id="rep-metric-demoradas">0</h3>
             </div>
           </div>
 
-          <!-- Distribución por Tipo de Movimiento -->
+          <!-- DistribuciÃ³n por Tipo de Movimiento -->
           <div>
-            <h6 class="font-bold text-xs text-slate-900 mb-2 border-b border-slate-200 pb-1">1. Distribución por Tipo de Cambio Estructural</h6>
+            <h6 class="font-bold text-xs text-slate-900 mb-2 border-b border-slate-200 pb-1">1. DistribuciÃ³n por Tipo de Cambio Estructural</h6>
             <div class="grid grid-cols-2 gap-3" id="rep-desglose-movimientos">
-              <!-- Se puebla dinámicamente -->
+              <!-- Se puebla dinÃ¡micamente -->
             </div>
           </div>
 
-          <!-- Seguimiento del Semáforo de Firmas -->
+          <!-- Seguimiento del SemÃ¡foro de Firmas -->
           <div>
-            <h6 class="font-bold text-xs text-slate-900 mb-2 border-b border-slate-200 pb-1">2. Eficiencia de Conclusión de Firmas Físicas</h6>
+            <h6 class="font-bold text-xs text-slate-900 mb-2 border-b border-slate-200 pb-1">2. Eficiencia de ConclusiÃ³n de Firmas FÃ­sicas</h6>
             <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
               <div class="flex items-center justify-between text-xs font-semibold">
                 <span>Avance general de expedientes formalmente concluidos:</span>
@@ -2553,15 +2559,15 @@
 
           <!-- Top Direcciones con Mayor Dinamismo -->
           <div>
-            <h6 class="font-bold text-xs text-slate-900 mb-2 border-b border-slate-200 pb-1">3. Áreas con Mayor Actividad de Movimientos</h6>
+            <h6 class="font-bold text-xs text-slate-900 mb-2 border-b border-slate-200 pb-1">3. Ãreas con Mayor Actividad de Movimientos</h6>
             <div id="rep-top-areas" class="space-y-1.5">
-              <!-- Se puebla dinámicamente -->
+              <!-- Se puebla dinÃ¡micamente -->
             </div>
           </div>
 
           <!-- Pie institucional del Reporte -->
           <div class="pt-4 border-t border-slate-200 text-center text-[10px] text-slate-400">
-            Documento emitido por el Sistema Institucional de Constancias de Cambios • Departamento de Innovación y Mejora Continua (DIMC)
+            Documento emitido por el Sistema Institucional de Constancias de Cambios â€¢ Departamento de InnovaciÃ³n y Mejora Continua (DIMC)
           </div>
         </div>
       </div>
@@ -2578,6 +2584,6 @@
   <script src="assets/catalogo_organico.js?v=2.7.0"></script>
   <script src="assets/mapa_jefes_inmediatos.js?v=2.7.0"></script>
   <script src="assets/mapa_areas_subordinadas.js?v=2.7.0"></script>
-  <script src="app.js?v=2.9.12"></script>
+  <script src="app.js?v=2.9.13"></script>
 </body>
 </html>
