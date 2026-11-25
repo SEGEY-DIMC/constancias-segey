@@ -5698,31 +5698,93 @@ function esPuestoElegibleTestigo(puesto) {
  * Retorna: { valido: bool, sugerencias: string[] }
  * =========================================================================
  */
+/**
+ * Reglas regex para los 13 Mandos Altos oficiales SEGEY,
+ * con soporte para forma masculina Y femenina en cada nivel.
+ * Ejemplos: Director/Directora, Coordinador/Coordinadora,
+ *           Jefe/Jefa, Secretario/Secretaria, Subdirector/Subdirectora
+ */
+const REGLAS_MANDOS_PERMITIDOS = [
+  // 1. Secretario(a) de Educación
+  { regex: /^secretari[oa]\s+de\s+educaci[oó]n/i, etiqueta: 'Secretario(a) de Educación' },
+  // 2. Subsecretario(a)
+  { regex: /^subsecretari[oa]/i, etiqueta: 'Subsecretario(a)' },
+  // 3. Jefe(a) del Despacho
+  { regex: /^(jefe|jefa)\s+del\s+despacho/i, etiqueta: 'Jefe(a) del Despacho' },
+  // 4. Director(a) General
+  { regex: /^director[a]?\s+general/i, etiqueta: 'Director(a) General' },
+  // 5. Coordinador(a) General
+  { regex: /^coordinador[a]?\s+general/i, etiqueta: 'Coordinador(a) General' },
+  // 6. Director(a) Jurídico(a)
+  { regex: /^director[a]?\s+jur[ií]dic[oa]/i, etiqueta: 'Director(a) Jurídico(a)' },
+  // 7. Director(a) de Plantel
+  { regex: /^director[a]?\s+de\s+plantel/i, etiqueta: 'Director(a) de Plantel' },
+  // 8. Director(a) de Centro
+  { regex: /^director[a]?\s+(de\s+|del\s+)?centro/i, etiqueta: 'Director(a) de Centro' },
+  // 9. Subdirector(a)  — antes que Director para no capturar sub como director
+  { regex: /^subdirector[a]?/i, etiqueta: 'Subdirector(a)' },
+  // 10. Director(a) [genérico — cubre "Director de …", "Directora de …"]
+  { regex: /^director[a]?(\s|$)/i, etiqueta: 'Director(a)' },
+  // 11. Jefe(a) de Departamento
+  { regex: /^(jefe|jefa)\s+de\s+departamento/i, etiqueta: 'Jefe(a) de Departamento' },
+  // 12. Coordinador(a) de Soporte Técnico (TIC)
+  { regex: /^coordinador[a]?\s+de\s+soporte\s+t[eé]cnico/i, etiqueta: 'Coordinador(a) de Soporte Técnico (TIC)' },
+  // 13. Coordinador(a) [genérico — cubre "Coordinador de …", "Coordinadora de …"]
+  { regex: /^coordinador[a]?(\s|$)/i, etiqueta: 'Coordinador(a)' },
+];
+
+/**
+ * Puestos de Mandos Medios / Bajos que NO deben validarse como Mando Alto
+ * pero sí son elegibles para firmar (testigos, jefes inmediatos de apoyo).
+ */
+const REGLAS_MANDOS_MEDIOS = [
+  /^secretari[oa]\s+particular/i,
+  /^secretari[oa]\s+t[eé]cnic[oa]/i,
+  /^secretari[oa]\s+administrativ[oa]/i,
+  /^subdirector[a]?\s+administrativ[oa]/i,
+  /^subdirector[a]?\s+acad[eé]mic[oa]/i,
+  /^coordinador[a]?\s+regional/i,
+  /^coordinador[a]?\s+de\s+[aá]rea/i,
+  /^(jefe|jefa)\s+de\s+oficina/i,
+  /^enlace/i,
+  /^supervisor[a]?/i,
+  /^encargad[oa]/i,
+  /^responsable/i,
+  /^asesor[a]?/i,
+  /^analista/i,
+  /^tutor[a]?/i,
+];
+
 function validarCargoEnCatalogo(cargo) {
   if (!cargo || !cargo.trim()) return { valido: false, sugerencias: [] };
-  const cNorm = normalizeText(cargo.trim());
+  const p = cargo.trim();
 
-  // 1. Excluir mandos operativos/bajos
+  // 1. Excluir mandos operativos/bajos explícitamente
   const excluidos = [
     'intendente', 'vigilante', 'chofer', 'diligenciero', 'operador telefonico',
     'archivista', 'recepcionista', 'prefecto', 'bibliotecario', 'operador audiovisual',
-    'reportero', 'auxiliar operativo', 'tecnico en mantenimiento'
+    'reportero', 'auxiliar operativo', 'tecnico en mantenimiento',
+    'auxiliar', 'conserje', 'portero'
   ];
+  const pNorm = normalizeText(p);
   for (const exc of excluidos) {
-    if (cNorm.includes(exc)) return { valido: false, sugerencias: [] };
+    if (pNorm.startsWith(exc)) return { valido: false, sugerencias: [] };
   }
 
-  // 2. Verificar coincidencia con catálogo (coincidencia parcial flexible)
-  const coincidencias = PUESTOS_ELEGIBLES_TESTIGOS.filter(pTarget => {
-    const tNorm = normalizeText(pTarget);
-    return cNorm.startsWith(tNorm) || tNorm.startsWith(cNorm) || cNorm.includes(tNorm) || tNorm.includes(cNorm);
-  });
+  // 2. Verificar contra reglas de Mandos Altos (13 niveles oficiales, m/f)
+  const reglaCoincidente = REGLAS_MANDOS_PERMITIDOS.find(r => r.regex.test(p));
+  if (reglaCoincidente) return { valido: true, sugerencias: [reglaCoincidente.etiqueta] };
 
-  if (coincidencias.length > 0) return { valido: true, sugerencias: coincidencias };
+  // 3. Verificar si es Mando Medio (elegible pero no Mando Alto)
+  const esMedioElegible = REGLAS_MANDOS_MEDIOS.some(r => r.test(p));
+  if (esMedioElegible) return { valido: true, sugerencias: [] };
 
-  // 3. Buscar sugerencias cercanas (primeras 4 letras coinciden)
-  const prefijo = cNorm.substring(0, 4);
-  const sugerencias = PUESTOS_ELEGIBLES_TESTIGOS.filter(p => normalizeText(p).startsWith(prefijo)).slice(0, 3);
+  // 4. No coincide → buscar sugerencias por primeras letras
+  const prefijo4 = pNorm.substring(0, 4);
+  const sugerencias = REGLAS_MANDOS_PERMITIDOS
+    .filter(r => normalizeText(r.etiqueta).startsWith(prefijo4))
+    .map(r => r.etiqueta)
+    .slice(0, 3);
   return { valido: false, sugerencias };
 }
 
@@ -5747,13 +5809,14 @@ function aplicarValidacionCargo(inputEl, msgId) {
   if (valido) {
     inputEl.classList.add('border-green-400', 'ring-1', 'ring-green-300');
     if (msgEl) {
-      msgEl.textContent = '✓ Puesto reconocido en el catálogo de niveles de mando autorizados.';
+      const etiqueta = sugerencias.length > 0 ? ` (${sugerencias[0]})` : '';
+      msgEl.textContent = `✓ Puesto reconocido en el catálogo de niveles de mando autorizados${etiqueta}.`;
       msgEl.className = 'text-[10px] text-green-700 mt-0.5 font-medium';
     }
   } else {
     inputEl.classList.add('border-red-400', 'ring-1', 'ring-red-300');
     if (msgEl) {
-      let txt = '⚠ El puesto no se encontró en el catálogo de niveles de mando permitidos.';
+      let txt = '⚠ El cargo no corresponde a un nivel de mando autorizado en el catálogo (Secretario/a, Subsecretario/a, Director/a General, Coordinador/a General, Director/a, Subdirector/a, Jefe/a de Departamento, Coordinador/a…).';
       if (sugerencias.length > 0) txt += ` ¿Quiso decir: ${sugerencias.join(', ')}?`;
       msgEl.textContent = txt;
       msgEl.className = 'text-[10px] text-red-600 mt-0.5 font-medium';
