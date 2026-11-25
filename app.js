@@ -708,6 +708,7 @@ document.addEventListener('DOMContentLoaded', () => {
     syncJustificacionesFromGoogleSheets(false);
   }
   initAllSearchableComboboxes();
+  inicializarValidacionCargos();
 });
 
 /**
@@ -5686,6 +5687,102 @@ function esPuestoElegibleTestigo(puesto) {
   return PUESTOS_ELEGIBLES_TESTIGOS.some(pTarget => {
     const tNorm = normalizeText(pTarget);
     return pNorm.includes(tNorm) || tNorm.includes(pNorm);
+  });
+}
+
+/**
+ * =========================================================================
+ * VALIDACIÓN DE CARGO O PUESTO CONTRA CATÁLOGO OFICIAL DE NIVELES DE MANDO
+ * Verifica que el texto ingresado en los campos "Cargo o Puesto" de firmantes
+ * corresponda a un nivel de mando permitido (Altos, Medios Altos o Medios Bajos).
+ * Retorna: { valido: bool, sugerencias: string[] }
+ * =========================================================================
+ */
+function validarCargoEnCatalogo(cargo) {
+  if (!cargo || !cargo.trim()) return { valido: false, sugerencias: [] };
+  const cNorm = normalizeText(cargo.trim());
+
+  // 1. Excluir mandos operativos/bajos
+  const excluidos = [
+    'intendente', 'vigilante', 'chofer', 'diligenciero', 'operador telefonico',
+    'archivista', 'recepcionista', 'prefecto', 'bibliotecario', 'operador audiovisual',
+    'reportero', 'auxiliar operativo', 'tecnico en mantenimiento'
+  ];
+  for (const exc of excluidos) {
+    if (cNorm.includes(exc)) return { valido: false, sugerencias: [] };
+  }
+
+  // 2. Verificar coincidencia con catálogo (coincidencia parcial flexible)
+  const coincidencias = PUESTOS_ELEGIBLES_TESTIGOS.filter(pTarget => {
+    const tNorm = normalizeText(pTarget);
+    return cNorm.startsWith(tNorm) || tNorm.startsWith(cNorm) || cNorm.includes(tNorm) || tNorm.includes(cNorm);
+  });
+
+  if (coincidencias.length > 0) return { valido: true, sugerencias: coincidencias };
+
+  // 3. Buscar sugerencias cercanas (primeras 4 letras coinciden)
+  const prefijo = cNorm.substring(0, 4);
+  const sugerencias = PUESTOS_ELEGIBLES_TESTIGOS.filter(p => normalizeText(p).startsWith(prefijo)).slice(0, 3);
+  return { valido: false, sugerencias };
+}
+
+/**
+ * Aplica validación visual (borde rojo / verde + mensaje) a un input de Cargo o Puesto.
+ * msgId: id del elemento <p> donde mostrar el mensaje de error/advertencia.
+ */
+function aplicarValidacionCargo(inputEl, msgId) {
+  if (!inputEl) return;
+  const val = inputEl.value.trim();
+  const msgEl = document.getElementById(msgId);
+
+  if (!val) {
+    inputEl.classList.remove('border-red-400', 'border-green-400', 'ring-1', 'ring-red-300', 'ring-green-300');
+    if (msgEl) { msgEl.textContent = ''; msgEl.className = 'hidden'; }
+    return;
+  }
+
+  const { valido, sugerencias } = validarCargoEnCatalogo(val);
+  inputEl.classList.remove('border-red-400', 'border-green-400', 'ring-1', 'ring-red-300', 'ring-green-300');
+
+  if (valido) {
+    inputEl.classList.add('border-green-400', 'ring-1', 'ring-green-300');
+    if (msgEl) {
+      msgEl.textContent = '✓ Puesto reconocido en el catálogo de niveles de mando autorizados.';
+      msgEl.className = 'text-[10px] text-green-700 mt-0.5 font-medium';
+    }
+  } else {
+    inputEl.classList.add('border-red-400', 'ring-1', 'ring-red-300');
+    if (msgEl) {
+      let txt = '⚠ El puesto no se encontró en el catálogo de niveles de mando permitidos.';
+      if (sugerencias.length > 0) txt += ` ¿Quiso decir: ${sugerencias.join(', ')}?`;
+      msgEl.textContent = txt;
+      msgEl.className = 'text-[10px] text-red-600 mt-0.5 font-medium';
+    }
+  }
+}
+
+/**
+ * Inicializa los listeners blur/input para todos los campos de Cargo o Puesto.
+ */
+function inicializarValidacionCargos() {
+  const camposCargo = [
+    { inputId: 'titularUnidad1Cargo', msgId: 'msgCargoTitular1' },
+    { inputId: 'titularUnidad2Cargo', msgId: 'msgCargoTitular2' },
+    { inputId: 'titularAreaCargo',    msgId: 'msgCargoArea1'    },
+    { inputId: 'titularArea2Cargo',   msgId: 'msgCargoArea2'    },
+    { inputId: 'testigo1Cargo',       msgId: 'msgCargoTestigo1' },
+    { inputId: 'testigo2Cargo',       msgId: 'msgCargoTestigo2' },
+  ];
+  camposCargo.forEach(({ inputId, msgId }) => {
+    const el = document.getElementById(inputId);
+    if (!el) return;
+    el.addEventListener('blur',  () => aplicarValidacionCargo(el, msgId));
+    el.addEventListener('input', () => {
+      // Limpiar estado visual mientras escribe; valida al salir del campo
+      el.classList.remove('border-red-400', 'border-green-400', 'ring-1', 'ring-red-300', 'ring-green-300');
+      const msgEl = document.getElementById(msgId);
+      if (msgEl) { msgEl.textContent = ''; msgEl.className = 'hidden'; }
+    });
   });
 }
 
