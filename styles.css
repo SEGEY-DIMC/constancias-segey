@@ -120,8 +120,8 @@ body {
 
 /* Evitar saltos de página dentro de bloques críticos como firmas */
 .page-break-avoid {
-  page-break-inside: auto;
-  break-inside: auto;
+  page-break-inside: avoid;
+  break-inside: avoid;
 }
 
 /* Optimización para generación de PDF en navegador (html2pdf) */
@@ -237,6 +237,7 @@ body {
 }
 
 .official-sheet.generating-pdf .official-header,
+.official-sheet.generating-pdf .page-break-avoid,
 .official-sheet.generating-pdf .firmas-container,
 .official-sheet.generating-pdf .grid-cols-2 {
   page-break-inside: avoid !important;
