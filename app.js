@@ -1634,13 +1634,13 @@ function compileLayout(templateStr, data) {
     municipio: data.municipio || 'Mérida',
     fechaActa: data.fechaConstancia || data.fechaActa || '',
     fechaConstancia: data.fechaConstancia || data.fechaActa || '',
-    dia: data.dia || '10',
-    mes: data.mes || 'Noviembre',
-    anio: (data.anio && String(data.anio).length === 4) ? String(data.anio).slice(-2) : (data.anio || '26'),
-    anioCompleto: data.anioCompleto || (data.anio ? (String(data.anio).length === 2 ? `20${data.anio}` : data.anio) : '2026'),
-    horaActa: data.horaActa || '10:00',
-    horas: data.horas || '10',
-    minutos: data.minutos || '00',
+    dia: data.dia || '____',
+    mes: data.mes || '_____________',
+    anio: (data.anio && String(data.anio).length === 4) ? String(data.anio).slice(-2) : (data.anio || '__'),
+    anioCompleto: data.anioCompleto || (data.anio ? (String(data.anio).length === 2 ? `20${data.anio}` : data.anio) : '20__'),
+    horaActa: data.horaActa || '',
+    horas: data.horas || '____',
+    minutos: data.minutos || '____',
     inmueble: data.inmueble || 'el Edificio Central de la Secretaría de Educación',
 
     titularUnidad1Nombre: u1Nom,
@@ -7143,14 +7143,14 @@ function handleFormSubmit(event) {
 
   const observaciones = document.getElementById('observaciones').value.trim();
 
-  // Procesar fecha y hora
-  const dateObj = new Date(fechaActaStr + 'T12:00:00');
-  const dia = dateObj.getDate();
-  const mes = MESES[dateObj.getMonth()];
-  const anio = String(dateObj.getFullYear()).slice(-2);
-  const anioCompleto = dateObj.getFullYear();
+  // Procesar fecha y hora (permitir dejarlas en blanco para llenar a mano)
+  const dateObj = fechaActaStr ? new Date(fechaActaStr + 'T12:00:00') : null;
+  const dia = (dateObj && !isNaN(dateObj.getDate())) ? dateObj.getDate() : '';
+  const mes = (dateObj && !isNaN(dateObj.getMonth())) ? MESES[dateObj.getMonth()] : '';
+  const anio = (dateObj && !isNaN(dateObj.getFullYear())) ? String(dateObj.getFullYear()).slice(-2) : '';
+  const anioCompleto = (dateObj && !isNaN(dateObj.getFullYear())) ? dateObj.getFullYear() : '';
 
-  const [horas, minutos] = (horaActaStr || '10:00').split(':');
+  const [horas, minutos] = horaActaStr ? horaActaStr.split(':') : ['', ''];
 
   const titularUnidad1 = titularUnidad1Cargo ? `${titularUnidad1Nombre} - ${titularUnidad1Cargo}` : titularUnidad1Nombre;
   const titularUnidad2 = titularUnidad2Nombre ? (titularUnidad2Cargo ? `${titularUnidad2Nombre} - ${titularUnidad2Cargo}` : titularUnidad2Nombre) : '';
@@ -7332,9 +7332,10 @@ function handleFormSubmit(event) {
 }
 
 function getCurrentFormDataForPreview() {
-  const fechaActaStr = document.getElementById('fechaActa')?.value || new Date().toISOString().split('T')[0];
-  const dateObj = new Date(fechaActaStr + 'T12:00:00');
-  const [horas, minutos] = (document.getElementById('horaActa')?.value || '10:00').split(':');
+  const fechaActaStr = (document.getElementById('fechaActa')?.value || '').trim();
+  const dateObj = fechaActaStr ? new Date(fechaActaStr + 'T12:00:00') : null;
+  const horaActaVal = (document.getElementById('horaActa')?.value || '').trim();
+  const [horas, minutos] = horaActaVal ? horaActaVal.split(':') : ['', ''];
 
   const tipoMovimientoEl = document.querySelector('input[name="tipoMovimiento"]:checked');
   const tipoMovimiento = tipoMovimientoEl ? tipoMovimientoEl.value : 'Alta';
@@ -7390,13 +7391,13 @@ function getCurrentFormDataForPreview() {
     municipio: document.getElementById('municipio')?.value.trim() || 'Mérida',
     fechaActa: fechaActaStr,
     fechaConstancia: fechaActaStr,
-    dia: isNaN(dateObj.getDate()) ? '10' : String(dateObj.getDate()),
-    mes: isNaN(dateObj.getMonth()) ? 'Noviembre' : MESES[dateObj.getMonth()],
-    anio: isNaN(dateObj.getFullYear()) ? '26' : String(dateObj.getFullYear()).slice(-2),
-    anioCompleto: isNaN(dateObj.getFullYear()) ? 2026 : dateObj.getFullYear(),
-    horaActa: document.getElementById('horaActa')?.value || '10:00',
-    horas: horas || '10',
-    minutos: minutos || '00',
+    dia: (dateObj && !isNaN(dateObj.getDate())) ? String(dateObj.getDate()) : '____',
+    mes: (dateObj && !isNaN(dateObj.getMonth())) ? MESES[dateObj.getMonth()] : '_____________',
+    anio: (dateObj && !isNaN(dateObj.getFullYear())) ? String(dateObj.getFullYear()).slice(-2) : '__',
+    anioCompleto: (dateObj && !isNaN(dateObj.getFullYear())) ? dateObj.getFullYear() : '20__',
+    horaActa: horaActaVal,
+    horas: horas || '____',
+    minutos: minutos || '____',
     inmueble: formatearInmueble(document.getElementById('inmueble')?.value.trim()) || 'el Edificio Central de la Secretaría de Educación',
 
     titularUnidad1Nombre: u1Nom || '___________________________',
@@ -7564,26 +7565,6 @@ function obtenerCamposVaciosFormulario() {
       seccion: 'Apartado II: Generales',
       nombre: 'Municipio de Yucatán',
       detalle: 'Indique el municipio donde se formaliza la constancia (ej. Mérida).'
-    });
-  }
-
-  const fechaActa = (document.getElementById('fechaActa')?.value || '').trim();
-  if (!fechaActa) {
-    camposVacios.push({
-      id: 'fechaActa',
-      seccion: 'Apartado II: Generales',
-      nombre: 'Fecha de Constancia',
-      detalle: 'Capture la fecha oficial de la constancia.'
-    });
-  }
-
-  const horaActa = (document.getElementById('horaActa')?.value || '').trim();
-  if (!horaActa) {
-    camposVacios.push({
-      id: 'horaActa',
-      seccion: 'Apartado II: Generales',
-      nombre: 'Hora y Minutos',
-      detalle: 'Especifique la hora de la constancia (HH:MM).'
     });
   }
 
@@ -7914,13 +7895,13 @@ function ensureCurrentDocumentSaved() {
     areaNotificadora: document.getElementById('areaNotificadora')?.value.trim() || '',
     responsableCaptura: document.getElementById('responsableCaptura')?.value.trim() || '',
     municipio: document.getElementById('municipio')?.value.trim() || 'Mérida',
-    fechaActa: document.getElementById('fechaActa')?.value || new Date().toISOString().split('T')[0],
-    fechaConstancia: document.getElementById('fechaActa')?.value || new Date().toISOString().split('T')[0],
+    fechaActa: document.getElementById('fechaActa')?.value || '',
+    fechaConstancia: document.getElementById('fechaActa')?.value || '',
     dia: formData.dia,
     mes: formData.mes,
     anio: formData.anio,
     anioCompleto: formData.anioCompleto,
-    horaActa: document.getElementById('horaActa')?.value || '10:00',
+    horaActa: document.getElementById('horaActa')?.value || '',
     horas: formData.horas,
     minutos: formData.minutos,
     inmueble: formatearInmueble(document.getElementById('inmueble')?.value.trim()) || 'el Edificio Central de la Secretaría de Educación',
