@@ -6858,7 +6858,7 @@ function handleTipoMovimientoChange() {
       lblNuevaDenom.innerHTML = 'Nombre del Área o Adscripción <span class="text-red-500">*</span>';
     }
     if (ndInputElem) {
-      ndInputElem.placeholder = 'ESPECIFIQUE CON PRECISIÓN EL NOMBRE DEL ÁREA, CLAVE O ADSCRIPCIÓN DETERMINADA...';
+      ndInputElem.placeholder = 'ESPECIFIQUE CON PRECISIÓN EL NOMBRE DEL ÁREA O ADSCRIPCIÓN DETERMINADA...';
     }
   }
 
