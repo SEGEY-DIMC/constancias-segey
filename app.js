@@ -9501,6 +9501,11 @@ function confirmarInactivacionConMotivo() {
   record.motivoInactivacion = motivo;
   record.fechaInactivacion = new Date().toISOString();
 
+  syncDeletedFoliosToGoogleSheets(
+    [record.folio],
+    `INACTIVO desde Bitácora y Control: ${motivo}`
+  );
+
   saveRecordsToStorage();
   closeInactivarModal();
   renderTable();
@@ -10117,7 +10122,7 @@ async function reserveCentralFolio() {
   }
 }
 
-function syncDeletedFoliosToGoogleSheets(folios) {
+function syncDeletedFoliosToGoogleSheets(folios, motivo) {
   const webhook = localStorage.getItem(WEBHOOK_KEY) || DEFAULT_WEBHOOK_URL;
   if (!webhook || !Array.isArray(folios) || folios.length === 0) return;
 
@@ -10125,7 +10130,7 @@ function syncDeletedFoliosToGoogleSheets(folios) {
     action: 'deleteRecords',
     token: BITACORA_API_TOKEN,
     folios,
-    motivo: 'ELIMINADO desde Bitácora y Control; folio conservado para trazabilidad.'
+    motivo: motivo || 'ELIMINADO desde Bitácora y Control; folio conservado para trazabilidad.'
   };
 
   fetch(webhook, {
