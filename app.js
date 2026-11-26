@@ -2599,7 +2599,7 @@ const ENLACE_DIRECTO_POR_AREA = {
   'Departamento de Registro y Certificación': 'Tec. Mattia de Jesús Tun Peña',
   'Departamento de Sistemas de Gestión de Nómina': 'C.P. Manuel Jesús Heredia Ceballos',
   'Departamento de Telebachillerato Comunitario del Estado de Yucatán y Bachillerato Intercultural': 'Mtro. Alberto Solís Cámara',
-  'Despacho del Secretario': ['Ing. Gladys Gahona Cámara', 'L.E. Rosalinda Villanueva Hau'],
+  'Despacho del Secretario': 'Ing. Gladys Gahona Cámara, L.E. Rosalinda Villanueva Hau',
   'Dirección Jurídica': 'Lic. Alonso Hernández Núñez',
   'Dirección de Administración y Finanzas': 'Lic. Yazmin Eugenia Cob Caballero',
   'Dirección de Desarrollo Educativo': 'Mtra. Ligia del Socorro Sánchez Castañeda',
@@ -2618,8 +2618,8 @@ const ENLACE_DIRECTO_POR_AREA = {
   'Dirección de Servicios Educativos de Media Superior': 'C.P. Miguel Edgardo Argáez Quijano',
   'Dirección de Servicios Regionales': 'Ing. Luis Gabriel Canul Mukul',
   'Enlace Estatal con la Unidad del Sistema para la Carrera de las Maestras y los Maestros (USICAMM)': 'C.P. Katia Isabel Manzanilla Mena',
-  'Jefatura del Despacho': ['Ing. Gladys Gahona Cámara', 'L.E. Rosalinda Villanueva Hau'],
-  'Secretario Particular': ['Ing. Gladys Gahona Cámara', 'L.E. Rosalinda Villanueva Hau'],
+  'Jefatura del Despacho': 'Ing. Gladys Gahona Cámara, L.E. Rosalinda Villanueva Hau',
+  'Secretario Particular': 'Ing. Gladys Gahona Cámara, L.E. Rosalinda Villanueva Hau',
   'Subdirección de Organización y Administración de Personal': 'C.P. Koty Georgina Victoria Delgado',
   'Subsecretaría de Educación Básica': 'Mtra. Carla Guadalupe Sanchez Colli',
   'Subsecretaría de Educación Media Superior': 'C.P. Miguel Edgardo Argáez Quijano',
@@ -7071,6 +7071,24 @@ function initQueryParams() {
 
 let isSubmittingForm = false;
 
+const DUPLICATE_COMPARISON_FIELDS = [
+  'areaNotificadora', 'responsableCaptura', 'municipio', 'fechaActa', 'horaActa',
+  'inmueble', 'tipoMovimiento', 'nuevaDenominacion', 'unidadDestino', 'justificacion',
+  'titularUnidad1Nombre', 'titularUnidad1Cargo', 'titularUnidad2Nombre', 'titularUnidad2Cargo',
+  'titularAreaNombre', 'titularAreaCargo', 'titularArea2Nombre', 'titularArea2Cargo',
+  'testigo1Nombre', 'testigo1Cargo', 'testigo2Nombre', 'testigo2Cargo', 'estatus', 'observaciones'
+];
+
+function normalizeDuplicateValue(value) {
+  return String(value ?? '').trim().replace(/\s+/g, ' ');
+}
+
+function sameSavedRecordContent(existing, candidate) {
+  return DUPLICATE_COMPARISON_FIELDS.every(field =>
+    normalizeDuplicateValue(existing[field]) === normalizeDuplicateValue(candidate[field])
+  );
+}
+
 function generateNextFolio() {
   const anio = new Date().getFullYear();
   let maxNum = 0;
@@ -7173,7 +7191,7 @@ function switchTab(tabId, preserveRecord = false) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function handleFormSubmit(event) {
+async function handleFormSubmit(event) {
   event.preventDefault();
 
   if (isAuditoriaUser()) {
@@ -7225,11 +7243,23 @@ function handleFormSubmit(event) {
     return;
   }
   
-  // Validación estricta anti-duplicados:
-  // Si no se proporcionó folio o si ya existe en la bitácora asignado a otro registro, generar automáticamente el siguiente
+  // Reservar el folio en Google Sheets antes de crear una constancia nueva.
   let folio = document.getElementById('folioControl').value.trim();
-  const folioExists = records.some(r => r.folio === folio && r.id !== editingRecordId);
-  if (!folio || folioExists) {
+  const localRecordWithFolio = records.some(record => record.folio === folio);
+  if (!editingRecordId && !localRecordWithFolio) {
+    const reservedFolio = await reserveCentralFolio();
+    if (!reservedFolio) {
+      saveDraftToStorage();
+      showToast('No se puede guardar: Google Sheets no está disponible para reservar un folio único. La información quedó como borrador local.', 'warning');
+      isSubmittingForm = false;
+      return;
+    }
+    folio = reservedFolio;
+    const folioInput = document.getElementById('folioControl');
+    if (folioInput) folioInput.value = folio;
+  }
+
+  if (!folio) {
     folio = generateNextFolio();
     const folioInp = document.getElementById('folioControl');
     if (folioInp) folioInp.value = folio;
@@ -7377,6 +7407,42 @@ function handleFormSubmit(event) {
     observaciones
   };
 
+  // Evitar duplicados por doble clic o por volver a presionar Guardar.
+  if (!editingRecordId) {
+    const existingIdxByFolio = records.findIndex(record => record.folio === folio);
+    if (existingIdxByFolio !== -1) {
+      const existing = records[existingIdxByFolio];
+
+      if (sameSavedRecordContent(existing, recordData)) {
+        currentRenderedRecord = existing;
+        renderDocument(existing);
+        showToast('Esta constancia ya fue guardada.', 'info');
+        isSubmittingForm = false;
+        switchTab('tab-preview', true);
+        return;
+      }
+
+      const confirmUpdate = window.confirm(
+        `El folio ${folio} ya existe y contiene información diferente. ¿Desea actualizar ese registro?`
+      );
+      if (!confirmUpdate) {
+        showToast('Guardado cancelado para evitar crear un folio duplicado.', 'warning');
+        isSubmittingForm = false;
+        return;
+      }
+
+      editingRecordId = existing.id;
+      recordData.id = existing.id;
+    }
+  } else {
+    const conflictingIdx = records.findIndex(record => record.folio === folio && record.id !== editingRecordId);
+    if (conflictingIdx !== -1) {
+      showToast('Ese folio ya pertenece a otra constancia. No se puede duplicar.', 'error');
+      isSubmittingForm = false;
+      return;
+    }
+  }
+
   if (editingRecordId) {
     const idx = records.findIndex(r => r.id === editingRecordId);
     if (idx !== -1) {
@@ -7457,12 +7523,8 @@ function handleFormSubmit(event) {
   populateAreaFilter();
   updateEstatusPermissions(isSuperAdmin());
 
-  // Avanzar folio de control al siguiente número libre para evitar duplicados en capturas subsecuentes
-  const nextFolio = generateNextFolio();
-  const folioControlInput = document.getElementById('folioControl');
-  if (folioControlInput) {
-    folioControlInput.value = nextFolio;
-  }
+  // Mantener el folio guardado mientras se visualiza o descarga el documento.
+  // El siguiente folio se asigna al volver a iniciar una nueva captura desde el formulario.
 
   setTimeout(() => {
     isSubmittingForm = false;
@@ -8011,6 +8073,7 @@ function ensureCurrentDocumentSaved() {
   if (existingIdx === -1 && folio) {
     existingIdx = records.findIndex(r => r.folio === folio);
   }
+  const isNewRecord = existingIdx === -1;
 
   const estatusVal = document.getElementById('estatus')?.value || 'Generada para Firma';
   const finalEstatus = (editingRecordId && estatusVal === 'Generada para Firma') ? 'Modificación' : estatusVal;
@@ -8110,7 +8173,11 @@ function ensureCurrentDocumentSaved() {
   renderTable();
   populateAreaFilter();
 
-  sendToGoogleSheetsWebhook(recordData);
+  // La descarga puede llamar a esta función después de Guardar. En ese caso
+  // el registro ya existe y no debe volver a insertarse en Google Sheets.
+  if (isNewRecord) {
+    sendToGoogleSheetsWebhook(recordData);
+  }
   return recordData;
 }
 
@@ -8135,6 +8202,23 @@ async function downloadCurrentDocumentPDF(skipValidation = false) {
         return;
       }
     }
+  }
+
+  const renderedRecordIsSaved = Boolean(
+    currentRenderedRecord &&
+    currentRenderedRecord.id !== 'preview_current' &&
+    records.some(record => record.id === currentRenderedRecord.id)
+  );
+
+  // Verificar primero la bitácora central para no validar contra una copia local desactualizada.
+  const remoteSyncOk = await syncRecordsFromGoogleSheets(false);
+  if (!remoteSyncOk) {
+    if (!renderedRecordIsSaved) {
+      saveDraftToStorage();
+      showToast('PDF bloqueado. La información se conservó como borrador local; intente nuevamente cuando Google Sheets esté disponible.', 'warning');
+      return;
+    }
+    showToast('Google Sheets no está disponible. Se descargará el registro local previamente guardado.', 'warning');
   }
 
   // Persistir automáticamente el registro localmente y en Google Sheets
@@ -10006,6 +10090,23 @@ function sendToGoogleSheetsWebhook(recordData) {
   });
 }
 
+async function reserveCentralFolio() {
+  const webhook = localStorage.getItem(WEBHOOK_KEY) || DEFAULT_WEBHOOK_URL;
+  if (!webhook) return null;
+
+  try {
+    const token = BITACORA_API_TOKEN;
+    const year = new Date().getFullYear();
+    const url = `${webhook}?action=reserveFolio&token=${encodeURIComponent(token)}&year=${year}&t=${Date.now()}`;
+    const response = await fetch(url, { cache: 'no-store' });
+    const result = await response.json();
+    return result && result.status === 'success' && result.folio ? result.folio : null;
+  } catch (error) {
+    console.error('No se pudo reservar un folio central:', error);
+    return null;
+  }
+}
+
 function getInitialSampleRecords() {
   return [
     {
@@ -10357,7 +10458,7 @@ function guardarCorreosNotificacion() {
 let isSyncingGSheets = false;
 
 async function syncRecordsFromGoogleSheets(forceToast = false) {
-  if (isSyncingGSheets) return;
+  if (isSyncingGSheets) return false;
 
   // Acceso institucional universal para sincronización de bitácora y folios
   const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || BITACORA_API_TOKEN;
@@ -10365,7 +10466,7 @@ async function syncRecordsFromGoogleSheets(forceToast = false) {
   const webhook = localStorage.getItem(WEBHOOK_KEY) || DEFAULT_WEBHOOK_URL;
   if (!webhook) {
     if (forceToast) showToast('Configure primero la URL del Webhook de Google Sheets.', 'error');
-    return;
+    return false;
   }
 
   isSyncingGSheets = true;
@@ -10407,11 +10508,11 @@ async function syncRecordsFromGoogleSheets(forceToast = false) {
       renderTable();
       updateRegistrySidebarBadges();
 
-      // Si el folio actual en el formulario ya existe en los registros remotos sincronizados,
-      // avanzar automáticamente al siguiente folio libre para evitar colisiones
+      // Conservar el folio actual durante la sincronización. El siguiente folio
+      // se asigna al iniciar una nueva captura, no durante una descarga.
       const folioInput = document.getElementById('folioControl');
       if (folioInput && !editingRecordId) {
-        if (!folioInput.value || records.some(r => r.folio === folioInput.value)) {
+        if (!folioInput.value) {
           folioInput.value = generateNextFolio();
         }
       }
@@ -10420,19 +10521,24 @@ async function syncRecordsFromGoogleSheets(forceToast = false) {
         showToast(`Sincronización completada: ${agregados} nuevos folios, ${actualizados} actualizados.`);
       }
       console.log(`Google Sheets Sync: ${agregados} agregados, ${actualizados} actualizados.`);
+      return true;
     } else if (result && result.status === 'error') {
       console.warn('Bitácora remota protegida:', result.message);
       if (forceToast) {
         showToast(result.message || 'Acceso restringido a la bitácora.', 'warning');
       }
+      return false;
     } else if (forceToast) {
       showToast('Sincronización completada. No hay registros adicionales.');
+      return true;
     }
+    return false;
   } catch (err) {
     console.warn('Sincronización con Google Sheets no disponible:', err);
     if (forceToast) {
       showToast('No se pudo conectar con Google Sheets en este momento.', 'error');
     }
+    return false;
   } finally {
     isSyncingGSheets = false;
     if (syncIcon) syncIcon.classList.remove('fa-spin');
@@ -11223,12 +11329,21 @@ function checkDraftOnLoad() {
   } catch (e) {}
 }
 
-function restaurarBorrador() {
+async function restaurarBorrador() {
   try {
     const raw = localStorage.getItem(AUTOSAVE_DRAFT_KEY);
     if (!raw) return;
     const draft = JSON.parse(raw);
     if (!draft || !draft.data) return;
+
+    const remoteSyncOk = await syncRecordsFromGoogleSheets(false);
+    if (remoteSyncOk && draft.data.folio && records.some(record => record.folio === draft.data.folio)) {
+      const folioAnterior = draft.data.folio;
+      draft.data.folio = generateNextFolio();
+      showToast(`El folio ${folioAnterior} ya fue ocupado. Se asignó ${draft.data.folio} al borrador.`, 'warning');
+    } else if (!remoteSyncOk) {
+      showToast('Borrador restaurado localmente. Debe sincronizar Google Sheets antes de guardarlo.', 'warning');
+    }
 
     loadRecordIntoForm(draft.data);
 
@@ -11253,6 +11368,7 @@ function descartarBorrador() {
 
 function loadRecordIntoForm(d) {
   if (!d) return;
+  if (d.folio) document.getElementById('folioControl').value = d.folio;
   if (d.areaNotificadora) setAreaNotificadoraValue(d.areaNotificadora);
   if (d.responsableCaptura) setResponsableCapturaValue(d.responsableCaptura);
   if (d.municipio) document.getElementById('municipio').value = d.municipio;
