@@ -8848,7 +8848,7 @@ function abrirModalEliminarSeleccionados() {
   const count = selectedRecordIds.size;
   countEl.textContent = `${count} constancia${count > 1 ? 's' : ''}`;
   if (btnConfirm) {
-    btnConfirm.innerHTML = `<i class="fa-solid fa-trash-can"></i> Sí, Eliminar Definitivamente (${count})`;
+    btnConfirm.innerHTML = `<i class="fa-solid fa-ban"></i> Sí, Marcar como Anuladas (${count})`;
   }
 
   // Obtener y listar registros seleccionados
@@ -8879,15 +8879,25 @@ function cerrarModalEliminarSeleccionados() {
   if (modal) modal.classList.add('hidden');
 }
 
-function confirmarBorradoDefinitivo() {
+async function confirmarBorradoDefinitivo() {
   if (selectedRecordIds.size === 0) return;
 
   const count = selectedRecordIds.size;
-  // Filtrar y eliminar permanentemente del array de registros
-  records = records.filter(r => !selectedRecordIds.has(r.id));
+  const recordsToDelete = records.filter(r => selectedRecordIds.has(r.id));
+  const foliosToDelete = recordsToDelete.map(record => record.folio).filter(Boolean);
+
+  // No borrar físicamente: conservar trazabilidad y marcar los folios como anulados.
+  const fechaEliminacion = new Date().toISOString();
+  recordsToDelete.forEach(record => {
+    record.estatusAnterior = record.estatus || 'Generada para Firma';
+    record.estatus = 'Inactivo';
+    record.motivoInactivacion = 'ELIMINADO desde Bitácora y Control; folio conservado para trazabilidad.';
+    record.fechaInactivacion = fechaEliminacion;
+  });
+  syncDeletedFoliosToGoogleSheets(foliosToDelete);
   selectedRecordIds.clear();
 
-  // Guardar en almacenamiento local y en disco server.py
+  // Guardar en almacenamiento local.
   saveRecordsToStorage();
 
   // Cerrar modal y refrescar vista
@@ -8896,7 +8906,7 @@ function confirmarBorradoDefinitivo() {
   updateStats();
   populateAreaFilter();
 
-  showToast(`¡Se eliminaron definitivamente ${count} constancia(s) de la bitácora institucional!`, 'success');
+  showToast(`Se marcaron ${count} constancia(s) como ELIMINADO; el folio se conserva y no se reutilizará.`, 'success');
 }
 
 window.handleRecordCheckboxChange = handleRecordCheckboxChange;
@@ -10105,6 +10115,25 @@ async function reserveCentralFolio() {
     console.error('No se pudo reservar un folio central:', error);
     return null;
   }
+}
+
+function syncDeletedFoliosToGoogleSheets(folios) {
+  const webhook = localStorage.getItem(WEBHOOK_KEY) || DEFAULT_WEBHOOK_URL;
+  if (!webhook || !Array.isArray(folios) || folios.length === 0) return;
+
+  const payload = {
+    action: 'deleteRecords',
+    token: BITACORA_API_TOKEN,
+    folios,
+    motivo: 'ELIMINADO desde Bitácora y Control; folio conservado para trazabilidad.'
+  };
+
+  fetch(webhook, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  }).catch(error => console.error('No se pudieron sincronizar folios eliminados:', error));
 }
 
 function getInitialSampleRecords() {
